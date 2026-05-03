@@ -1,0 +1,41 @@
+{
+  "nodes": [
+    {"id": "main_myapp", "label": "MyApp", "file_type": "code", "source_file": "lib/main.dart"},
+    {"id": "chat_screen_chatscreen", "label": "ChatScreen", "file_type": "code", "source_file": "lib/chatbot_rs/screens/chat_screen.dart"},
+    {"id": "splash_screen_splashscreen", "label": "SplashScreen", "file_type": "code", "source_file": "lib/chatbot_rs/screens/splash_screen.dart"},
+    {"id": "theme_apptheme", "label": "AppTheme", "file_type": "code", "source_file": "lib/chatbot_rs/theme.dart"},
+    {"id": "pubspec_yaml_dependencies", "label": "Project Dependencies", "file_type": "document", "source_file": "pubspec.yaml"},
+    {"id": "skills_md_prd", "label": "Product Requirements Document", "file_type": "document", "source_file": "skills.md"},
+    {"id": "skills_md_architecture", "label": "Zero-Cost Architecture", "file_type": "document", "source_file": "skills.md"},
+    {"id": "skills_md_indobert", "label": "IndoBERT Intent Classifier", "file_type": "document", "source_file": "skills.md"},
+    {"id": "skills_md_openrouter", "label": "OpenRouter NLG", "file_type": "document", "source_file": "skills.md"},
+    {"id": "skills_md_sqlite", "label": "SQLite Database", "file_type": "document", "source_file": "skills.md"},
+    {"id": "mainactivity_kt_mainactivity", "label": "MainActivity", "file_type": "code", "source_file": "android/app/src/main/kotlin/com/example/primabot/MainActivity.kt"},
+    {"id": "appdelegate_swift_appdelegate", "label": "AppDelegate", "file_type": "code", "source_file": "ios/Runner/AppDelegate.swift"}
+  ],
+  "edges": [
+    {"source": "main_myapp", "target": "chat_screen_chatscreen", "relation": "references", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "lib/main.dart"},
+    {"source": "chat_screen_chatscreen", "target": "theme_apptheme", "relation": "references", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "lib/chatbot_rs/screens/chat_screen.dart"},
+    {"source": "main_myapp", "target": "splash_screen_splashscreen", "relation": "references", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "lib/main.dart"},
+    {"source": "chat_screen_chatscreen", "target": "skills_md_sqlite", "relation": "implements", "confidence": "INFERRED", "confidence_score": 0.9, "source_file": "lib/chatbot_rs/screens/chat_screen.dart"},
+    {"source": "skills_md_prd", "target": "skills_md_architecture", "relation": "references", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "skills.md"},
+    {"source": "skills_md_architecture", "target": "skills_md_indobert", "relation": "references", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "skills.md"},
+    {"source": "skills_md_architecture", "target": "skills_md_openrouter", "relation": "references", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "skills.md"},
+    {"source": "skills_md_architecture", "target": "skills_md_sqlite", "relation": "references", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "skills.md"},
+    {"source": "main_myapp", "target": "skills_md_architecture", "relation": "implements", "confidence": "INFERRED", "confidence_score": 0.85, "source_file": "lib/main.dart"},
+    {"source": "pubspec_yaml_dependencies", "target": "skills_md_sqlite", "relation": "references", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "pubspec.yaml"}
+  ],
+  "hyperedges": [
+    {
+      "id": "chatbot_pipeline",
+      "label": "Chatbot AI Pipeline",
+      "nodes": ["skills_md_indobert", "skills_md_sqlite", "skills_md_openrouter"],
+      "relation": "participate_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "skills.md"
+    }
+  ],
+  "input_tokens": 0,
+  "output_tokens": 0
+}

@@ -1,0 +1,64 @@
+{
+  "layanan": [
+    {
+      "nama_layanan": "Poliklinik Anak",
+      "deskripsi": "Layanan Spesialis Anak",
+      "lokasi_gedung": "Gedung Utama"
+    },
+    {
+      "nama_layanan": "Poliklinik Bedah",
+      "deskripsi": "Layanan Spesialis Bedah",
+      "lokasi_gedung": "Gedung Utama"
+    },
+    {
+      "nama_layanan": "Poliklinik Kandungan",
+      "deskripsi": "Layanan Spesialis Kandungan (Obsgyn)",
+      "lokasi_gedung": "Gedung Utama"
+    },
+    {
+      "nama_layanan": "Poliklinik Penyakit Dalam",
+      "deskripsi": "Layanan Spesialis Penyakit Dalam",
+      "lokasi_gedung": "Gedung Utama"
+    },
+    {
+      "nama_layanan": "Poli Umum",
+      "deskripsi": "Layanan Dokter Umum",
+      "lokasi_gedung": "Gedung Utama"
+    },
+    {
+      "nama_layanan": "Poli VCT",
+      "deskripsi": "Voluntary Counseling and Testing",
+      "lokasi_gedung": "Gedung Utama"
+    }
+  ],
+  "jadwal_dokter": [
+    {"nama_dokter": "dr. Akil Baehaqi, Sp.A", "spesialisasi": "Anak", "hari": "Senin", "jam_mulai": "10:30", "jam_selesai": "12:30", "id_layanan": 1},
+    {"nama_dokter": "dr. Akil Baehaqi, Sp.A", "spesialisasi": "Anak", "hari": "Selasa", "jam_mulai": "10:30", "jam_selesai": "12:30", "id_layanan": 1},
+    {"nama_dokter": "dr. Akil Baehaqi, Sp.A", "spesialisasi": "Anak", "hari": "Rabu", "jam_mulai": "10:30", "jam_selesai": "12:30", "id_layanan": 1},
+    {"nama_dokter": "dr. Akil Baehaqi, Sp.A", "spesialisasi": "Anak", "hari": "Kamis", "jam_mulai": "10:30", "jam_selesai": "12:30", "id_layanan": 1},
+    {"nama_dokter": "dr. Akil Baehaqi, Sp.A", "spesialisasi": "Anak", "hari": "Jumat", "jam_mulai": "10:30", "jam_selesai": "12:30", "id_layanan": 1},
+
+    {"nama_dokter": "dr. Mintardi, Sp.B", "spesialisasi": "Bedah", "hari": "Senin", "jam_mulai": "07:00", "jam_selesai": "08:30", "id_layanan": 2},
+    {"nama_dokter": "dr. Mintardi, Sp.B", "spesialisasi": "Bedah", "hari": "Rabu", "jam_mulai": "07:00", "jam_selesai": "08:30", "id_layanan": 2},
+    {"nama_dokter": "dr. Mintardi, Sp.B", "spesialisasi": "Bedah", "hari": "Selasa", "jam_mulai": "14:00", "jam_selesai": "16:00", "id_layanan": 2},
+    {"nama_dokter": "dr. Mintardi, Sp.B", "spesialisasi": "Bedah", "hari": "Kamis", "jam_mulai": "14:00", "jam_selesai": "16:00", "id_layanan": 2},
+    {"nama_dokter": "dr. Mintardi, Sp.B", "spesialisasi": "Bedah", "hari": "Sabtu", "jam_mulai": "14:00", "jam_selesai": "16:00", "id_layanan": 2},
+
+    {"nama_dokter": "dr. Amy Cynthia De Meriyenes, Sp.OG", "spesialisasi": "Kandungan", "hari": "Kamis", "jam_mulai": "13:00", "jam_selesai": "15:00", "id_layanan": 3},
+    {"nama_dokter": "dr. Amy Cynthia De Meriyenes, Sp.OG", "spesialisasi": "Kandungan", "hari": "Sabtu", "jam_mulai": "13:00", "jam_selesai": "15:00", "id_layanan": 3},
+
+    {"nama_dokter": "dr. Idham Khalid, Sp.PD", "spesialisasi": "Penyakit Dalam", "hari": "Senin", "jam_mulai": "09:00", "jam_selesai": "12:00", "id_layanan": 4},
+    {"nama_dokter": "dr. Idham Khalid, Sp.PD", "spesialisasi": "Penyakit Dalam", "hari": "Rabu", "jam_mulai": "09:00", "jam_selesai": "12:00", "id_layanan": 4},
+    {"nama_dokter": "dr. Idham Khalid, Sp.PD", "spesialisasi": "Penyakit Dalam", "hari": "Jumat", "jam_mulai": "09:00", "jam_selesai": "11:30", "id_layanan": 4},
+
+    {"nama_dokter": "Dokter Umum", "spesialisasi": "Umum", "hari": "Senin", "jam_mulai": "09:00", "jam_selesai": "14:00", "id_layanan": 5},
+    {"nama_dokter": "Dokter Umum", "spesialisasi": "Umum", "hari": "Selasa", "jam_mulai": "09:00", "jam_selesai": "14:00", "id_layanan": 5},
+    {"nama_dokter": "Dokter Umum", "spesialisasi": "Umum", "hari": "Rabu", "jam_mulai": "09:00", "jam_selesai": "14:00", "id_layanan": 5},
+    {"nama_dokter": "Dokter Umum", "spesialisasi": "Umum", "hari": "Kamis", "jam_mulai": "09:00", "jam_selesai": "14:00", "id_layanan": 5},
+    {"nama_dokter": "Dokter Umum", "spesialisasi": "Umum", "hari": "Jumat", "jam_mulai": "09:00", "jam_selesai": "14:00", "id_layanan": 5},
+    {"nama_dokter": "Dokter Umum", "spesialisasi": "Umum", "hari": "Sabtu", "jam_mulai": "09:00", "jam_selesai": "14:00", "id_layanan": 5},
+
+    {"nama_dokter": "Klinik VCT", "spesialisasi": "VCT", "hari": "Selasa", "jam_mulai": "08:00", "jam_selesai": "15:00", "id_layanan": 6},
+    {"nama_dokter": "Klinik VCT", "spesialisasi": "VCT", "hari": "Kamis", "jam_mulai": "08:00", "jam_selesai": "15:00", "id_layanan": 6}
+  ]
+}

@@ -1,0 +1,330 @@
+{
+  "D:\\Project Google Play\\primabot\\android\\build.gradle.kts": {
+    "mtime": 1777775970.912164,
+    "hash": "803fe22651fbe96ed401eb0b66a492d1"
+  },
+  "D:\\Project Google Play\\primabot\\android\\gradlew": {
+    "mtime": 1777775971.6032915,
+    "hash": "7f1cd7eb3f75a1dc85cd37753972a6e2"
+  },
+  "D:\\Project Google Play\\primabot\\android\\settings.gradle.kts": {
+    "mtime": 1777775971.0664935,
+    "hash": "f276a44edd917afd836899357fdae60e"
+  },
+  "D:\\Project Google Play\\primabot\\android\\app\\build.gradle.kts": {
+    "mtime": 1777775970.8884733,
+    "hash": "a1766f693af1753e12758c14f3339cf1"
+  },
+  "D:\\Project Google Play\\primabot\\android\\app\\src\\main\\java\\io\\flutter\\plugins\\GeneratedPluginRegistrant.java": {
+    "mtime": 1777789969.9022727,
+    "hash": "8f5ee3c0faf1163a63f1e0b820a13ba5"
+  },
+  "D:\\Project Google Play\\primabot\\android\\app\\src\\main\\kotlin\\com\\example\\primabot\\MainActivity.kt": {
+    "mtime": 1777775970.9041085,
+    "hash": "a603a7c91a69341273c8b2409b816426"
+  },
+  "D:\\Project Google Play\\primabot\\ios\\Flutter\\ephemeral\\flutter_lldb_helper.py": {
+    "mtime": 1777776018.030563,
+    "hash": "98fc75412162af387e2e3461e4e58094"
+  },
+  "D:\\Project Google Play\\primabot\\ios\\Runner\\AppDelegate.swift": {
+    "mtime": 1773108652.641974,
+    "hash": "9e1de9c329a3fe4931876063de95132b"
+  },
+  "D:\\Project Google Play\\primabot\\ios\\Runner\\GeneratedPluginRegistrant.h": {
+    "mtime": 1777776018.1857066,
+    "hash": "decb9041b5e91a07e66f4664e5dac408"
+  },
+  "D:\\Project Google Play\\primabot\\ios\\Runner\\GeneratedPluginRegistrant.m": {
+    "mtime": 1777789969.9091182,
+    "hash": "b2b2c35a618ab4c813911d7e3a232e14"
+  },
+  "D:\\Project Google Play\\primabot\\ios\\Runner\\Runner-Bridging-Header.h": {
+    "mtime": 1757665952.8142376,
+    "hash": "7ad7b5cea096132de13ba526b2b9efbe"
+  },
+  "D:\\Project Google Play\\primabot\\ios\\Runner\\SceneDelegate.swift": {
+    "mtime": 1773108652.641974,
+    "hash": "0c3e86af131f6a9e547c80b5ed058914"
+  },
+  "D:\\Project Google Play\\primabot\\ios\\RunnerTests\\RunnerTests.swift": {
+    "mtime": 1777775971.5072658,
+    "hash": "24e5d095048eb86c30423f4e04b6e57b"
+  },
+  "D:\\Project Google Play\\primabot\\lib\\main.dart": {
+    "mtime": 1777787729.0365617,
+    "hash": "935af169d49b5506dfd93898b4513e86"
+  },
+  "D:\\Project Google Play\\primabot\\lib\\chatbot_rs\\theme.dart": {
+    "mtime": 1777794652.1660202,
+    "hash": "33d35d98b87a8abcf7f527290dcd1d4c"
+  },
+  "D:\\Project Google Play\\primabot\\lib\\chatbot_rs\\data\\datasources\\ai_datasource.dart": {
+    "mtime": 1777794300.0609393,
+    "hash": "d1432853e489640de72d2df925554289"
+  },
+  "D:\\Project Google Play\\primabot\\lib\\chatbot_rs\\data\\datasources\\local_datasource.dart": {
+    "mtime": 1777782232.8291445,
+    "hash": "6b1267edcbe73b7697848f8e6e08b710"
+  },
+  "D:\\Project Google Play\\primabot\\lib\\chatbot_rs\\data\\datasources\\seeder.dart": {
+    "mtime": 1777776892.499785,
+    "hash": "8155104227fc72e8f52b798d32ec0747"
+  },
+  "D:\\Project Google Play\\primabot\\lib\\chatbot_rs\\data\\models\\jadwal_model.dart": {
+    "mtime": 1777776866.1259112,
+    "hash": "0754a577bff9f43365571661745b53d9"
+  },
+  "D:\\Project Google Play\\primabot\\lib\\chatbot_rs\\data\\models\\layanan_model.dart": {
+    "mtime": 1777776860.1732514,
+    "hash": "afbbc7d9eedf4e3afdd3cb4a22ca204a"
+  },
+  "D:\\Project Google Play\\primabot\\lib\\chatbot_rs\\domain\\usecases\\get_bot_response.dart": {
+    "mtime": 1777781274.7441678,
+    "hash": "e149f4efa62d8d935009faab0cdfe9e5"
+  },
+  "D:\\Project Google Play\\primabot\\lib\\chatbot_rs\\presentation\\providers\\chat_provider.dart": {
+    "mtime": 1777795032.3492508,
+    "hash": "5901bdf2dff7508c9e17be6400de5856"
+  },
+  "D:\\Project Google Play\\primabot\\lib\\chatbot_rs\\presentation\\providers\\theme_provider.dart": {
+    "mtime": 1777787718.9956615,
+    "hash": "32af75cecd064c42d5e8e143b7060142"
+  },
+  "D:\\Project Google Play\\primabot\\lib\\chatbot_rs\\screens\\chat_screen.dart": {
+    "mtime": 1777795272.9801383,
+    "hash": "47a0c2ed520a692ae83c69b0c135006b"
+  },
+  "D:\\Project Google Play\\primabot\\lib\\chatbot_rs\\screens\\splash_screen.dart": {
+    "mtime": 1777785813.012745,
+    "hash": "b75cce65eadbe0ac6123efb8335f3bc7"
+  },
+  "D:\\Project Google Play\\primabot\\test\\chatbot_test.dart": {
+    "mtime": 1777780885.1104393,
+    "hash": "1175554fc3921047d196186e7bf94056"
+  },
+  "D:\\Project Google Play\\primabot\\test\\widget_test.dart": {
+    "mtime": 1777775971.5631945,
+    "hash": "e7da8012e6c23c83258e3348b64f134d"
+  },
+  "D:\\Project Google Play\\primabot\\analysis_options.yaml": {
+    "mtime": 1777775970.8716438,
+    "hash": "9e65f4b9beebb674c0dc252f70a5c177"
+  },
+  "D:\\Project Google Play\\primabot\\pubspec.yaml": {
+    "mtime": 1777789956.150271,
+    "hash": "64da374e0d4c28dee6adb464f7f04fea"
+  },
+  "D:\\Project Google Play\\primabot\\README.md": {
+    "mtime": 1777775971.5533814,
+    "hash": "23bf03ecafadf083e7af46493001da2a"
+  },
+  "D:\\Project Google Play\\primabot\\skills.md": {
+    "mtime": 1777776360.1802287,
+    "hash": "d0c640a2e28341344088b95049cb1a63"
+  },
+  "D:\\Project Google Play\\primabot\\ios\\Runner\\Assets.xcassets\\LaunchImage.imageset\\README.md": {
+    "mtime": 1757665952.9390135,
+    "hash": "f7ee1b402881509d197f34963e569927"
+  },
+  "D:\\Project Google Play\\primabot\\android\\app\\src\\main\\res\\drawable\\background.png": {
+    "mtime": 1777785471.7961268,
+    "hash": "ae647b2dc42f55ff6bde04b779b48897"
+  },
+  "D:\\Project Google Play\\primabot\\android\\app\\src\\main\\res\\drawable-hdpi\\android12splash.png": {
+    "mtime": 1777785471.744059,
+    "hash": "4c22f33ba9c9c08cd8a753b57b12b6da"
+  },
+  "D:\\Project Google Play\\primabot\\android\\app\\src\\main\\res\\drawable-hdpi\\splash.png": {
+    "mtime": 1777785471.5743616,
+    "hash": "4c22f33ba9c9c08cd8a753b57b12b6da"
+  },
+  "D:\\Project Google Play\\primabot\\android\\app\\src\\main\\res\\drawable-mdpi\\android12splash.png": {
+    "mtime": 1777785471.7450645,
+    "hash": "da74a90fb52ce41928bf2a7e24985f64"
+  },
+  "D:\\Project Google Play\\primabot\\android\\app\\src\\main\\res\\drawable-mdpi\\splash.png": {
+    "mtime": 1777785471.5577579,
+    "hash": "da74a90fb52ce41928bf2a7e24985f64"
+  },
+  "D:\\Project Google Play\\primabot\\android\\app\\src\\main\\res\\drawable-night-hdpi\\android12splash.png": {
+    "mtime": 1777785471.8729446,
+    "hash": "4c22f33ba9c9c08cd8a753b57b12b6da"
+  },
+  "D:\\Project Google Play\\primabot\\android\\app\\src\\main\\res\\drawable-night-mdpi\\android12splash.png": {
+    "mtime": 1777785471.8586197,
+    "hash": "da74a90fb52ce41928bf2a7e24985f64"
+  },
+  "D:\\Project Google Play\\primabot\\android\\app\\src\\main\\res\\drawable-night-xhdpi\\android12splash.png": {
+    "mtime": 1777785471.893084,
+    "hash": "1dda4ec555ccd7f64b17491d69081e96"
+  },
+  "D:\\Project Google Play\\primabot\\android\\app\\src\\main\\res\\drawable-night-xxhdpi\\android12splash.png": {
+    "mtime": 1777785471.9465525,
+    "hash": "08533084b0ce67b2f29edc449bca3feb"
+  },
+  "D:\\Project Google Play\\primabot\\android\\app\\src\\main\\res\\drawable-night-xxxhdpi\\android12splash.png": {
+    "mtime": 1777785471.9512522,
+    "hash": "178318d6cbc16ce7c18ffdc75a0b2bac"
+  },
+  "D:\\Project Google Play\\primabot\\android\\app\\src\\main\\res\\drawable-v21\\background.png": {
+    "mtime": 1777785471.7981522,
+    "hash": "ae647b2dc42f55ff6bde04b779b48897"
+  },
+  "D:\\Project Google Play\\primabot\\android\\app\\src\\main\\res\\drawable-xhdpi\\android12splash.png": {
+    "mtime": 1777785471.7644038,
+    "hash": "1dda4ec555ccd7f64b17491d69081e96"
+  },
+  "D:\\Project Google Play\\primabot\\android\\app\\src\\main\\res\\drawable-xhdpi\\splash.png": {
+    "mtime": 1777785471.5819888,
+    "hash": "1dda4ec555ccd7f64b17491d69081e96"
+  },
+  "D:\\Project Google Play\\primabot\\android\\app\\src\\main\\res\\drawable-xxhdpi\\android12splash.png": {
+    "mtime": 1777785471.8426843,
+    "hash": "08533084b0ce67b2f29edc449bca3feb"
+  },
+  "D:\\Project Google Play\\primabot\\android\\app\\src\\main\\res\\drawable-xxhdpi\\splash.png": {
+    "mtime": 1777785471.6408672,
+    "hash": "08533084b0ce67b2f29edc449bca3feb"
+  },
+  "D:\\Project Google Play\\primabot\\android\\app\\src\\main\\res\\drawable-xxxhdpi\\android12splash.png": {
+    "mtime": 1777785471.7946165,
+    "hash": "178318d6cbc16ce7c18ffdc75a0b2bac"
+  },
+  "D:\\Project Google Play\\primabot\\android\\app\\src\\main\\res\\drawable-xxxhdpi\\splash.png": {
+    "mtime": 1777785471.6545284,
+    "hash": "178318d6cbc16ce7c18ffdc75a0b2bac"
+  },
+  "D:\\Project Google Play\\primabot\\android\\app\\src\\main\\res\\mipmap-hdpi\\ic_launcher.png": {
+    "mtime": 1777785682.3647316,
+    "hash": "12090f1c7425f9d6e968fdb8aedbdc08"
+  },
+  "D:\\Project Google Play\\primabot\\android\\app\\src\\main\\res\\mipmap-mdpi\\ic_launcher.png": {
+    "mtime": 1777785682.362559,
+    "hash": "184ebbc247c3ee8b081fc430cf76fc85"
+  },
+  "D:\\Project Google Play\\primabot\\android\\app\\src\\main\\res\\mipmap-xhdpi\\ic_launcher.png": {
+    "mtime": 1777785682.367813,
+    "hash": "0cd6f28b2be6ed5d6a36e25040ff04a8"
+  },
+  "D:\\Project Google Play\\primabot\\android\\app\\src\\main\\res\\mipmap-xxhdpi\\ic_launcher.png": {
+    "mtime": 1777785682.3844657,
+    "hash": "df0aae6f42dbb141e446fbe1e46f24ab"
+  },
+  "D:\\Project Google Play\\primabot\\android\\app\\src\\main\\res\\mipmap-xxxhdpi\\ic_launcher.png": {
+    "mtime": 1777785682.3772638,
+    "hash": "05a52f7a22601721b05fbae397aa6ea6"
+  },
+  "D:\\Project Google Play\\primabot\\assets\\images\\logo.png": {
+    "mtime": 1777785458.2903922,
+    "hash": "38500e06999bbbe59a9e3ca1922c5217"
+  },
+  "D:\\Project Google Play\\primabot\\assets\\images\\logo_launcher.png": {
+    "mtime": 1777785659.6918066,
+    "hash": "411703911112bfb328a0fe7b6ea51d30"
+  },
+  "D:\\Project Google Play\\primabot\\assets\\images\\logo_splash.png": {
+    "mtime": 1777785458.6804068,
+    "hash": "b242b9e8c4912b12ef9718a6c7b7acd3"
+  },
+  "D:\\Project Google Play\\primabot\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-1024x1024@1x.png": {
+    "mtime": 1777785682.3531594,
+    "hash": "14ab46a3649869ba4ba01f6d15e097e8"
+  },
+  "D:\\Project Google Play\\primabot\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-20x20@1x.png": {
+    "mtime": 1777785681.6783454,
+    "hash": "77a08e2c19364e625fdbcfe26c67b6f3"
+  },
+  "D:\\Project Google Play\\primabot\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-20x20@2x.png": {
+    "mtime": 1777785681.6885834,
+    "hash": "8158192ba5a5316812120a6d717bd339"
+  },
+  "D:\\Project Google Play\\primabot\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-20x20@3x.png": {
+    "mtime": 1777785681.6978517,
+    "hash": "6bc1af17954501c3a578ae010f148a87"
+  },
+  "D:\\Project Google Play\\primabot\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-29x29@1x.png": {
+    "mtime": 1777785681.7078042,
+    "hash": "f4c89e2c2aa84c638e5870fbe9209a20"
+  },
+  "D:\\Project Google Play\\primabot\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-29x29@2x.png": {
+    "mtime": 1777785681.7187521,
+    "hash": "ff5485f0eb9f110b5cce490f2b1286da"
+  },
+  "D:\\Project Google Play\\primabot\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-29x29@3x.png": {
+    "mtime": 1777785681.7303023,
+    "hash": "81023b889260c97b8a5a151d017522f3"
+  },
+  "D:\\Project Google Play\\primabot\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-40x40@1x.png": {
+    "mtime": 1777785681.7394352,
+    "hash": "8158192ba5a5316812120a6d717bd339"
+  },
+  "D:\\Project Google Play\\primabot\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-40x40@2x.png": {
+    "mtime": 1777785681.747778,
+    "hash": "9fc33c8879e0050430a21990813f6c06"
+  },
+  "D:\\Project Google Play\\primabot\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-40x40@3x.png": {
+    "mtime": 1777785681.7606146,
+    "hash": "23711a5df96280511bca0fc39a621d9d"
+  },
+  "D:\\Project Google Play\\primabot\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-50x50@1x.png": {
+    "mtime": 1777785681.7696743,
+    "hash": "616131bca3e2cc0e33579898f750e1ee"
+  },
+  "D:\\Project Google Play\\primabot\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-50x50@2x.png": {
+    "mtime": 1777785681.7798367,
+    "hash": "620f01ffb7ca7983b04c6a308608f104"
+  },
+  "D:\\Project Google Play\\primabot\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-57x57@1x.png": {
+    "mtime": 1777785681.7884965,
+    "hash": "1367f77a5c88820b204c97aa4e74c1dc"
+  },
+  "D:\\Project Google Play\\primabot\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-57x57@2x.png": {
+    "mtime": 1777785681.7993762,
+    "hash": "573820cddd7b93bfe89ff20d3f670a5b"
+  },
+  "D:\\Project Google Play\\primabot\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-60x60@2x.png": {
+    "mtime": 1777785681.8102725,
+    "hash": "23711a5df96280511bca0fc39a621d9d"
+  },
+  "D:\\Project Google Play\\primabot\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-60x60@3x.png": {
+    "mtime": 1777785681.8272822,
+    "hash": "aacd558b55b2f365f593fab0f33a5a3b"
+  },
+  "D:\\Project Google Play\\primabot\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-72x72@1x.png": {
+    "mtime": 1777785681.8354516,
+    "hash": "12090f1c7425f9d6e968fdb8aedbdc08"
+  },
+  "D:\\Project Google Play\\primabot\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-72x72@2x.png": {
+    "mtime": 1777785681.848147,
+    "hash": "df0aae6f42dbb141e446fbe1e46f24ab"
+  },
+  "D:\\Project Google Play\\primabot\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-76x76@1x.png": {
+    "mtime": 1777785681.8570302,
+    "hash": "16f1566b07dac4e372a7a9f316bb79be"
+  },
+  "D:\\Project Google Play\\primabot\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-76x76@2x.png": {
+    "mtime": 1777785681.8700223,
+    "hash": "1ab7fd0be44f10ba9837c837c75b96d7"
+  },
+  "D:\\Project Google Play\\primabot\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-83.5x83.5@2x.png": {
+    "mtime": 1777785681.886278,
+    "hash": "602153f4ceafdfa4d02644cadca306b8"
+  },
+  "D:\\Project Google Play\\primabot\\ios\\Runner\\Assets.xcassets\\LaunchBackground.imageset\\background.png": {
+    "mtime": 1777785472.153174,
+    "hash": "ae647b2dc42f55ff6bde04b779b48897"
+  },
+  "D:\\Project Google Play\\primabot\\ios\\Runner\\Assets.xcassets\\LaunchImage.imageset\\LaunchImage.png": {
+    "mtime": 1777785472.0889947,
+    "hash": "da74a90fb52ce41928bf2a7e24985f64"
+  },
+  "D:\\Project Google Play\\primabot\\ios\\Runner\\Assets.xcassets\\LaunchImage.imageset\\LaunchImage@2x.png": {
+    "mtime": 1777785472.1103058,
+    "hash": "1dda4ec555ccd7f64b17491d69081e96"
+  },
+  "D:\\Project Google Play\\primabot\\ios\\Runner\\Assets.xcassets\\LaunchImage.imageset\\LaunchImage@3x.png": {
+    "mtime": 1777785472.1443458,
+    "hash": "08533084b0ce67b2f29edc449bca3feb"
+  }
+}

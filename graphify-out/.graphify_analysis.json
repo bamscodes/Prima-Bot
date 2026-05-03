@@ -1,0 +1,259 @@
+{
+  "communities": {
+    "0": [
+      "d_project_google_play_primabot_lib_chatbot_rs_screens_chat_screen_dart_align",
+      "d_project_google_play_primabot_lib_chatbot_rs_screens_chat_screen_dart_build",
+      "d_project_google_play_primabot_lib_chatbot_rs_screens_chat_screen_dart_buildinputarea",
+      "d_project_google_play_primabot_lib_chatbot_rs_screens_chat_screen_dart_chatscreen",
+      "d_project_google_play_primabot_lib_chatbot_rs_screens_chat_screen_dart_chatscreenstate",
+      "d_project_google_play_primabot_lib_chatbot_rs_screens_chat_screen_dart_container",
+      "d_project_google_play_primabot_lib_chatbot_rs_screens_chat_screen_dart_scaffold",
+      "d_project_google_play_primabot_lib_chatbot_rs_screens_chat_screen_dart_sendmessage",
+      "d_project_google_play_primabot_lib_chatbot_rs_screens_chat_screen_dart_sizedbox",
+      "lib_chatbot_rs_screens_chat_screen_dart"
+    ],
+    "1": [
+      "chat_screen_chatscreen",
+      "main_myapp",
+      "pubspec_yaml_dependencies",
+      "skills_md_architecture",
+      "skills_md_indobert",
+      "skills_md_openrouter",
+      "skills_md_prd",
+      "skills_md_sqlite",
+      "splash_screen_splashscreen",
+      "theme_apptheme"
+    ],
+    "2": [
+      "d_project_google_play_primabot_lib_chatbot_rs_theme_dart_chatbottheme",
+      "d_project_google_play_primabot_lib_chatbot_rs_theme_dart_themedata",
+      "d_project_google_play_primabot_test_widget_test_dart_main",
+      "lib_chatbot_rs_theme_dart",
+      "package_flutter_material_dart",
+      "package_flutter_test_flutter_test_dart",
+      "package_google_fonts_google_fonts_dart",
+      "package_primabot_main_dart",
+      "test_widget_test_dart"
+    ],
+    "3": [
+      "chatbot_rs_screens_splash_screen_dart",
+      "chatbot_rs_theme_dart",
+      "d_project_google_play_primabot_lib_main_dart_build",
+      "d_project_google_play_primabot_lib_main_dart_main",
+      "d_project_google_play_primabot_lib_main_dart_materialapp",
+      "d_project_google_play_primabot_lib_main_dart_primabotapp",
+      "lib_main_dart"
+    ],
+    "4": [
+      "chat_screen_dart",
+      "d_project_google_play_primabot_lib_chatbot_rs_screens_splash_screen_dart_build",
+      "d_project_google_play_primabot_lib_chatbot_rs_screens_splash_screen_dart_chatbotsplashscreen",
+      "d_project_google_play_primabot_lib_chatbot_rs_screens_splash_screen_dart_scaffold",
+      "d_project_google_play_primabot_lib_chatbot_rs_screens_splash_screen_dart_sizedbox",
+      "d_project_google_play_primabot_lib_chatbot_rs_screens_splash_screen_dart_spacer",
+      "lib_chatbot_rs_screens_splash_screen_dart"
+    ],
+    "5": [
+      "flutterappdelegate",
+      "flutterimplicitenginedelegate",
+      "ios_runner_appdelegate_swift",
+      "runner_appdelegate_appdelegate",
+      "runner_appdelegate_appdelegate_application",
+      "runner_appdelegate_appdelegate_didinitializeimplicitflutterengine"
+    ],
+    "6": [
+      "ephemeral_flutter_lldb_helper_handle_new_rx_page",
+      "ephemeral_flutter_lldb_helper_lldb_init_module",
+      "ephemeral_flutter_lldb_helper_rationale_8",
+      "ios_flutter_ephemeral_flutter_lldb_helper_py"
+    ],
+    "7": [
+      "ios_runnertests_runnertests_swift",
+      "runnertests_runnertests_runnertests",
+      "runnertests_runnertests_runnertests_testexample",
+      "xctestcase"
+    ],
+    "8": [
+      "android_app_src_main_java_io_flutter_plugins_generatedpluginregistrant_java",
+      "plugins_generatedpluginregistrant_generatedpluginregistrant",
+      "plugins_generatedpluginregistrant_generatedpluginregistrant_registerwith"
+    ],
+    "9": [
+      "ios_runner_generatedpluginregistrant_m",
+      "runner_generatedpluginregistrant_generatedpluginregistrant",
+      "runner_generatedpluginregistrant_generatedpluginregistrant_registerwithregistry"
+    ],
+    "10": [
+      "flutterscenedelegate",
+      "ios_runner_scenedelegate_swift",
+      "runner_scenedelegate_scenedelegate"
+    ],
+    "11": [
+      "android_app_src_main_kotlin_com_example_primabot_mainactivity_kt",
+      "primabot_mainactivity_mainactivity"
+    ],
+    "12": [
+      "android_build_gradle_kts"
+    ],
+    "13": [
+      "android_settings_gradle_kts"
+    ],
+    "14": [
+      "android_app_build_gradle_kts"
+    ],
+    "15": [
+      "ios_runner_generatedpluginregistrant_h"
+    ],
+    "16": [
+      "ios_runner_runner_bridging_header_h"
+    ],
+    "17": [
+      "mainactivity_kt_mainactivity"
+    ],
+    "18": [
+      "appdelegate_swift_appdelegate"
+    ]
+  },
+  "cohesion": {
+    "0": 0.2,
+    "1": 0.22,
+    "2": 0.22,
+    "3": 0.29,
+    "4": 0.29,
+    "5": 0.33,
+    "6": 0.5,
+    "7": 0.5,
+    "8": 0.67,
+    "9": 0.67,
+    "10": 0.67,
+    "11": 1.0,
+    "12": 1.0,
+    "13": 1.0,
+    "14": 1.0,
+    "15": 1.0,
+    "16": 1.0,
+    "17": 1.0,
+    "18": 1.0
+  },
+  "gods": [
+    {
+      "id": "runner_appdelegate_appdelegate",
+      "label": "AppDelegate",
+      "degree": 5
+    },
+    {
+      "id": "package_flutter_material_dart",
+      "label": "package:flutter/material.dart",
+      "degree": 5
+    },
+    {
+      "id": "skills_md_architecture",
+      "label": "Zero-Cost Architecture",
+      "degree": 5
+    },
+    {
+      "id": "runnertests_runnertests_runnertests",
+      "label": "RunnerTests",
+      "degree": 3
+    },
+    {
+      "id": "main_myapp",
+      "label": "MyApp",
+      "degree": 3
+    },
+    {
+      "id": "chat_screen_chatscreen",
+      "label": "ChatScreen",
+      "degree": 3
+    },
+    {
+      "id": "skills_md_sqlite",
+      "label": "SQLite Database",
+      "degree": 3
+    },
+    {
+      "id": "plugins_generatedpluginregistrant_generatedpluginregistrant",
+      "label": "GeneratedPluginRegistrant",
+      "degree": 2
+    },
+    {
+      "id": "ephemeral_flutter_lldb_helper_handle_new_rx_page",
+      "label": "handle_new_rx_page()",
+      "degree": 2
+    },
+    {
+      "id": "runner_generatedpluginregistrant_generatedpluginregistrant",
+      "label": "GeneratedPluginRegistrant",
+      "degree": 2
+    }
+  ],
+  "surprises": [
+    {
+      "source": "MyApp",
+      "target": "Zero-Cost Architecture",
+      "source_files": [
+        "lib/main.dart",
+        "skills.md"
+      ],
+      "confidence": "INFERRED",
+      "relation": "implements",
+      "why": "inferred connection - not explicitly stated in source; crosses file types (code \u2194 doc); connects across different repos/directories"
+    },
+    {
+      "source": "ChatScreen",
+      "target": "SQLite Database",
+      "source_files": [
+        "lib/chatbot_rs/screens/chat_screen.dart",
+        "skills.md"
+      ],
+      "confidence": "INFERRED",
+      "relation": "implements",
+      "why": "inferred connection - not explicitly stated in source; crosses file types (code \u2194 doc); connects across different repos/directories"
+    },
+    {
+      "source": "Project Dependencies",
+      "target": "SQLite Database",
+      "source_files": [
+        "pubspec.yaml",
+        "skills.md"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "connects across different repos/directories"
+    },
+    {
+      "source": "MyApp",
+      "target": "ChatScreen",
+      "source_files": [
+        "lib/main.dart",
+        "lib/chatbot_rs/screens/chat_screen.dart"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "cross-file semantic connection"
+    },
+    {
+      "source": "MyApp",
+      "target": "SplashScreen",
+      "source_files": [
+        "lib/main.dart",
+        "lib/chatbot_rs/screens/splash_screen.dart"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "cross-file semantic connection"
+    }
+  ],
+  "questions": [
+    {
+      "type": "bridge_node",
+      "question": "Why does `package:flutter/material.dart` connect `Community 2` to `Community 0`, `Community 3`, `Community 4`?",
+      "why": "High betweenness centrality (0.147) - this node is a cross-community bridge."
+    },
+    {
+      "type": "isolated_nodes",
+      "question": "What connects `MainActivity`, `Intercept NOTIFY_DEBUGGER_ABOUT_RX_PAGES and touch the pages.`, `-registerWithRegistry` to the rest of the system?",
+      "why": "38 weakly-connected nodes found - possible documentation gaps or missing edges."
+    }
+  ]
+}

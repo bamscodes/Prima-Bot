@@ -1,0 +1,1076 @@
+{
+  "nodes": [
+    {
+      "id": "android_build_gradle_kts",
+      "label": "build.gradle.kts",
+      "file_type": "code",
+      "source_file": "android\\build.gradle.kts",
+      "source_location": "L1"
+    },
+    {
+      "id": "android_settings_gradle_kts",
+      "label": "settings.gradle.kts",
+      "file_type": "code",
+      "source_file": "android\\settings.gradle.kts",
+      "source_location": "L1"
+    },
+    {
+      "id": "android_app_build_gradle_kts",
+      "label": "build.gradle.kts",
+      "file_type": "code",
+      "source_file": "android\\app\\build.gradle.kts",
+      "source_location": "L1"
+    },
+    {
+      "id": "android_app_src_main_java_io_flutter_plugins_generatedpluginregistrant_java",
+      "label": "GeneratedPluginRegistrant.java",
+      "file_type": "code",
+      "source_file": "android\\app\\src\\main\\java\\io\\flutter\\plugins\\GeneratedPluginRegistrant.java",
+      "source_location": "L1"
+    },
+    {
+      "id": "plugins_generatedpluginregistrant_generatedpluginregistrant",
+      "label": "GeneratedPluginRegistrant",
+      "file_type": "code",
+      "source_file": "android\\app\\src\\main\\java\\io\\flutter\\plugins\\GeneratedPluginRegistrant.java",
+      "source_location": "L14"
+    },
+    {
+      "id": "plugins_generatedpluginregistrant_generatedpluginregistrant_registerwith",
+      "label": ".registerWith()",
+      "file_type": "code",
+      "source_file": "android\\app\\src\\main\\java\\io\\flutter\\plugins\\GeneratedPluginRegistrant.java",
+      "source_location": "L17"
+    },
+    {
+      "id": "android_app_src_main_kotlin_com_example_primabot_mainactivity_kt",
+      "label": "MainActivity.kt",
+      "file_type": "code",
+      "source_file": "android\\app\\src\\main\\kotlin\\com\\example\\primabot\\MainActivity.kt",
+      "source_location": "L1"
+    },
+    {
+      "id": "primabot_mainactivity_mainactivity",
+      "label": "MainActivity",
+      "file_type": "code",
+      "source_file": "android\\app\\src\\main\\kotlin\\com\\example\\primabot\\MainActivity.kt",
+      "source_location": "L5"
+    },
+    {
+      "id": "ios_flutter_ephemeral_flutter_lldb_helper_py",
+      "label": "flutter_lldb_helper.py",
+      "file_type": "code",
+      "source_file": "ios\\Flutter\\ephemeral\\flutter_lldb_helper.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "ephemeral_flutter_lldb_helper_handle_new_rx_page",
+      "label": "handle_new_rx_page()",
+      "file_type": "code",
+      "source_file": "ios\\Flutter\\ephemeral\\flutter_lldb_helper.py",
+      "source_location": "L7"
+    },
+    {
+      "id": "ephemeral_flutter_lldb_helper_lldb_init_module",
+      "label": "__lldb_init_module()",
+      "file_type": "code",
+      "source_file": "ios\\Flutter\\ephemeral\\flutter_lldb_helper.py",
+      "source_location": "L24"
+    },
+    {
+      "id": "ephemeral_flutter_lldb_helper_rationale_8",
+      "label": "Intercept NOTIFY_DEBUGGER_ABOUT_RX_PAGES and touch the pages.",
+      "file_type": "rationale",
+      "source_file": "ios\\Flutter\\ephemeral\\flutter_lldb_helper.py",
+      "source_location": "L8"
+    },
+    {
+      "id": "ios_runner_appdelegate_swift",
+      "label": "AppDelegate.swift",
+      "file_type": "code",
+      "source_file": "ios\\Runner\\AppDelegate.swift",
+      "source_location": "L1"
+    },
+    {
+      "id": "runner_appdelegate_appdelegate",
+      "label": "AppDelegate",
+      "file_type": "code",
+      "source_file": "ios\\Runner\\AppDelegate.swift",
+      "source_location": "L4"
+    },
+    {
+      "id": "flutterappdelegate",
+      "label": "FlutterAppDelegate",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "flutterimplicitenginedelegate",
+      "label": "FlutterImplicitEngineDelegate",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "runner_appdelegate_appdelegate_application",
+      "label": ".application()",
+      "file_type": "code",
+      "source_file": "ios\\Runner\\AppDelegate.swift",
+      "source_location": "L6"
+    },
+    {
+      "id": "runner_appdelegate_appdelegate_didinitializeimplicitflutterengine",
+      "label": ".didInitializeImplicitFlutterEngine()",
+      "file_type": "code",
+      "source_file": "ios\\Runner\\AppDelegate.swift",
+      "source_location": "L13"
+    },
+    {
+      "id": "ios_runner_generatedpluginregistrant_h",
+      "label": "GeneratedPluginRegistrant.h",
+      "file_type": "code",
+      "source_file": "ios\\Runner\\GeneratedPluginRegistrant.h",
+      "source_location": "L1"
+    },
+    {
+      "id": "ios_runner_generatedpluginregistrant_m",
+      "label": "GeneratedPluginRegistrant.m",
+      "file_type": "code",
+      "source_file": "ios\\Runner\\GeneratedPluginRegistrant.m",
+      "source_location": "L1"
+    },
+    {
+      "id": "runner_generatedpluginregistrant_generatedpluginregistrant",
+      "label": "GeneratedPluginRegistrant",
+      "file_type": "code",
+      "source_file": "ios\\Runner\\GeneratedPluginRegistrant.m",
+      "source_location": "L9"
+    },
+    {
+      "id": "runner_generatedpluginregistrant_generatedpluginregistrant_registerwithregistry",
+      "label": "-registerWithRegistry",
+      "file_type": "code",
+      "source_file": "ios\\Runner\\GeneratedPluginRegistrant.m",
+      "source_location": "L11"
+    },
+    {
+      "id": "ios_runner_runner_bridging_header_h",
+      "label": "Runner-Bridging-Header.h",
+      "file_type": "code",
+      "source_file": "ios\\Runner\\Runner-Bridging-Header.h",
+      "source_location": "L1"
+    },
+    {
+      "id": "ios_runner_scenedelegate_swift",
+      "label": "SceneDelegate.swift",
+      "file_type": "code",
+      "source_file": "ios\\Runner\\SceneDelegate.swift",
+      "source_location": "L1"
+    },
+    {
+      "id": "runner_scenedelegate_scenedelegate",
+      "label": "SceneDelegate",
+      "file_type": "code",
+      "source_file": "ios\\Runner\\SceneDelegate.swift",
+      "source_location": "L4"
+    },
+    {
+      "id": "flutterscenedelegate",
+      "label": "FlutterSceneDelegate",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "ios_runnertests_runnertests_swift",
+      "label": "RunnerTests.swift",
+      "file_type": "code",
+      "source_file": "ios\\RunnerTests\\RunnerTests.swift",
+      "source_location": "L1"
+    },
+    {
+      "id": "runnertests_runnertests_runnertests",
+      "label": "RunnerTests",
+      "file_type": "code",
+      "source_file": "ios\\RunnerTests\\RunnerTests.swift",
+      "source_location": "L5"
+    },
+    {
+      "id": "xctestcase",
+      "label": "XCTestCase",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "runnertests_runnertests_runnertests_testexample",
+      "label": ".testExample()",
+      "file_type": "code",
+      "source_file": "ios\\RunnerTests\\RunnerTests.swift",
+      "source_location": "L7"
+    },
+    {
+      "id": "lib_main_dart",
+      "label": "main.dart",
+      "file_type": "code",
+      "source_file": "lib\\main.dart",
+      "source_location": null
+    },
+    {
+      "id": "d_project_google_play_primabot_lib_main_dart_primabotapp",
+      "label": "PrimabotApp",
+      "file_type": "code",
+      "source_file": "lib\\main.dart",
+      "source_location": null
+    },
+    {
+      "id": "d_project_google_play_primabot_lib_main_dart_main",
+      "label": "main",
+      "file_type": "code",
+      "source_file": "lib\\main.dart",
+      "source_location": null
+    },
+    {
+      "id": "d_project_google_play_primabot_lib_main_dart_build",
+      "label": "build",
+      "file_type": "code",
+      "source_file": "lib\\main.dart",
+      "source_location": null
+    },
+    {
+      "id": "d_project_google_play_primabot_lib_main_dart_materialapp",
+      "label": "MaterialApp",
+      "file_type": "code",
+      "source_file": "lib\\main.dart",
+      "source_location": null
+    },
+    {
+      "id": "package_flutter_material_dart",
+      "label": "package:flutter/material.dart",
+      "file_type": "code",
+      "source_file": "lib\\main.dart",
+      "source_location": null
+    },
+    {
+      "id": "chatbot_rs_theme_dart",
+      "label": "chatbot_rs/theme.dart",
+      "file_type": "code",
+      "source_file": "lib\\main.dart",
+      "source_location": null
+    },
+    {
+      "id": "chatbot_rs_screens_splash_screen_dart",
+      "label": "chatbot_rs/screens/splash_screen.dart",
+      "file_type": "code",
+      "source_file": "lib\\main.dart",
+      "source_location": null
+    },
+    {
+      "id": "lib_chatbot_rs_theme_dart",
+      "label": "theme.dart",
+      "file_type": "code",
+      "source_file": "lib\\chatbot_rs\\theme.dart",
+      "source_location": null
+    },
+    {
+      "id": "d_project_google_play_primabot_lib_chatbot_rs_theme_dart_chatbottheme",
+      "label": "ChatbotTheme",
+      "file_type": "code",
+      "source_file": "lib\\chatbot_rs\\theme.dart",
+      "source_location": null
+    },
+    {
+      "id": "d_project_google_play_primabot_lib_chatbot_rs_theme_dart_themedata",
+      "label": "ThemeData",
+      "file_type": "code",
+      "source_file": "lib\\chatbot_rs\\theme.dart",
+      "source_location": null
+    },
+    {
+      "id": "package_flutter_material_dart",
+      "label": "package:flutter/material.dart",
+      "file_type": "code",
+      "source_file": "lib\\chatbot_rs\\theme.dart",
+      "source_location": null
+    },
+    {
+      "id": "package_google_fonts_google_fonts_dart",
+      "label": "package:google_fonts/google_fonts.dart",
+      "file_type": "code",
+      "source_file": "lib\\chatbot_rs\\theme.dart",
+      "source_location": null
+    },
+    {
+      "id": "lib_chatbot_rs_screens_chat_screen_dart",
+      "label": "chat_screen.dart",
+      "file_type": "code",
+      "source_file": "lib\\chatbot_rs\\screens\\chat_screen.dart",
+      "source_location": null
+    },
+    {
+      "id": "d_project_google_play_primabot_lib_chatbot_rs_screens_chat_screen_dart_chatscreen",
+      "label": "ChatScreen",
+      "file_type": "code",
+      "source_file": "lib\\chatbot_rs\\screens\\chat_screen.dart",
+      "source_location": null
+    },
+    {
+      "id": "d_project_google_play_primabot_lib_chatbot_rs_screens_chat_screen_dart_chatscreenstate",
+      "label": "_ChatScreenState",
+      "file_type": "code",
+      "source_file": "lib\\chatbot_rs\\screens\\chat_screen.dart",
+      "source_location": null
+    },
+    {
+      "id": "d_project_google_play_primabot_lib_chatbot_rs_screens_chat_screen_dart_sendmessage",
+      "label": "_sendMessage",
+      "file_type": "code",
+      "source_file": "lib\\chatbot_rs\\screens\\chat_screen.dart",
+      "source_location": null
+    },
+    {
+      "id": "d_project_google_play_primabot_lib_chatbot_rs_screens_chat_screen_dart_build",
+      "label": "build",
+      "file_type": "code",
+      "source_file": "lib\\chatbot_rs\\screens\\chat_screen.dart",
+      "source_location": null
+    },
+    {
+      "id": "d_project_google_play_primabot_lib_chatbot_rs_screens_chat_screen_dart_scaffold",
+      "label": "Scaffold",
+      "file_type": "code",
+      "source_file": "lib\\chatbot_rs\\screens\\chat_screen.dart",
+      "source_location": null
+    },
+    {
+      "id": "d_project_google_play_primabot_lib_chatbot_rs_screens_chat_screen_dart_align",
+      "label": "Align",
+      "file_type": "code",
+      "source_file": "lib\\chatbot_rs\\screens\\chat_screen.dart",
+      "source_location": null
+    },
+    {
+      "id": "d_project_google_play_primabot_lib_chatbot_rs_screens_chat_screen_dart_sizedbox",
+      "label": "SizedBox",
+      "file_type": "code",
+      "source_file": "lib\\chatbot_rs\\screens\\chat_screen.dart",
+      "source_location": null
+    },
+    {
+      "id": "d_project_google_play_primabot_lib_chatbot_rs_screens_chat_screen_dart_buildinputarea",
+      "label": "_buildInputArea",
+      "file_type": "code",
+      "source_file": "lib\\chatbot_rs\\screens\\chat_screen.dart",
+      "source_location": null
+    },
+    {
+      "id": "d_project_google_play_primabot_lib_chatbot_rs_screens_chat_screen_dart_container",
+      "label": "Container",
+      "file_type": "code",
+      "source_file": "lib\\chatbot_rs\\screens\\chat_screen.dart",
+      "source_location": null
+    },
+    {
+      "id": "package_flutter_material_dart",
+      "label": "package:flutter/material.dart",
+      "file_type": "code",
+      "source_file": "lib\\chatbot_rs\\screens\\chat_screen.dart",
+      "source_location": null
+    },
+    {
+      "id": "lib_chatbot_rs_screens_splash_screen_dart",
+      "label": "splash_screen.dart",
+      "file_type": "code",
+      "source_file": "lib\\chatbot_rs\\screens\\splash_screen.dart",
+      "source_location": null
+    },
+    {
+      "id": "d_project_google_play_primabot_lib_chatbot_rs_screens_splash_screen_dart_chatbotsplashscreen",
+      "label": "ChatbotSplashScreen",
+      "file_type": "code",
+      "source_file": "lib\\chatbot_rs\\screens\\splash_screen.dart",
+      "source_location": null
+    },
+    {
+      "id": "d_project_google_play_primabot_lib_chatbot_rs_screens_splash_screen_dart_build",
+      "label": "build",
+      "file_type": "code",
+      "source_file": "lib\\chatbot_rs\\screens\\splash_screen.dart",
+      "source_location": null
+    },
+    {
+      "id": "d_project_google_play_primabot_lib_chatbot_rs_screens_splash_screen_dart_scaffold",
+      "label": "Scaffold",
+      "file_type": "code",
+      "source_file": "lib\\chatbot_rs\\screens\\splash_screen.dart",
+      "source_location": null
+    },
+    {
+      "id": "d_project_google_play_primabot_lib_chatbot_rs_screens_splash_screen_dart_spacer",
+      "label": "Spacer",
+      "file_type": "code",
+      "source_file": "lib\\chatbot_rs\\screens\\splash_screen.dart",
+      "source_location": null
+    },
+    {
+      "id": "d_project_google_play_primabot_lib_chatbot_rs_screens_splash_screen_dart_sizedbox",
+      "label": "SizedBox",
+      "file_type": "code",
+      "source_file": "lib\\chatbot_rs\\screens\\splash_screen.dart",
+      "source_location": null
+    },
+    {
+      "id": "package_flutter_material_dart",
+      "label": "package:flutter/material.dart",
+      "file_type": "code",
+      "source_file": "lib\\chatbot_rs\\screens\\splash_screen.dart",
+      "source_location": null
+    },
+    {
+      "id": "chat_screen_dart",
+      "label": "chat_screen.dart",
+      "file_type": "code",
+      "source_file": "lib\\chatbot_rs\\screens\\splash_screen.dart",
+      "source_location": null
+    },
+    {
+      "id": "test_widget_test_dart",
+      "label": "widget_test.dart",
+      "file_type": "code",
+      "source_file": "test\\widget_test.dart",
+      "source_location": null
+    },
+    {
+      "id": "d_project_google_play_primabot_test_widget_test_dart_main",
+      "label": "main",
+      "file_type": "code",
+      "source_file": "test\\widget_test.dart",
+      "source_location": null
+    },
+    {
+      "id": "package_flutter_material_dart",
+      "label": "package:flutter/material.dart",
+      "file_type": "code",
+      "source_file": "test\\widget_test.dart",
+      "source_location": null
+    },
+    {
+      "id": "package_flutter_test_flutter_test_dart",
+      "label": "package:flutter_test/flutter_test.dart",
+      "file_type": "code",
+      "source_file": "test\\widget_test.dart",
+      "source_location": null
+    },
+    {
+      "id": "package_primabot_main_dart",
+      "label": "package:primabot/main.dart",
+      "file_type": "code",
+      "source_file": "test\\widget_test.dart",
+      "source_location": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "android_app_src_main_java_io_flutter_plugins_generatedpluginregistrant_java",
+      "target": "keep",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "android\\app\\src\\main\\java\\io\\flutter\\plugins\\GeneratedPluginRegistrant.java",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_main_java_io_flutter_plugins_generatedpluginregistrant_java",
+      "target": "nonnull",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "android\\app\\src\\main\\java\\io\\flutter\\plugins\\GeneratedPluginRegistrant.java",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_main_java_io_flutter_plugins_generatedpluginregistrant_java",
+      "target": "log",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "android\\app\\src\\main\\java\\io\\flutter\\plugins\\GeneratedPluginRegistrant.java",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_main_java_io_flutter_plugins_generatedpluginregistrant_java",
+      "target": "flutterengine",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "android\\app\\src\\main\\java\\io\\flutter\\plugins\\GeneratedPluginRegistrant.java",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_main_java_io_flutter_plugins_generatedpluginregistrant_java",
+      "target": "plugins_generatedpluginregistrant_generatedpluginregistrant",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android\\app\\src\\main\\java\\io\\flutter\\plugins\\GeneratedPluginRegistrant.java",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "plugins_generatedpluginregistrant_generatedpluginregistrant",
+      "target": "plugins_generatedpluginregistrant_generatedpluginregistrant_registerwith",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android\\app\\src\\main\\java\\io\\flutter\\plugins\\GeneratedPluginRegistrant.java",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_main_kotlin_com_example_primabot_mainactivity_kt",
+      "target": "primabot_mainactivity_mainactivity",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android\\app\\src\\main\\kotlin\\com\\example\\primabot\\MainActivity.kt",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "ios_flutter_ephemeral_flutter_lldb_helper_py",
+      "target": "lldb",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "ios\\Flutter\\ephemeral\\flutter_lldb_helper.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "ios_flutter_ephemeral_flutter_lldb_helper_py",
+      "target": "ephemeral_flutter_lldb_helper_handle_new_rx_page",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "ios\\Flutter\\ephemeral\\flutter_lldb_helper.py",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "ios_flutter_ephemeral_flutter_lldb_helper_py",
+      "target": "ephemeral_flutter_lldb_helper_lldb_init_module",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "ios\\Flutter\\ephemeral\\flutter_lldb_helper.py",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "ephemeral_flutter_lldb_helper_rationale_8",
+      "target": "ephemeral_flutter_lldb_helper_handle_new_rx_page",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "ios\\Flutter\\ephemeral\\flutter_lldb_helper.py",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "ios_runner_appdelegate_swift",
+      "target": "flutter",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "ios\\Runner\\AppDelegate.swift",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "ios_runner_appdelegate_swift",
+      "target": "uikit",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "ios\\Runner\\AppDelegate.swift",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "ios_runner_appdelegate_swift",
+      "target": "runner_appdelegate_appdelegate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "ios\\Runner\\AppDelegate.swift",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "runner_appdelegate_appdelegate",
+      "target": "flutterappdelegate",
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "ios\\Runner\\AppDelegate.swift",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "runner_appdelegate_appdelegate",
+      "target": "flutterimplicitenginedelegate",
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "ios\\Runner\\AppDelegate.swift",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "runner_appdelegate_appdelegate",
+      "target": "runner_appdelegate_appdelegate_application",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "ios\\Runner\\AppDelegate.swift",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "runner_appdelegate_appdelegate",
+      "target": "runner_appdelegate_appdelegate_didinitializeimplicitflutterengine",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "ios\\Runner\\AppDelegate.swift",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "ios_runner_generatedpluginregistrant_m",
+      "target": "generatedpluginregistrant",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "ios\\Runner\\GeneratedPluginRegistrant.m",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "ios_runner_generatedpluginregistrant_m",
+      "target": "runner_generatedpluginregistrant_generatedpluginregistrant",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "ios\\Runner\\GeneratedPluginRegistrant.m",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "runner_generatedpluginregistrant_generatedpluginregistrant",
+      "target": "runner_generatedpluginregistrant_generatedpluginregistrant_registerwithregistry",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "ios\\Runner\\GeneratedPluginRegistrant.m",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "ios_runner_scenedelegate_swift",
+      "target": "flutter",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "ios\\Runner\\SceneDelegate.swift",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "ios_runner_scenedelegate_swift",
+      "target": "uikit",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "ios\\Runner\\SceneDelegate.swift",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "ios_runner_scenedelegate_swift",
+      "target": "runner_scenedelegate_scenedelegate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "ios\\Runner\\SceneDelegate.swift",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "runner_scenedelegate_scenedelegate",
+      "target": "flutterscenedelegate",
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "ios\\Runner\\SceneDelegate.swift",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "ios_runnertests_runnertests_swift",
+      "target": "flutter",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "ios\\RunnerTests\\RunnerTests.swift",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "ios_runnertests_runnertests_swift",
+      "target": "uikit",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "ios\\RunnerTests\\RunnerTests.swift",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "ios_runnertests_runnertests_swift",
+      "target": "xctest",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "ios\\RunnerTests\\RunnerTests.swift",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "ios_runnertests_runnertests_swift",
+      "target": "runnertests_runnertests_runnertests",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "ios\\RunnerTests\\RunnerTests.swift",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "runnertests_runnertests_runnertests",
+      "target": "xctestcase",
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "ios\\RunnerTests\\RunnerTests.swift",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "runnertests_runnertests_runnertests",
+      "target": "runnertests_runnertests_runnertests_testexample",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "ios\\RunnerTests\\RunnerTests.swift",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "lib_main_dart",
+      "target": "d_project_google_play_primabot_lib_main_dart_primabotapp",
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib\\main.dart",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "lib_main_dart",
+      "target": "d_project_google_play_primabot_lib_main_dart_main",
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib\\main.dart",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "lib_main_dart",
+      "target": "d_project_google_play_primabot_lib_main_dart_build",
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib\\main.dart",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "lib_main_dart",
+      "target": "d_project_google_play_primabot_lib_main_dart_materialapp",
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib\\main.dart",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "lib_main_dart",
+      "target": "package_flutter_material_dart",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib\\main.dart",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "lib_main_dart",
+      "target": "chatbot_rs_theme_dart",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib\\main.dart",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "lib_main_dart",
+      "target": "chatbot_rs_screens_splash_screen_dart",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib\\main.dart",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "lib_chatbot_rs_theme_dart",
+      "target": "d_project_google_play_primabot_lib_chatbot_rs_theme_dart_chatbottheme",
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib\\chatbot_rs\\theme.dart",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "lib_chatbot_rs_theme_dart",
+      "target": "d_project_google_play_primabot_lib_chatbot_rs_theme_dart_themedata",
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib\\chatbot_rs\\theme.dart",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "lib_chatbot_rs_theme_dart",
+      "target": "package_flutter_material_dart",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib\\chatbot_rs\\theme.dart",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "lib_chatbot_rs_theme_dart",
+      "target": "package_google_fonts_google_fonts_dart",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib\\chatbot_rs\\theme.dart",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "lib_chatbot_rs_screens_chat_screen_dart",
+      "target": "d_project_google_play_primabot_lib_chatbot_rs_screens_chat_screen_dart_chatscreen",
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib\\chatbot_rs\\screens\\chat_screen.dart",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "lib_chatbot_rs_screens_chat_screen_dart",
+      "target": "d_project_google_play_primabot_lib_chatbot_rs_screens_chat_screen_dart_chatscreenstate",
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib\\chatbot_rs\\screens\\chat_screen.dart",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "lib_chatbot_rs_screens_chat_screen_dart",
+      "target": "d_project_google_play_primabot_lib_chatbot_rs_screens_chat_screen_dart_sendmessage",
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib\\chatbot_rs\\screens\\chat_screen.dart",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "lib_chatbot_rs_screens_chat_screen_dart",
+      "target": "d_project_google_play_primabot_lib_chatbot_rs_screens_chat_screen_dart_build",
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib\\chatbot_rs\\screens\\chat_screen.dart",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "lib_chatbot_rs_screens_chat_screen_dart",
+      "target": "d_project_google_play_primabot_lib_chatbot_rs_screens_chat_screen_dart_scaffold",
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib\\chatbot_rs\\screens\\chat_screen.dart",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "lib_chatbot_rs_screens_chat_screen_dart",
+      "target": "d_project_google_play_primabot_lib_chatbot_rs_screens_chat_screen_dart_align",
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib\\chatbot_rs\\screens\\chat_screen.dart",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "lib_chatbot_rs_screens_chat_screen_dart",
+      "target": "d_project_google_play_primabot_lib_chatbot_rs_screens_chat_screen_dart_sizedbox",
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib\\chatbot_rs\\screens\\chat_screen.dart",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "lib_chatbot_rs_screens_chat_screen_dart",
+      "target": "d_project_google_play_primabot_lib_chatbot_rs_screens_chat_screen_dart_buildinputarea",
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib\\chatbot_rs\\screens\\chat_screen.dart",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "lib_chatbot_rs_screens_chat_screen_dart",
+      "target": "d_project_google_play_primabot_lib_chatbot_rs_screens_chat_screen_dart_container",
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib\\chatbot_rs\\screens\\chat_screen.dart",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "lib_chatbot_rs_screens_chat_screen_dart",
+      "target": "package_flutter_material_dart",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib\\chatbot_rs\\screens\\chat_screen.dart",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "lib_chatbot_rs_screens_splash_screen_dart",
+      "target": "d_project_google_play_primabot_lib_chatbot_rs_screens_splash_screen_dart_chatbotsplashscreen",
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib\\chatbot_rs\\screens\\splash_screen.dart",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "lib_chatbot_rs_screens_splash_screen_dart",
+      "target": "d_project_google_play_primabot_lib_chatbot_rs_screens_splash_screen_dart_build",
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib\\chatbot_rs\\screens\\splash_screen.dart",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "lib_chatbot_rs_screens_splash_screen_dart",
+      "target": "d_project_google_play_primabot_lib_chatbot_rs_screens_splash_screen_dart_scaffold",
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib\\chatbot_rs\\screens\\splash_screen.dart",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "lib_chatbot_rs_screens_splash_screen_dart",
+      "target": "d_project_google_play_primabot_lib_chatbot_rs_screens_splash_screen_dart_spacer",
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib\\chatbot_rs\\screens\\splash_screen.dart",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "lib_chatbot_rs_screens_splash_screen_dart",
+      "target": "d_project_google_play_primabot_lib_chatbot_rs_screens_splash_screen_dart_sizedbox",
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib\\chatbot_rs\\screens\\splash_screen.dart",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "lib_chatbot_rs_screens_splash_screen_dart",
+      "target": "package_flutter_material_dart",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib\\chatbot_rs\\screens\\splash_screen.dart",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "lib_chatbot_rs_screens_splash_screen_dart",
+      "target": "chat_screen_dart",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib\\chatbot_rs\\screens\\splash_screen.dart",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "test_widget_test_dart",
+      "target": "d_project_google_play_primabot_test_widget_test_dart_main",
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "test\\widget_test.dart",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "test_widget_test_dart",
+      "target": "package_flutter_material_dart",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "test\\widget_test.dart",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "test_widget_test_dart",
+      "target": "package_flutter_test_flutter_test_dart",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "test\\widget_test.dart",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "test_widget_test_dart",
+      "target": "package_primabot_main_dart",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "test\\widget_test.dart",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "input_tokens": 0,
+  "output_tokens": 0
+}
