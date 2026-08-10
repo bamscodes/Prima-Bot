@@ -7,7 +7,7 @@ class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
   static const _databaseName = 'rs_prima_insan.db';
-  static const _databaseVersion = 2;
+  static const _databaseVersion = 3;
 
   DatabaseHelper._init();
 
@@ -41,6 +41,9 @@ class DatabaseHelper {
         )
       ''');
     }
+    if (oldVersion < 3) {
+      await db.execute('ALTER TABLE chat_history ADD COLUMN tts_text TEXT');
+    }
   }
 
   Future _createDB(Database db, int version) async {
@@ -71,6 +74,7 @@ class DatabaseHelper {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         session_id TEXT NOT NULL,
         text TEXT NOT NULL,
+        tts_text TEXT,
         is_bot INTEGER NOT NULL,
         timestamp TEXT NOT NULL
       )
@@ -87,11 +91,12 @@ class DatabaseHelper {
     return await db.insert('jadwal_dokter', jadwal.toMap());
   }
 
-  Future<int> insertChat(String sessionId, String text, bool isBot) async {
+  Future<int> insertChat(String sessionId, String text, bool isBot, {String? ttsText}) async {
     final db = await instance.database;
     return await db.insert('chat_history', {
       'session_id': sessionId,
       'text': text,
+      'tts_text': ttsText,
       'is_bot': isBot ? 1 : 0,
       'timestamp': DateTime.now().toIso8601String(),
     });

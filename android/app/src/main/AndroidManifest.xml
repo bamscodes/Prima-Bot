@@ -1,4 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Izin Internet: wajib ada agar Edge TTS bisa terhubung ke server Microsoft -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Izin akses status jaringan -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <application
         android:label="Prima Bot"
         android:name="${applicationName}"
