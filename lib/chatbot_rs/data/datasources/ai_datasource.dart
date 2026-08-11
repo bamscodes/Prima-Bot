@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -30,12 +31,11 @@ class AIService {
       );
 
       if (response.statusCode == 200) {
-        final List<dynamic> result = jsonDecode(response.body);
         // Map the model output to our intents
         return {'intent': 'Cari_Jadwal', 'confidence': 0.9}; 
       }
     } catch (e) {
-      print('HF Error: $e');
+      log('HF Error: $e');
     }
     return _simulateIntent(text);
   }
@@ -84,19 +84,18 @@ class AIService {
             'model': model,
             'messages': fullMessages,
           }),
-        );
+        ).timeout(const Duration(seconds: 8));
 
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
           return data['choices'][0]['message']['content'];
         } else {
-          print('Model $model failed: ${response.statusCode}');
-          continue;
+          log('Model $model failed: ${response.statusCode}');
         }
       } catch (e) {
-        print('Error with model $model: $e');
-        continue;
+        log('Error with model $model: $e');
       }
+      continue;
     }
 
     return 'Maaf, semua layanan AI kami sedang padat. Silakan coba lagi beberapa saat lagi.';
@@ -109,13 +108,21 @@ class AIService {
     bool isCariJadwal = lowerText.contains('jadwal') || lowerText.contains('dokter') || lowerText.contains('poli') || lowerText.contains('kapan');
     
     String? entitas;
-    if (lowerText.contains('anak')) entitas = 'Anak';
-    else if (lowerText.contains('bedah')) entitas = 'Bedah';
-    else if (lowerText.contains('kandungan') || lowerText.contains('obsgyn') || lowerText.contains('hamil')) entitas = 'Kandungan';
-    else if (lowerText.contains('dalam') || lowerText.contains('penyakit dalam')) entitas = 'Penyakit Dalam';
-    else if (lowerText.contains('umum')) entitas = 'Umum';
-    else if (lowerText.contains('vct') || lowerText.contains('hiv')) entitas = 'VCT';
-    else if (lowerText.contains('gigi')) entitas = 'Gigi'; // Retained just in case, though not in new schedule
+    if (lowerText.contains('anak')) {
+      entitas = 'Anak';
+    } else if (lowerText.contains('bedah')) {
+      entitas = 'Bedah';
+    } else if (lowerText.contains('kandungan') || lowerText.contains('obsgyn') || lowerText.contains('hamil')) {
+      entitas = 'Kandungan';
+    } else if (lowerText.contains('dalam') || lowerText.contains('penyakit dalam')) {
+      entitas = 'Penyakit Dalam';
+    } else if (lowerText.contains('umum')) {
+      entitas = 'Umum';
+    } else if (lowerText.contains('vct') || lowerText.contains('hiv')) {
+      entitas = 'VCT';
+    } else if (lowerText.contains('gigi')) {
+      entitas = 'Gigi'; // Retained just in case, though not in new schedule
+    }
 
     if (isCariJadwal || entitas != null) {
       
@@ -124,13 +131,21 @@ class AIService {
         // Simple logic for "tomorrow"
         final tomorrow = DateTime.now().add(const Duration(days: 1));
         hari = _getHariIndo(tomorrow.weekday);
-      } else if (lowerText.contains('senin')) hari = 'Senin';
-      else if (lowerText.contains('selasa')) hari = 'Selasa';
-      else if (lowerText.contains('rabu')) hari = 'Rabu';
-      else if (lowerText.contains('kamis')) hari = 'Kamis';
-      else if (lowerText.contains('jumat')) hari = 'Jumat';
-      else if (lowerText.contains('sabtu')) hari = 'Sabtu';
-      else if (lowerText.contains('minggu')) hari = 'Minggu';
+      } else if (lowerText.contains('senin')) {
+        hari = 'Senin';
+      } else if (lowerText.contains('selasa')) {
+        hari = 'Selasa';
+      } else if (lowerText.contains('rabu')) {
+        hari = 'Rabu';
+      } else if (lowerText.contains('kamis')) {
+        hari = 'Kamis';
+      } else if (lowerText.contains('jumat')) {
+        hari = 'Jumat';
+      } else if (lowerText.contains('sabtu')) {
+        hari = 'Sabtu';
+      } else if (lowerText.contains('minggu')) {
+        hari = 'Minggu';
+      }
 
       return {
         'intent': 'Cari_Jadwal',

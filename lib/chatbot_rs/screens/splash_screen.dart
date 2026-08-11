@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'chat_screen.dart';
 import '../data/datasources/seeder.dart';
@@ -22,7 +23,7 @@ class _ChatbotSplashScreenState extends State<ChatbotSplashScreen> {
     try {
       await DataSeeder.seedData();
     } catch (e) {
-      print('Seeding failed: $e');
+      log('Seeding failed: $e');
     } finally {
       if (mounted) {
         setState(() {
@@ -65,7 +66,7 @@ class _ChatbotSplashScreenState extends State<ChatbotSplashScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withOpacity(0.1),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -80,7 +81,7 @@ class _ChatbotSplashScreenState extends State<ChatbotSplashScreen> {
               Text(
                 'Dapatkan jawaban instan seputar jadwal dokter dan layanan RS Prima Insan Mulia.',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.6),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
                 textAlign: TextAlign.center,
               ),

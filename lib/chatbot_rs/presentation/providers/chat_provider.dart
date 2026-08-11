@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import '../../../services/edge_tts_service.dart';
@@ -64,7 +65,7 @@ class ChatProvider extends ChangeNotifier {
         }
       }
     } catch (e) {
-      print('Failed to load history: $e');
+      log('Failed to load history: $e');
       // Fallback greeting if DB fails
       _messages.add(ChatMessage(
         text: 'Halo! Selamat datang di **RS Prima Insan Mulia**. (Koneksi database sedang disiapkan)',

@@ -24,7 +24,7 @@ class GetBotResponse {
           return await AIService.generateResponse([
             ...history,
             {'role': 'user', 'content': '$userInput (Sistem: Tanyakan spesialisasi apa yang dicari)'}
-          ]).timeout(const Duration(seconds: 15));
+          ]).timeout(const Duration(seconds: 45));
         } catch (_) {
           return 'Tentu, spesialisasi dokter apa yang ingin Anda cari? (Contoh: Gigi atau Anak)';
         }
@@ -48,7 +48,7 @@ class GetBotResponse {
           ...history,
           {'role': 'user', 'content': promptText}
         ];
-        return await AIService.generateResponse(currentMessages).timeout(const Duration(seconds: 20));
+        return await AIService.generateResponse(currentMessages).timeout(const Duration(seconds: 45));
       } catch (e) {
         // Offline Fallback
         return '$dataContext\n\n*(Catatan: Anda sedang dalam mode offline/koneksi lambat, informasi terbatas pada jadwal lokal)*';
@@ -61,7 +61,7 @@ class GetBotResponse {
         ...history,
         {'role': 'user', 'content': userInput}
       ];
-      return await AIService.generateResponse(currentMessages).timeout(const Duration(seconds: 20));
+      return await AIService.generateResponse(currentMessages).timeout(const Duration(seconds: 45));
     } catch (e) {
       return 'Maaf, saya sedang mengalami kendala koneksi. Saat ini saya hanya bisa melayani pertanyaan seputar jadwal dokter yang tersimpan secara lokal.';
     }

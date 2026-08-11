@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'package:flutter/services.dart';
 import 'local_datasource.dart';
 import '../models/layanan_model.dart';
@@ -24,6 +25,6 @@ class DataSeeder {
       await dbHelper.insertJadwal(JadwalModel.fromMap(item));
     }
     
-    print('Data seeded successfully');
+    log('Data seeded successfully');
   }
 }

@@ -36,7 +36,7 @@ class ChatbotTheme {
         outlineVariant: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
       ),
       textSelectionTheme: TextSelectionThemeData(
-        selectionColor: isDark ? Colors.amber.withOpacity(0.4) : Colors.amber.withOpacity(0.5),
+        selectionColor: isDark ? Colors.amber.withValues(alpha: 0.4) : Colors.amber.withValues(alpha: 0.5),
         selectionHandleColor: Colors.amber,
         cursorColor: Colors.amber,
       ),

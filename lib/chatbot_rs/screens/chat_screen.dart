@@ -141,7 +141,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       'Online',
                       style: theme.textTheme.labelSmall?.copyWith(
                         fontSize: 10,
-                        color: theme.colorScheme.onPrimary.withOpacity(0.7),
+                        color: theme.colorScheme.onPrimary.withValues(alpha: 0.7),
                       ),
                     ),
                   ],
@@ -252,12 +252,12 @@ class _ChatScreenState extends State<ChatScreen> {
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
+                              color: Colors.black.withValues(alpha: 0.05),
                               blurRadius: 10,
                               offset: const Offset(0, 4),
                             ),
                           ],
-                          border: isBot ? Border.all(color: theme.colorScheme.outlineVariant.withOpacity(0.5)) : null,
+                          border: isBot ? Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)) : null,
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -299,8 +299,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                       chatProvider.speakingMessageIndex == index ? Icons.stop_circle_outlined : Icons.play_circle_outline, 
                                       size: 18, 
                                       color: chatProvider.speakingMessageIndex == index 
-                                          ? Colors.red.withOpacity(0.8) 
-                                          : theme.colorScheme.primary.withOpacity(0.6),
+                                          ? Colors.red.withValues(alpha: 0.8) 
+                                          : theme.colorScheme.primary.withValues(alpha: 0.6),
                                     ),
                                   ),
                                   const SizedBox(width: 8),
@@ -310,8 +310,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                   style: theme.textTheme.labelSmall?.copyWith(
                                     fontSize: 10,
                                     color: isBot 
-                                      ? theme.colorScheme.onSurface.withOpacity(0.4) 
-                                      : theme.colorScheme.onPrimary.withOpacity(0.7),
+                                      ? theme.colorScheme.onSurface.withValues(alpha: 0.4) 
+                                      : theme.colorScheme.onPrimary.withValues(alpha: 0.7),
                                   ),
                                 ),
                               ],
@@ -343,7 +343,7 @@ class _ChatScreenState extends State<ChatScreen> {
             decoration: BoxDecoration(
               color: theme.colorScheme.surface,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: theme.colorScheme.outlineVariant.withOpacity(0.5)),
+              border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
             ),
             child: Row(
               children: [
@@ -377,8 +377,8 @@ class _ChatScreenState extends State<ChatScreen> {
             child: ActionChip(
               label: Text(suggestion),
               onPressed: () => _sendMessage(suggestion),
-              backgroundColor: theme.colorScheme.primaryContainer.withOpacity(0.1),
-              side: BorderSide(color: theme.colorScheme.primary.withOpacity(0.2)),
+              backgroundColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.1),
+              side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.2)),
               labelStyle: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.primary),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             ),
@@ -395,7 +395,7 @@ class _ChatScreenState extends State<ChatScreen> {
         color: theme.colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             offset: const Offset(0, -4),
             blurRadius: 20,
           ),
