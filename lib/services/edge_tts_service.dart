@@ -34,9 +34,13 @@ class EdgeTtsService {
 
   // Callback state untuk update UI
   Function? _onStart;
+  Function? _onPause;
   Function? _onCompletion;
-  Function? _onCancel;
   Function(String)? _onError;
+
+  PlayerState get playerState => _player?.state ?? PlayerState.stopped;
+  bool get isPlaying => _player?.state == PlayerState.playing;
+  bool get isPaused => _player?.state == PlayerState.paused;
 
   // Gunakan suara Yasmin (Melayu) — mirip 90% dengan Bahasa Indonesia
   static const String _defaultVoice = 'ms-MY-YasminNeural';
@@ -69,10 +73,10 @@ class EdgeTtsService {
       debugPrint('[TTS] Status player: $state');
       if (state == PlayerState.playing) {
         _onStart?.call();
+      } else if (state == PlayerState.paused) {
+        _onPause?.call();
       } else if (state == PlayerState.completed) {
         _onCompletion?.call();
-      } else if (state == PlayerState.stopped) {
-        _onCancel?.call();
       }
     });
 
@@ -85,8 +89,8 @@ class EdgeTtsService {
   }
 
   void setStartHandler(Function handler) => _onStart = handler;
+  void setPauseHandler(Function handler) => _onPause = handler;
   void setCompletionHandler(Function handler) => _onCompletion = handler;
-  void setCancelHandler(Function handler) => _onCancel = handler;
   void setErrorHandler(Function(String) handler) => _onError = handler;
 
   /// Normalisasi teks dan hitung cache key-nya.
@@ -143,8 +147,10 @@ class EdgeTtsService {
       await init();
     }
 
-    // Hentikan suara yang sedang berjalan
-    await _player!.stop();
+    // Hentikan suara yang sedang berjalan jika ada
+    try {
+      await _player!.stop();
+    } catch (_) {}
 
     // Normalisasi DULU — hash harus sama dengan pregenerate
     final normalized = _normalize(text);
@@ -187,7 +193,6 @@ class EdgeTtsService {
       debugPrint('[TTS] Error saat speak: $e');
       debugPrint('[TTS] StackTrace: $stackTrace');
       _onError?.call(e.toString());
-      // Reset state UI agar icon tidak stuck
       _onCompletion?.call();
     }
   }

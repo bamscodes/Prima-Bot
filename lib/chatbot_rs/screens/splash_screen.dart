@@ -40,83 +40,162 @@ class _ChatbotSplashScreenState extends State<ChatbotSplashScreen> {
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32.0),
+        child: SingleChildScrollView(
+          physics: const ClampingScrollPhysics(),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Spacer(),
-              Image.asset(
-                'assets/images/logo.png',
-                width: 250,
-                height: 250,
-                fit: BoxFit.contain,
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'Prima Bot',
-                style: theme.textTheme.displayMedium?.copyWith(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.2,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  'Asisten Kesehatan Digital',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.bold,
+              const SizedBox(height: 40),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Meet Prisma',
+                        style: theme.textTheme.displayLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.onSurface,
+                          height: 1.2,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Text(
+                            'Your',
+                            style: theme.textTheme.displayLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: theme.colorScheme.onSurface,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            child: Text(
+                              'Hospital Guide',
+                              style: theme.textTheme.displaySmall?.copyWith(
+                                color: theme.colorScheme.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          'Get quick answers about services,\ndoctors, schedules, and\nhospital facilities.',
+                          textAlign: TextAlign.right,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: const Color(0xFF9D9D9D),
+                            height: 1.5,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Dapatkan jawaban instan seputar jadwal dokter dan layanan RS Prima Insan Mulia.',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const Spacer(),
-              if (_isInitializing)
-                Column(
-                  children: [
-                    const CircularProgressIndicator(),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Menyiapkan sistem...',
-                      style: theme.textTheme.labelSmall?.copyWith(color: Colors.grey),
+                
+                const SizedBox(height: 36),
+                
+                // Left Bubble
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Container(
+                    padding: const EdgeInsets.only(left: 24, right: 32, top: 20, bottom: 20),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.only(
+                        topRight: Radius.circular(50),
+                        bottomRight: Radius.circular(50),
+                      ),
                     ),
-                  ],
-                )
-              else
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(builder: (context) => const ChatScreen()),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-                      elevation: 0,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Hospital Information', style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.primary)),
+                        const SizedBox(height: 4),
+                        Text('Fast Answers', style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.primary)),
+                        const SizedBox(height: 4),
+                        Text('Easy Access', style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.primary)),
+                      ],
                     ),
-                    child: const Text('Mulai Konsultasi'),
                   ),
                 ),
-              const SizedBox(height: 32),
-            ],
-          ),
+                
+                const SizedBox(height: 40),
+                
+                // Right Bubble
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    padding: const EdgeInsets.only(left: 32, right: 24, top: 20, bottom: 20),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(50),
+                        bottomLeft: Radius.circular(50),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text('Get Started', style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.primary)),
+                        const SizedBox(height: 4),
+                        Text('Explore Prima', style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.primary)),
+                        const SizedBox(height: 4),
+                        Text('Start Chatting', style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.primary)),
+                        const SizedBox(height: 4),
+                        Text('Let\'s Start Now', style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.primary)),
+                      ],
+                    ),
+                  ),
+                ),
+                
+                const SizedBox(height: 36),
+                
+                // Bottom Area
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+                  child: Column(
+                    children: [
+                      Text(
+                        'powered by hospital information',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: const Color(0xFF9D9D9D),
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: ElevatedButton(
+                          onPressed: _isInitializing ? null : () {
+                            Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(builder: (context) => const ChatScreen()),
+                            );
+                          },
+                          child: _isInitializing 
+                              ? const SizedBox(
+                                  width: 24, 
+                                  height: 24, 
+                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+                                )
+                              : const Text('Let\'s Chat Now'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
         ),
       ),
     );
