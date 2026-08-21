@@ -6,19 +6,23 @@ import 'package:uuid/uuid.dart';
 import '../../../services/edge_tts_service.dart';
 import '../../data/datasources/local_datasource.dart';
 import '../../domain/usecases/get_bot_response.dart';
+import '../../domain/usecases/generate_conversation_title.dart';
 import '../../domain/utils/conversation_title_formatter.dart';
 
 class ChatMessage {
   final String text; // Teks untuk ditampilkan di UI (bisa berisi markdown/link)
-  final String? ttsText; // Teks khusus untuk TTS (tanpa markdown, plain text). Jika null, gunakan text.
+  final String?
+  ttsText; // Teks khusus untuk TTS (tanpa markdown, plain text). Jika null, gunakan text.
   final bool isBot;
   final DateTime time;
+  bool isAnimated; // Menyimpan status apakah animasi typewriter telah selesai
 
   ChatMessage({
     required this.text,
     this.ttsText,
     required this.isBot,
     required this.time,
+    this.isAnimated = true,
   });
 }
 
@@ -27,12 +31,14 @@ class ChatSession {
   final String title;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final bool isTitlePending;
 
   ChatSession({
     required this.id,
     required this.title,
     required this.createdAt,
     required this.updatedAt,
+    required this.isTitlePending,
   });
 
   factory ChatSession.fromMap(Map<String, dynamic> map) {
@@ -41,6 +47,7 @@ class ChatSession {
       title: map['title'] as String,
       createdAt: DateTime.parse(map['created_at'] as String),
       updatedAt: DateTime.parse(map['updated_at'] as String),
+      isTitlePending: (map['title_generated'] as int? ?? 1) == 0,
     );
   }
 }
@@ -48,6 +55,8 @@ class ChatSession {
 class ChatProvider extends ChangeNotifier {
   final List<ChatMessage> _messages = [];
   final GetBotResponse _getBotResponse = GetBotResponse();
+  final GenerateConversationTitle _generateConversationTitle =
+      GenerateConversationTitle();
   final EdgeTtsService _tts = EdgeTtsService();
   final Uuid _uuid = const Uuid();
 
@@ -71,18 +80,26 @@ class ChatProvider extends ChangeNotifier {
   bool get isSpeaking => _speakingMessageIndex != null;
   bool get isTtsPaused => _isTtsPaused;
   int? get speakingMessageIndex => _speakingMessageIndex;
-  bool isMessagePlaying(int index) => _speakingMessageIndex == index && !_isTtsPaused;
-  bool isMessagePaused(int index) => _speakingMessageIndex == index && _isTtsPaused;
+  bool isMessagePlaying(int index) =>
+      _speakingMessageIndex == index && !_isTtsPaused;
+  bool isMessagePaused(int index) =>
+      _speakingMessageIndex == index && _isTtsPaused;
   String get sessionId => _sessionId;
   List<String> get suggestions => _suggestions;
   List<ChatSession> get sessions => _sessions;
+
+  void markMessageAnimated(int index) {
+    if (index >= 0 && index < _messages.length) {
+      _messages[index].isAnimated = true;
+    }
+  }
 
   ChatProvider() {
     _initTts();
     _initSessions();
   }
 
-  /// Initialize: load sessions, sanitize any broken titles, then load last session or create new one
+  /// Initialize: load session list for drawer, but ALWAYS start on a fresh draft ("Hai Hai" landing page)
   Future<void> _initSessions() async {
     try {
       await DatabaseHelper.instance.deleteSessionsWithoutUserMessages();
@@ -90,15 +107,8 @@ class ChatProvider extends ChangeNotifier {
         ConversationTitleFormatter.format,
       );
       await loadSessions();
-      if (_sessions.isNotEmpty) {
-        // Load the most recent session
-        _sessionId = _sessions.first.id;
-        _isSessionPersisted = true;
-        await _loadHistory(_sessionId);
-      } else {
-        // No sessions yet, create first one
-        await startNewChat();
-      }
+      // Selalu mulai di sesi baru / halaman awal ("Hai Hai") saat pertama kali masuk
+      await startNewChat();
     } catch (e) {
       log('Failed to init sessions: $e');
       await startNewChat();
@@ -224,7 +234,9 @@ class ChatProvider extends ChangeNotifier {
 
   /// Toggle antara Play, Pause, dan Resume untuk pesan ke-[index]
   Future<void> togglePlayPause(int index, String text) async {
-    debugPrint('[TTS Provider] togglePlayPause for index $index. Speaking index: $_speakingMessageIndex, isPaused: $_isTtsPaused');
+    debugPrint(
+      '[TTS Provider] togglePlayPause for index $index. Speaking index: $_speakingMessageIndex, isPaused: $_isTtsPaused',
+    );
 
     if (_speakingMessageIndex == index) {
       if (!_isTtsPaused) {
@@ -314,6 +326,7 @@ class ChatProvider extends ChangeNotifier {
           ttsText: ttsText,
           isBot: true,
           time: DateTime.now(),
+          isAnimated: false,
         ),
       );
     }
@@ -325,6 +338,9 @@ class ChatProvider extends ChangeNotifier {
     final requestSessionId = _sessionId;
     final requestToken = ++_requestTokenSequence;
     final isDraftSession = !_isSessionPersisted;
+    final fallbackTitle = _generateConversationTitle.fallback(
+      userMessage: text,
+    );
     var requestSessionPersisted = !isDraftSession;
     ChatMessage? optimisticUserMessage;
 
@@ -341,6 +357,7 @@ class ChatProvider extends ChangeNotifier {
         text: text,
         isBot: false,
         time: DateTime.now(),
+        isAnimated: false,
       );
       optimisticUserMessage = userMsg;
       _messages.add(userMsg);
@@ -348,10 +365,9 @@ class ChatProvider extends ChangeNotifier {
 
       if (isDraftSession) {
         // Buat judul langsung secara lokal dari pesan pertama user
-        final title = ConversationTitleFormatter.format(text);
         await DatabaseHelper.instance.insertSessionWithFirstMessage(
           requestSessionId,
-          title,
+          fallbackTitle,
           text,
         );
         requestSessionPersisted = true;
@@ -367,11 +383,25 @@ class ChatProvider extends ChangeNotifier {
         }
       }
 
-      await _generateAndSaveBotResponse(requestSessionId, text, messagesForRequest);
+      await _generateAndSaveBotResponse(
+        requestSessionId,
+        text,
+        messagesForRequest,
+        isDraftSession,
+      );
     } catch (e) {
       log('Failed to send message in session $requestSessionId: $e');
       const errorResponse =
           'Maaf, terjadi kesalahan sistem. Silakan coba lagi nanti.';
+
+      if (isDraftSession && requestSessionPersisted) {
+        unawaited(
+          _resolveConversationTitleFallback(
+            sessionId: requestSessionId,
+            expectedFallbackTitle: fallbackTitle,
+          ),
+        );
+      }
 
       if (requestSessionPersisted) {
         try {
@@ -387,6 +417,7 @@ class ChatProvider extends ChangeNotifier {
                 text: errorResponse,
                 isBot: true,
                 time: DateTime.now(),
+                isAnimated: false,
               ),
             );
           }
@@ -397,7 +428,12 @@ class ChatProvider extends ChangeNotifier {
             _messages.remove(optimisticUserMessage);
           }
           _messages.add(
-            ChatMessage(text: errorResponse, isBot: true, time: DateTime.now()),
+            ChatMessage(
+              text: errorResponse,
+              isBot: true,
+              time: DateTime.now(),
+              isAnimated: false,
+            ),
           );
         }
       }
@@ -414,7 +450,9 @@ class ChatProvider extends ChangeNotifier {
   /// Edit prompt user pada [index], hapus respons AI lama setelahnya, dan generate respons baru.
   Future<void> editMessageAndRegenerate(int index, String newText) async {
     if (newText.trim().isEmpty || _isLoading || _sessionId.isEmpty) return;
-    if (index < 0 || index >= _messages.length || _messages[index].isBot) return;
+    if (index < 0 || index >= _messages.length || _messages[index].isBot) {
+      return;
+    }
 
     final requestSessionId = _sessionId;
     final requestToken = ++_requestTokenSequence;
@@ -426,6 +464,7 @@ class ChatProvider extends ChangeNotifier {
       text: newText.trim(),
       isBot: false,
       time: DateTime.now(),
+      isAnimated: false,
     );
 
     // 2. Hapus respons lama AI dan pesan sesudahnya
@@ -435,8 +474,14 @@ class ChatProvider extends ChangeNotifier {
     // 3. Jika ini pesan pertama user, perbarui judul sesi
     final isFirstUserMessage = !_messages.take(index).any((m) => !m.isBot);
     if (isFirstUserMessage) {
-      final newTitle = ConversationTitleFormatter.format(newText.trim());
-      await DatabaseHelper.instance.updateSessionTitle(_sessionId, newTitle);
+      final newTitle = _generateConversationTitle.fallback(
+        userMessage: newText.trim(),
+      );
+      await DatabaseHelper.instance.updateSessionTitle(
+        _sessionId,
+        newTitle,
+        false,
+      );
       await loadSessions();
     }
 
@@ -444,12 +489,14 @@ class ChatProvider extends ChangeNotifier {
     await DatabaseHelper.instance.replaceChatHistory(
       _sessionId,
       _messages
-          .map((m) => {
-                'text': m.text,
-                'tts_text': m.ttsText,
-                'is_bot': m.isBot ? 1 : 0,
-                'timestamp': m.time.toIso8601String(),
-              })
+          .map(
+            (m) => {
+              'text': m.text,
+              'tts_text': m.ttsText,
+              'is_bot': m.isBot ? 1 : 0,
+              'timestamp': m.time.toIso8601String(),
+            },
+          )
           .toList(),
     );
 
@@ -462,11 +509,27 @@ class ChatProvider extends ChangeNotifier {
 
     try {
       final messagesForRequest = List<ChatMessage>.of(_messages);
-      await _generateAndSaveBotResponse(requestSessionId, newText.trim(), messagesForRequest);
+      await _generateAndSaveBotResponse(
+        requestSessionId,
+        newText.trim(),
+        messagesForRequest,
+        isFirstUserMessage,
+      );
     } catch (e) {
       log('Failed to generate response after edit: $e');
-      const errorResponse = 'Maaf, terjadi kesalahan sistem. Silakan coba lagi nanti.';
+      const errorResponse =
+          'Maaf, terjadi kesalahan sistem. Silakan coba lagi nanti.';
       await _saveAssistantMessage(requestSessionId, errorResponse);
+      if (isFirstUserMessage) {
+        unawaited(
+          _resolveConversationTitleFallback(
+            sessionId: requestSessionId,
+            expectedFallbackTitle: _generateConversationTitle.fallback(
+              userMessage: newText.trim(),
+            ),
+          ),
+        );
+      }
     } finally {
       if (_activeRequestToken == requestToken) {
         _loadingSessionId = null;
@@ -480,7 +543,11 @@ class ChatProvider extends ChangeNotifier {
   /// Regenerate respons AI pada [assistantIndex].
   Future<void> regenerateResponse(int assistantIndex) async {
     if (_isLoading || _sessionId.isEmpty) return;
-    if (assistantIndex < 0 || assistantIndex >= _messages.length || !_messages[assistantIndex].isBot) return;
+    if (assistantIndex < 0 ||
+        assistantIndex >= _messages.length ||
+        !_messages[assistantIndex].isBot) {
+      return;
+    }
 
     // Cari prompt user sebelum respons bot ini
     final userIndex = assistantIndex - 1;
@@ -494,17 +561,22 @@ class ChatProvider extends ChangeNotifier {
 
     // Hapus respons AI lama dan pesan setelahnya
     _messages.removeRange(assistantIndex, _messages.length);
+    final isFirstUserResponse = !_messages
+        .take(userIndex)
+        .any((message) => !message.isBot);
 
     // Simpan history yang dipotong ke DB
     await DatabaseHelper.instance.replaceChatHistory(
       _sessionId,
       _messages
-          .map((m) => {
-                'text': m.text,
-                'tts_text': m.ttsText,
-                'is_bot': m.isBot ? 1 : 0,
-                'timestamp': m.time.toIso8601String(),
-              })
+          .map(
+            (m) => {
+              'text': m.text,
+              'tts_text': m.ttsText,
+              'is_bot': m.isBot ? 1 : 0,
+              'timestamp': m.time.toIso8601String(),
+            },
+          )
           .toList(),
     );
 
@@ -516,11 +588,27 @@ class ChatProvider extends ChangeNotifier {
 
     try {
       final messagesForRequest = List<ChatMessage>.of(_messages);
-      await _generateAndSaveBotResponse(requestSessionId, userPrompt, messagesForRequest);
+      await _generateAndSaveBotResponse(
+        requestSessionId,
+        userPrompt,
+        messagesForRequest,
+        isFirstUserResponse,
+      );
     } catch (e) {
       log('Failed to regenerate response: $e');
-      const errorResponse = 'Maaf, terjadi kesalahan sistem. Silakan coba lagi nanti.';
+      const errorResponse =
+          'Maaf, terjadi kesalahan sistem. Silakan coba lagi nanti.';
       await _saveAssistantMessage(requestSessionId, errorResponse);
+      if (isFirstUserResponse) {
+        unawaited(
+          _resolveConversationTitleFallback(
+            sessionId: requestSessionId,
+            expectedFallbackTitle: _generateConversationTitle.fallback(
+              userMessage: userPrompt,
+            ),
+          ),
+        );
+      }
     } finally {
       if (_activeRequestToken == requestToken) {
         _loadingSessionId = null;
@@ -536,7 +624,26 @@ class ChatProvider extends ChangeNotifier {
     String requestSessionId,
     String text,
     List<ChatMessage> messagesForRequest,
+    bool generateTitle,
   ) async {
+    final fallbackTitle = _generateConversationTitle.fallback(
+      userMessage: text,
+    );
+
+    Future<void> saveResponse(String response, {String? ttsText}) async {
+      await _saveAssistantMessage(requestSessionId, response, ttsText: ttsText);
+      if (generateTitle) {
+        unawaited(
+          _generateAndPersistConversationTitle(
+            sessionId: requestSessionId,
+            userMessage: text,
+            assistantMessage: response,
+            expectedFallbackTitle: fallbackTitle,
+          ),
+        );
+      }
+    }
+
     final String lowerText = text.toLowerCase().trim();
     if (lowerText == 'informasi kontak') {
       await Future.delayed(const Duration(milliseconds: 600));
@@ -552,11 +659,7 @@ class ChatProvider extends ChangeNotifier {
           'I G D Gawat Darurat: kosong delapan lima enam, empat lima kosong tujuh, tujuh delapan tiga satu. '
           'Humas atau H C: kosong delapan lima enam, empat lima kosong tujuh, tujuh delapan tiga kosong. '
           'Call Center: kosong dua delapan tiga, delapan empat tujuh tiga tiga tiga.';
-      await _saveAssistantMessage(
-        requestSessionId,
-        displayResponse,
-        ttsText: ttsResponse,
-      );
+      await saveResponse(displayResponse, ttsText: ttsResponse);
       if (_sessionId == requestSessionId) {
         _suggestions = ['Lokasi RS', 'Jadwal Dokter', 'Kembali'];
       }
@@ -571,11 +674,7 @@ class ChatProvider extends ChangeNotifier {
       const ttsResponse =
           'Lokasi Rumah Sakit Prima Insan Mulia: '
           'Jalan Raya Losari Lor, Kecamatan Losari, Kabupaten Brebes, Jawa Tengah, Indonesia.';
-      await _saveAssistantMessage(
-        requestSessionId,
-        displayResponse,
-        ttsText: ttsResponse,
-      );
+      await saveResponse(displayResponse, ttsText: ttsResponse);
       if (_sessionId == requestSessionId) {
         _suggestions = ['Jadwal Poliklinik', 'Informasi Kontak', 'Kembali'];
       }
@@ -593,7 +692,7 @@ class ChatProvider extends ChangeNotifier {
 6. **Poli VCT**
 
 Silakan pilih pintasan di bawah ini atau ketik poli mana yang jadwalnya ingin Anda ketahui.''';
-      await _saveAssistantMessage(requestSessionId, response);
+      await saveResponse(response);
       if (_sessionId == requestSessionId) {
         _suggestions = [
           'Jadwal Poli Anak',
@@ -614,21 +713,79 @@ Silakan pilih pintasan di bawah ini atau ketik poli mana yang jadwalnya ingin An
         .take(messagesForRequest.length - 1)
         .toList();
 
-    final lastMessages =
-        history.length > 5 ? history.sublist(history.length - 5) : history;
+    final lastMessages = history.length > 5
+        ? history.sublist(history.length - 5)
+        : history;
 
     final List<Map<String, String>> aiHistory = lastMessages
-        .map(
-          (m) => {'role': m.isBot ? 'assistant' : 'user', 'content': m.text},
-        )
+        .map((m) => {'role': m.isBot ? 'assistant' : 'user', 'content': m.text})
         .toList();
 
     final response = await _getBotResponse.execute(text, aiHistory);
-    await _saveAssistantMessage(requestSessionId, response);
+    await saveResponse(response);
     unawaited(_tts.pregenerate(response));
 
     if (_sessionId == requestSessionId) {
       _suggestions = ['Jadwal Poliklinik', 'Informasi Kontak', 'Lokasi RS'];
+    }
+  }
+
+  Future<void> _generateAndPersistConversationTitle({
+    required String sessionId,
+    required String userMessage,
+    required String assistantMessage,
+    required String expectedFallbackTitle,
+  }) async {
+    try {
+      final title = await _generateConversationTitle.execute(
+        userMessage: userMessage,
+        assistantMessage: assistantMessage,
+      );
+      if (title == null) {
+        await _resolveConversationTitleFallback(
+          sessionId: sessionId,
+          expectedFallbackTitle: expectedFallbackTitle,
+        );
+        return;
+      }
+
+      final wasUpdated = await DatabaseHelper.instance
+          .updateGeneratedSessionTitleIfPending(
+            sessionId,
+            expectedFallbackTitle,
+            title,
+          );
+      if (wasUpdated > 0) await loadSessions();
+    } catch (error, stackTrace) {
+      log(
+        'Failed to generate conversation title for $sessionId',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      await _resolveConversationTitleFallback(
+        sessionId: sessionId,
+        expectedFallbackTitle: expectedFallbackTitle,
+      );
+    }
+  }
+
+  Future<void> _resolveConversationTitleFallback({
+    required String sessionId,
+    required String expectedFallbackTitle,
+  }) async {
+    try {
+      final wasUpdated = await DatabaseHelper.instance
+          .resolveSessionTitleFallbackIfPending(
+            sessionId,
+            expectedFallbackTitle,
+          );
+      if (wasUpdated > 0) await loadSessions();
+    } catch (error, stackTrace) {
+      log(
+        'Failed to resolve fallback title for $sessionId',
+        error: error,
+        stackTrace: stackTrace,
+      );
     }
   }
 

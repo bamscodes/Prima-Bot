@@ -7,7 +7,7 @@ class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
   static const _databaseName = 'rs_prima_insan.db';
-  static const _databaseVersion = 5;
+  static const _databaseVersion = 7;
 
   DatabaseHelper._init();
 
@@ -72,6 +72,14 @@ class DatabaseHelper {
         'ADD COLUMN title_generated INTEGER NOT NULL DEFAULT 0',
       );
     }
+    if (oldVersion < 6) {
+      await _createChatIndexes(db);
+    }
+    if (oldVersion < 7) {
+      // Session lama sudah memiliki judul yang final. Hanya sesi baru yang
+      // perlu menunjukkan skeleton saat AI sedang merangkum judul.
+      await db.update('chat_sessions', {'title_generated': 1});
+    }
   }
 
   Future _createDB(Database db, int version) async {
@@ -116,6 +124,18 @@ class DatabaseHelper {
         updated_at TEXT NOT NULL,
         title_generated INTEGER NOT NULL DEFAULT 0
       )
+    ''');
+    await _createChatIndexes(db);
+  }
+
+  Future<void> _createChatIndexes(DatabaseExecutor db) async {
+    await db.execute('''
+      CREATE INDEX IF NOT EXISTS idx_chat_history_session_timestamp
+      ON chat_history(session_id, timestamp)
+    ''');
+    await db.execute('''
+      CREATE INDEX IF NOT EXISTS idx_chat_sessions_updated_at
+      ON chat_sessions(updated_at DESC)
     ''');
   }
 
@@ -186,19 +206,66 @@ class DatabaseHelper {
   Future<int> updateSessionTitle(
     String id,
     String title,
+    bool? titleGenerated,
   ) async {
     final db = await instance.database;
+    final values = <String, Object?>{
+      'title': title,
+      'updated_at': DateTime.now().toIso8601String(),
+    };
+    if (titleGenerated != null) {
+      values['title_generated'] = titleGenerated ? 1 : 0;
+    }
     return await db.update(
       'chat_sessions',
-      {'title': title},
+      values,
       where: 'id = ?',
       whereArgs: [id],
     );
   }
 
+  /// Stores an AI title only while the same local fallback title is still
+  /// pending. This prevents a slow, older title request from overwriting a
+  /// title after the first user prompt has been edited.
+  Future<int> updateGeneratedSessionTitleIfPending(
+    String id,
+    String expectedFallbackTitle,
+    String generatedTitle,
+  ) async {
+    final db = await instance.database;
+    return db.update(
+      'chat_sessions',
+      {
+        'title': generatedTitle,
+        'title_generated': 1,
+        'updated_at': DateTime.now().toIso8601String(),
+      },
+      where: 'id = ? AND title = ? AND title_generated = 0',
+      whereArgs: [id, expectedFallbackTitle],
+    );
+  }
+
+  /// Menyelesaikan state loading judul dengan fallback lokal bila request AI
+  /// gagal. Kondisi WHERE menjaga agar hasil request lama tidak mengubah sesi
+  /// yang telah diedit atau sudah punya judul AI.
+  Future<int> resolveSessionTitleFallbackIfPending(
+    String id,
+    String expectedFallbackTitle,
+  ) async {
+    final db = await instance.database;
+    return db.update(
+      'chat_sessions',
+      {'title_generated': 1, 'updated_at': DateTime.now().toIso8601String()},
+      where: 'id = ? AND title = ? AND title_generated = 0',
+      whereArgs: [id, expectedFallbackTitle],
+    );
+  }
+
   /// Memperbaiki judul sesi lama yang rusak atau bernilai generic/bahasa inggris
   /// berdasarkan pesan pertama pengguna pada sesi tersebut.
-  Future<void> sanitizeSessionTitles(String Function(String) titleFormatter) async {
+  Future<void> sanitizeSessionTitles(
+    String Function(String) titleFormatter,
+  ) async {
     final db = await instance.database;
     final sessions = await db.query('chat_sessions');
 
@@ -207,7 +274,8 @@ class DatabaseHelper {
       final currentTitle = (session['title'] as String?) ?? '';
 
       // Cek apakah judul perlu diperbaiki (misal: "The user wants...", "Chat Baru", "Chat Lama", dll)
-      final isProblematic = currentTitle.toLowerCase().contains('the user') ||
+      final isProblematic =
+          currentTitle.toLowerCase().contains('the user') ||
           currentTitle.toLowerCase().contains('user wants') ||
           currentTitle.toLowerCase().contains('tit...') ||
           currentTitle == 'Chat Baru' ||
@@ -314,6 +382,14 @@ class DatabaseHelper {
   ) async {
     final db = await instance.database;
     await db.transaction((transaction) async {
+      final sessions = await transaction.query(
+        'chat_sessions',
+        columns: ['id'],
+        where: 'id = ?',
+        whereArgs: [sessionId],
+        limit: 1,
+      );
+      if (sessions.isEmpty) return;
       await transaction.delete(
         'chat_history',
         where: 'session_id = ?',
@@ -328,6 +404,12 @@ class DatabaseHelper {
           'timestamp': msg['timestamp'] ?? DateTime.now().toIso8601String(),
         });
       }
+      await transaction.update(
+        'chat_sessions',
+        {'updated_at': DateTime.now().toIso8601String()},
+        where: 'id = ?',
+        whereArgs: [sessionId],
+      );
     });
   }
 
@@ -387,6 +469,39 @@ class DatabaseHelper {
     final db = await instance.database;
     await db.delete('layanan');
     await db.delete('jadwal_dokter');
+  }
+
+  /// The bundled hospital data is immutable at runtime. Checking this marker
+  /// prevents deleting and reinserting every row on each app launch.
+  Future<bool> hasSeededHospitalData() async {
+    final db = await instance.database;
+    final layananCount = Sqflite.firstIntValue(
+      await db.rawQuery('SELECT COUNT(*) FROM layanan'),
+    );
+    final jadwalCount = Sqflite.firstIntValue(
+      await db.rawQuery('SELECT COUNT(*) FROM jadwal_dokter'),
+    );
+    return (layananCount ?? 0) > 0 && (jadwalCount ?? 0) > 0;
+  }
+
+  /// Inserts the bundled data atomically. A failed first-run seed will not
+  /// leave a partially populated hospital database behind.
+  Future<void> seedHospitalData(
+    List<LayananModel> layanan,
+    List<JadwalModel> jadwal,
+  ) async {
+    final db = await instance.database;
+    await db.transaction((transaction) async {
+      await transaction.delete('jadwal_dokter');
+      await transaction.delete('layanan');
+
+      for (final item in layanan) {
+        await transaction.insert('layanan', item.toMap());
+      }
+      for (final item in jadwal) {
+        await transaction.insert('jadwal_dokter', item.toMap());
+      }
+    });
   }
 
   Future close() async {

@@ -28,6 +28,7 @@ class EdgeTtsService {
 
   /// Cache in-memory: hash teks ternormalisasi → path file audio
   final Map<int, String> _audioCache = {};
+  static const int _maxCachedAudioFiles = 24;
 
   /// Flag untuk mencegah pre-generate berjalan bersamaan
   bool _isPregenerating = false;
@@ -125,7 +126,7 @@ class EdgeTtsService {
       debugPrint('[TTS] Pre-gen: mulai generate di background...');
       final outputPath = await _generateAudioFile(normalized, key);
       if (outputPath != null) {
-        _audioCache[key] = outputPath;
+        await _cacheAudioFile(key, outputPath);
         debugPrint('[TTS] Pre-gen selesai: $outputPath');
       }
     } catch (e) {
@@ -178,7 +179,7 @@ class EdgeTtsService {
         debugPrint('[TTS] Cache miss → generating audio...');
         audioPath = await _generateAudioFile(normalized, key);
         if (audioPath != null) {
-          _audioCache[key] = audioPath;
+          await _cacheAudioFile(key, audioPath);
         }
       }
 
@@ -231,6 +232,27 @@ class EdgeTtsService {
     } catch (e) {
       debugPrint('[TTS] _generateAudioFile error: $e');
       return null;
+    }
+  }
+
+  /// Keeps disk and in-memory cache bounded during long chat sessions. Dart's
+  /// default map preserves insertion order, so the oldest cached audio is
+  /// evicted first. Audio can always be generated again on demand.
+  Future<void> _cacheAudioFile(int key, String path) async {
+    _audioCache.remove(key);
+    _audioCache[key] = path;
+
+    while (_audioCache.length > _maxCachedAudioFiles) {
+      final evictedKey = _audioCache.keys.first;
+      final evictedPath = _audioCache.remove(evictedKey);
+      if (evictedPath == null) continue;
+
+      try {
+        final file = File(evictedPath);
+        if (await file.exists()) await file.delete();
+      } catch (error) {
+        debugPrint('[TTS] Tidak dapat menghapus cache lama: $error');
+      }
     }
   }
 

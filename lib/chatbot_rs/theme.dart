@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'presentation/widgets/app_motion.dart';
 
 class ChatbotTheme {
   // Light Mode Legacy (Will be updated later)
@@ -8,7 +9,7 @@ class ChatbotTheme {
   static const Color secondaryColor = Color(0xFF006C49);
   static const Color backgroundColor = Color(0xFFF8F9FF);
   static const Color onSurfaceColor = Color(0xFF0B1C30);
-  
+
   // Dark Mode Figma Redesign
   static const Color darkBackground = Color(0xFF16181A);
   static const Color darkSurface = Color(0xFF3C3D3F);
@@ -27,24 +28,37 @@ class ChatbotTheme {
 
   static ThemeData _buildTheme(Brightness brightness) {
     final bool isDark = brightness == Brightness.dark;
-    
+
     return ThemeData(
       useMaterial3: true,
       brightness: brightness,
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: AppPageTransitionsBuilder(),
+          TargetPlatform.iOS: AppPageTransitionsBuilder(),
+          TargetPlatform.macOS: AppPageTransitionsBuilder(),
+          TargetPlatform.windows: AppPageTransitionsBuilder(),
+          TargetPlatform.linux: AppPageTransitionsBuilder(),
+        },
+      ),
       scaffoldBackgroundColor: isDark ? darkBackground : backgroundColor,
       colorScheme: ColorScheme.fromSeed(
         seedColor: isDark ? brandPrimary : primaryColor,
         brightness: brightness,
         primary: isDark ? brandPrimary : primaryColor,
         onPrimary: isDark ? Colors.white : Colors.white,
-        primaryContainer: isDark ? brandPrimary.withValues(alpha: 0.2) : primaryContainer,
+        primaryContainer: isDark
+            ? brandPrimary.withValues(alpha: 0.2)
+            : primaryContainer,
         secondary: isDark ? darkSurface : secondaryColor,
         surface: isDark ? darkBackground : backgroundColor,
         onSurface: isDark ? textMain : onSurfaceColor,
         outlineVariant: isDark ? darkSurface : const Color(0xFFE2E8F0),
       ),
       textSelectionTheme: TextSelectionThemeData(
-        selectionColor: isDark ? brandPrimary.withValues(alpha: 0.4) : Colors.amber.withValues(alpha: 0.5),
+        selectionColor: isDark
+            ? brandPrimary.withValues(alpha: 0.4)
+            : Colors.amber.withValues(alpha: 0.5),
         selectionHandleColor: isDark ? brandPrimary : Colors.amber,
         cursorColor: isDark ? brandPrimary : Colors.amber,
       ),
@@ -99,7 +113,9 @@ class ChatbotTheme {
           ),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28), // Fully rounded for Let's Chat Now
+            borderRadius: BorderRadius.circular(
+              28,
+            ), // Fully rounded for Let's Chat Now
           ),
         ),
       ),
@@ -113,16 +129,18 @@ class ChatbotTheme {
           borderRadius: BorderRadius.circular(28),
           borderSide: BorderSide.none,
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 16,
+        ),
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: isDark ? darkSurface : Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
       drawerTheme: DrawerThemeData(
         backgroundColor: isDark ? darkBackground : backgroundColor,
+        elevation: 0,
       ),
     );
   }

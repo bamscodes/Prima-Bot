@@ -16,7 +16,10 @@ class _BaseDetailScreen extends StatelessWidget {
           children: [
             // Header Area
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20.0,
+                vertical: 20.0,
+              ),
               child: Row(
                 children: [
                   Container(
@@ -25,7 +28,10 @@ class _BaseDetailScreen extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                     child: IconButton(
-                      icon: Icon(Icons.arrow_back, color: theme.colorScheme.onSurface),
+                      icon: Icon(
+                        Icons.arrow_back,
+                        color: theme.colorScheme.onSurface,
+                      ),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ),
@@ -35,7 +41,11 @@ class _BaseDetailScreen extends StatelessWidget {
                         CircleAvatar(
                           radius: 24,
                           backgroundColor: Colors.white,
-                          child: Icon(Icons.people_alt, color: const Color(0xFF16181A), size: 28),
+                          child: Icon(
+                            Icons.people_alt,
+                            color: const Color(0xFF16181A),
+                            size: 28,
+                          ),
                         ),
                         const SizedBox(height: 8),
                         Text(
@@ -56,46 +66,46 @@ class _BaseDetailScreen extends StatelessWidget {
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(24.0),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.secondary,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            color: theme.colorScheme.onSurface,
-                            fontWeight: FontWeight.bold,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(24.0),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.secondary,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: theme.colorScheme.onSurface,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 16),
-                        content,
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-                  Center(
-                    child: Text(
-                      'Prima Bot Version 1.0.0',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF9D9D9D),
-                        fontSize: 12,
+                          const SizedBox(height: 16),
+                          content,
+                        ],
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                ],
+                    const SizedBox(height: 40),
+                    Center(
+                      child: Text(
+                        'Prima Bot Version 1.0.0',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: const Color(0xFF9D9D9D),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-    );
+      );
   }
 }
 
@@ -121,7 +131,9 @@ class _SoundSettingsScreenState extends State<SoundSettingsScreen> {
           SliderTheme(
             data: SliderThemeData(
               activeTrackColor: theme.colorScheme.onSurface,
-              inactiveTrackColor: const Color(0xFF9D9D9D).withValues(alpha: 0.3),
+              inactiveTrackColor: const Color(
+                0xFF9D9D9D,
+              ).withValues(alpha: 0.3),
               thumbColor: theme.colorScheme.onSurface,
               trackHeight: 4,
               thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
@@ -140,7 +152,9 @@ class _SoundSettingsScreenState extends State<SoundSettingsScreen> {
                 value: _autoPlay,
                 onChanged: (val) => setState(() => _autoPlay = val),
                 activeThumbColor: theme.colorScheme.primary,
-                activeTrackColor: theme.colorScheme.primary.withValues(alpha: 0.5),
+                activeTrackColor: theme.colorScheme.primary.withValues(
+                  alpha: 0.5,
+                ),
               ),
             ],
           ),
@@ -169,7 +183,11 @@ class LanguageSettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLanguageOption(ThemeData theme, String language, bool isSelected) {
+  Widget _buildLanguageOption(
+    ThemeData theme,
+    String language,
+    bool isSelected,
+  ) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -180,9 +198,16 @@ class LanguageSettingsScreen extends StatelessWidget {
           decoration: BoxDecoration(
             color: isSelected ? theme.colorScheme.primary : Colors.transparent,
             borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: isSelected ? theme.colorScheme.primary : const Color(0xFF9D9D9D), width: 2),
+            border: Border.all(
+              color: isSelected
+                  ? theme.colorScheme.primary
+                  : const Color(0xFF9D9D9D),
+              width: 2,
+            ),
           ),
-          child: isSelected ? const Icon(Icons.check, size: 16, color: Colors.white) : null,
+          child: isSelected
+              ? const Icon(Icons.check, size: 16, color: Colors.white)
+              : null,
         ),
       ],
     );
@@ -215,19 +240,40 @@ class DeveloperScreen extends StatelessWidget {
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('The people behind Prima Bot.', style: theme.textTheme.bodyMedium),
+          Text(
+            'The people behind Prima Bot.',
+            style: theme.textTheme.bodyMedium,
+          ),
           const SizedBox(height: 24),
-          Text('PROJECT SUPERVISOR\nNama Dosen\nProject Supervisor', style: theme.textTheme.bodyMedium?.copyWith(height: 1.5)),
+          Text(
+            'PROJECT SUPERVISOR\nNama Dosen\nProject Supervisor',
+            style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
+          ),
           const SizedBox(height: 16),
-          Text('Nama\nUI/UX Designer', style: theme.textTheme.bodyMedium?.copyWith(height: 1.5)),
+          Text(
+            'Nama\nUI/UX Designer',
+            style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
+          ),
           const SizedBox(height: 16),
-          Text('Nama\nMobile Developer', style: theme.textTheme.bodyMedium?.copyWith(height: 1.5)),
+          Text(
+            'Nama\nMobile Developer',
+            style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
+          ),
           const SizedBox(height: 16),
-          Text('Nama\nMobile Developer', style: theme.textTheme.bodyMedium?.copyWith(height: 1.5)),
+          Text(
+            'Nama\nMobile Developer',
+            style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
+          ),
           const SizedBox(height: 16),
-          Text('Nama\nMobile Developer', style: theme.textTheme.bodyMedium?.copyWith(height: 1.5)),
+          Text(
+            'Nama\nMobile Developer',
+            style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
+          ),
           const SizedBox(height: 16),
-          Text('Nama\nMobile Developer', style: theme.textTheme.bodyMedium?.copyWith(height: 1.5)),
+          Text(
+            'Nama\nMobile Developer',
+            style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
+          ),
         ],
       ),
     );

@@ -26,5 +26,23 @@ void main() {
       final title = ConversationTitleFormatter.format('   ');
       expect(title, 'Percakapan Baru');
     });
+
+    test('normalizes an AI title before it is displayed', () {
+      final title = ConversationTitleFormatter.formatGenerated(
+        'Judul: "Jadwal Konsultasi Dokter Anak Besok"',
+        fallback: 'Halo, saya ingin menanyakan jadwal dokter anak besok.',
+      );
+
+      expect(title, 'Jadwal Konsultasi Dokter Anak Besok');
+    });
+
+    test('uses the local title when AI returns only whitespace', () {
+      final title = ConversationTitleFormatter.formatGenerated(
+        '  ',
+        fallback: 'Saya ingin tanya tentang lokasi rumah sakit',
+      );
+
+      expect(title, 'Lokasi rumah sakit');
+    });
   });
 }

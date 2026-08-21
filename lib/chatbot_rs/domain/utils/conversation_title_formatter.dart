@@ -42,6 +42,26 @@ abstract final class ConversationTitleFormatter {
     return _capitalize(title);
   }
 
+  /// Normalizes an AI-generated title before it is persisted or shown in the
+  /// drawer. Models occasionally return quotes, a `Judul:` prefix, markdown,
+  /// or a whole sentence despite the prompt asking for a short title.
+  static String formatGenerated(String generatedTitle, {String? fallback}) {
+    var title = generatedTitle
+        .replaceAll(RegExp(r'^(?:judul|title)\s*:\s*', caseSensitive: false), '')
+        .replaceAll(RegExp(r'["“”‘’`]'), '')
+        .replaceAll(RegExp(r'[*_#>\[\]()]'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+
+    if (title.isEmpty) {
+      return format(fallback ?? '');
+    }
+
+    title = _limitWords(title);
+    title = _truncate(title);
+    return _capitalize(title);
+  }
+
   static String _capitalize(String text) {
     if (text.isEmpty) return text;
     return '${text[0].toUpperCase()}${text.substring(1)}';

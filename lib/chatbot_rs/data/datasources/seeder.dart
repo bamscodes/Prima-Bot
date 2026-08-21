@@ -8,23 +8,20 @@ import '../models/jadwal_model.dart';
 class DataSeeder {
   static Future<void> seedData() async {
     final dbHelper = DatabaseHelper.instance;
-    
-    // Check if data already exists to avoid duplicates (simplified: clear and re-seed for this demo)
-    await dbHelper.clearAll();
+    if (await dbHelper.hasSeededHospitalData()) return;
 
     final String response = await rootBundle.loadString('assets/data_rs.json');
-    final data = await json.decode(response);
+    final data = json.decode(response) as Map<String, dynamic>;
 
-    final List<dynamic> layananList = data['layanan'];
-    for (var item in layananList) {
-      await dbHelper.insertLayanan(LayananModel.fromMap(item));
-    }
+    final layananList = (data['layanan'] as List<dynamic>)
+        .map((item) => LayananModel.fromMap(item as Map<String, dynamic>))
+        .toList();
+    final jadwalList = (data['jadwal_dokter'] as List<dynamic>)
+        .map((item) => JadwalModel.fromMap(item as Map<String, dynamic>))
+        .toList();
 
-    final List<dynamic> jadwalList = data['jadwal_dokter'];
-    for (var item in jadwalList) {
-      await dbHelper.insertJadwal(JadwalModel.fromMap(item));
-    }
-    
+    await dbHelper.seedHospitalData(layananList, jadwalList);
+
     log('Data seeded successfully');
   }
 }

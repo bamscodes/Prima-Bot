@@ -13,44 +13,19 @@ class AIService {
     'google/gemma-7b-it:free',
   ];
 
-  // Use dotenv for secure storage
-  static String get _hfApiKey => dotenv.env['HUGGING_FACE_API_KEY'] ?? '';
+  // Loaded from the app environment. For production, move this request to a
+  // server-side proxy so the key is not bundled in the client application.
   static String get _openRouterApiKey => dotenv.env['OPENROUTER_API_KEY'] ?? '';
   static bool get _hasOpenRouterKey =>
       _openRouterApiKey.isNotEmpty &&
       _openRouterApiKey != 'YOUR_OPENROUTER_API_KEY';
 
-  // Hugging Face IndoBERT Intent Classification
-  static Future<Map<String, dynamic>> classifyIntent(String text) async {
-    const url =
-        'https://api-inference.huggingface.co/models/indobenchmark/indobert-base-p1';
-
-    try {
-      // Note: This is a placeholder for actual IndoBERT intent classification logic.
-      // Usually, you'd have a specific fine-tuned model for intents.
-      // For this demo, we'll simulate the response if the API key is missing.
-
-      if (_hfApiKey == 'YOUR_HUGGING_FACE_API_KEY') {
-        return _simulateIntent(text);
-      }
-
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {
-          'Authorization': 'Bearer $_hfApiKey',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({'inputs': text}),
-      );
-
-      if (response.statusCode == 200) {
-        // Map the model output to our intents
-        return {'intent': 'Cari_Jadwal', 'confidence': 0.9};
-      }
-    } catch (e) {
-      log('HF Error: $e');
-    }
-    return _simulateIntent(text);
+  // The former Hugging Face endpoint was a base IndoBERT model, not an intent
+  // classifier. Treating every HTTP 200 as `Cari_Jadwal` misrouted general
+  // questions. Keep this deterministic and local until a trained intent model
+  // and its label mapping are available.
+  static Future<Map<String, dynamic>> classifyIntent(String text) {
+    return Future.value(_simulateIntent(text));
   }
 
   // OpenRouter Text Generation with fallback and memory
@@ -81,7 +56,42 @@ TUGAS UTAMA:
         'Maaf, semua layanan AI kami sedang padat. Silakan coba lagi beberapa saat lagi.';
   }
 
+  /// Produces a compact, human-readable title after the first AI answer is
+  /// available. This runs separately from the chat response so it never
+  /// delays rendering the answer to the user.
+  static Future<String?> generateConversationTitle({
+    required String userMessage,
+    required String assistantMessage,
+  }) {
+    if (!_hasOpenRouterKey) return Future.value(null);
 
+    final userExcerpt = _excerpt(userMessage);
+    final assistantExcerpt = _excerpt(assistantMessage);
+    return _requestCompletion(
+      [
+        {
+          'role': 'system',
+          'content': '''Buat judul riwayat percakapan dalam Bahasa Indonesia.
+Rangkum topik utama, bukan salin pembuka pesan pengguna. Gunakan 3-7 kata,
+tanpa tanda kutip, tanpa awalan "Judul:", tanpa markdown, dan hanya tulis judul.''',
+        },
+        {
+          'role': 'user',
+          'content':
+              'Pesan pengguna: $userExcerpt\n\nRespons asisten: $assistantExcerpt',
+        },
+      ],
+      models: const ['openrouter/free', 'google/gemini-2.5-pro:free'],
+      maxTokens: 24,
+      temperature: 0.2,
+    );
+  }
+
+  static String _excerpt(String value, {int maxLength = 600}) {
+    final normalized = value.replaceAll(RegExp(r'\s+'), ' ').trim();
+    if (normalized.length <= maxLength) return normalized;
+    return normalized.substring(0, maxLength);
+  }
   static Future<String?> _requestCompletion(
     List<Map<String, String>> messages, {
     required Iterable<String> models,
