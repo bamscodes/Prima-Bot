@@ -251,7 +251,17 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                       ? _buildEmptyChat(theme)
                       : _buildChatList(chatProvider, theme),
                 ),
-                // Removed AnimatedSize for _buildSuggestions from here
+                AnimatedSize(
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeOutCubic,
+                  alignment: Alignment.bottomCenter,
+                  child:
+                      (chatProvider.messages.isNotEmpty &&
+                          chatProvider.suggestions.isNotEmpty &&
+                          !chatProvider.isLoading)
+                      ? _buildSuggestions(chatProvider, theme)
+                      : const SizedBox.shrink(),
+                ),
                 _buildInputArea(theme),
               ],
             ),
@@ -704,121 +714,106 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     );
   }
 
-  Widget _buildInputArea(ThemeData theme) {
-    final chatProvider = Provider.of<ChatProvider>(context);
-    final hasSuggestions = chatProvider.messages.isNotEmpty &&
-                           chatProvider.suggestions.isNotEmpty &&
-                           !chatProvider.isLoading;
+  Widget _buildSuggestions(ChatProvider provider, ThemeData theme) {
+    return Container(
+      height: 38,
+      margin: const EdgeInsets.only(top: 4, bottom: 10),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        itemCount: provider.suggestions.length,
+        itemBuilder: (context, index) {
+          final suggestion = provider.suggestions[index];
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ActionChip(
+              label: Text(suggestion),
+              onPressed: () {
+                FocusScope.of(context).unfocus();
+                _sendMessage(suggestion);
+              },
+              backgroundColor: theme.colorScheme.secondary,
+              side: BorderSide.none,
+              labelStyle: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurface,
+                fontSize: 13,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
 
+  Widget _buildInputArea(ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.only(left: 20, right: 20, bottom: 16, top: 2),
-      child: AnimatedSize(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOutCubic,
-        alignment: Alignment.bottomCenter,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 4.0),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.secondary,
-            borderRadius: BorderRadius.circular(24),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (hasSuggestions)
-                Container(
-                  height: 40,
-                  margin: const EdgeInsets.only(top: 8, bottom: 4),
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    itemCount: chatProvider.suggestions.length,
-                    itemBuilder: (context, index) {
-                      final suggestion = chatProvider.suggestions[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: ActionChip(
-                          label: Text(suggestion),
-                          onPressed: () {
-                            FocusScope.of(context).unfocus();
-                            _sendMessage(suggestion);
-                          },
-                          backgroundColor: theme.colorScheme.surface,
-                          side: BorderSide(
-                            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.2),
-                          ),
-                          labelStyle: theme.textTheme.labelSmall?.copyWith(
-                            color: theme.colorScheme.onSurface,
-                            fontSize: 13,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                        ),
-                      );
-                    },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 4.0),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.secondary,
+          borderRadius: BorderRadius.circular(28),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const SizedBox(width: 10),
+            Expanded(
+              child: TextField(
+                key: const ValueKey('chat_input'),
+                controller: _controller,
+                focusNode: _inputFocusNode,
+                autofocus: false,
+                keyboardType: TextInputType.multiline,
+                minLines: 1,
+                maxLines: 5,
+                textInputAction: TextInputAction.newline,
+                textAlignVertical: TextAlignVertical.center,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurface,
+                  fontSize: 15,
+                ),
+                decoration: InputDecoration(
+                  hintText: 'Tanya Sesuatu...',
+                  hintStyle: theme.textTheme.bodyMedium?.copyWith(
+                    color: const Color(0xFF9D9D9D),
+                    fontSize: 15,
+                  ),
+                  isDense: true,
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  fillColor: Colors.transparent,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 12,
                   ),
                 ),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: TextField(
-                      key: const ValueKey('chat_input'),
-                      controller: _controller,
-                      focusNode: _inputFocusNode,
-                      autofocus: false,
-                      keyboardType: TextInputType.multiline,
-                      minLines: 1,
-                      maxLines: 5,
-                      textInputAction: TextInputAction.newline,
-                      textAlignVertical: TextAlignVertical.center,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurface,
-                        fontSize: 15,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'Tanya Sesuatu...',
-                        hintStyle: theme.textTheme.bodyMedium?.copyWith(
-                          color: const Color(0xFF9D9D9D),
-                          fontSize: 15,
-                        ),
-                        isDense: true,
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        fillColor: Colors.transparent,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 4,
-                          vertical: 12,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  AppScaleTap(
-                    semanticLabel: 'Kirim pesan',
-                    onTap: () => _sendMessage(),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primary,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.send_rounded,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                ],
               ),
-            ],
-          ),
+            ),
+            const SizedBox(width: 6),
+            AppScaleTap(
+              semanticLabel: 'Kirim pesan',
+              onTap: () => _sendMessage(),
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.send_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -862,6 +857,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
+                      focusColor: Colors.transparent,
                       hoverColor: theme.colorScheme.secondary.withValues(alpha: 0.5),
                       splashColor: theme.colorScheme.secondary.withValues(alpha: 0.7),
                       leading: Icon(
@@ -888,6 +884,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
+                      focusColor: Colors.transparent,
                       hoverColor: theme.colorScheme.secondary.withValues(alpha: 0.5),
                       splashColor: theme.colorScheme.secondary.withValues(alpha: 0.7),
                       leading: Icon(
@@ -973,13 +970,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
+                              focusColor: Colors.transparent,
+                              hoverColor: theme.colorScheme.secondary.withValues(alpha: 0.5),
+                              splashColor: theme.colorScheme.secondary.withValues(alpha: 0.7),
                               selected: isActive,
-                              selectedTileColor:
-                                  theme.colorScheme.secondary,
-                              hoverColor: theme.colorScheme.secondary
-                                  .withValues(alpha: 0.5),
-                              splashColor: theme.colorScheme.secondary
-                                  .withValues(alpha: 0.7),
+                              selectedColor: theme.colorScheme.onSurface,
+                              selectedTileColor: theme.colorScheme.secondary,
                               leading: Icon(
                                 Icons.chat_outlined,
                                 color: isActive
@@ -991,14 +987,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                   ? const HistoryTitleSkeleton()
                                   : Text(
                                       session.title,
-                                      style: theme.textTheme.bodyMedium
-                                          ?.copyWith(
-                                            color:
-                                                theme.colorScheme.onSurface,
-                                            fontWeight: isActive
-                                                ? FontWeight.bold
-                                                : FontWeight.normal,
-                                          ),
+                                      style: theme.textTheme.bodyMedium?.copyWith(
+                                        color: theme.colorScheme.onSurface,
+                                        fontWeight: isActive
+                                            ? FontWeight.bold
+                                            : FontWeight.normal,
+                                      ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
