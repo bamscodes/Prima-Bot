@@ -150,22 +150,18 @@ class SettingsScreen extends StatelessWidget {
                       theme,
                       icon: Icons.volume_up_rounded,
                       title: 'Sound',
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const SoundSettingsScreen(),
-                        ),
+                      onTap: () => showDialog(
+                        context: context,
+                        builder: (_) => const SoundSettingsScreen(),
                       ),
                     ),
                     _buildSettingsCard(
                       theme,
                       icon: Icons.language,
                       title: 'Language',
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const LanguageSettingsScreen(),
-                        ),
+                      onTap: () => showDialog(
+                        context: context,
+                        builder: (_) => const LanguageSettingsScreen(),
                       ),
                     ),
                     _buildSettingsCard(

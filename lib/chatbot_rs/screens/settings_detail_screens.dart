@@ -124,62 +124,113 @@ class _SoundSettingsScreenState extends State<SoundSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return _BaseDetailScreen(
-      title: 'Chat Sound',
-      content: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SliderTheme(
-            data: SliderThemeData(
-              activeTrackColor: theme.colorScheme.onSurface,
-              inactiveTrackColor: const Color(
-                0xFF9D9D9D,
-              ).withValues(alpha: 0.3),
-              thumbColor: theme.colorScheme.onSurface,
-              trackHeight: 4,
-              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
-            ),
-            child: Slider(
-              value: _volume,
-              onChanged: (val) => setState(() => _volume = val),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Auto Play Voice', style: theme.textTheme.bodyMedium),
-              Switch(
-                value: _autoPlay,
-                onChanged: (val) => setState(() => _autoPlay = val),
-                activeThumbColor: theme.colorScheme.primary,
-                activeTrackColor: theme.colorScheme.primary.withValues(
-                  alpha: 0.5,
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      backgroundColor: theme.colorScheme.surface,
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.volume_up_outlined, color: theme.colorScheme.onSurface),
+                const SizedBox(width: 8),
+                Text(
+                  'Chat Sound',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: theme.colorScheme.onSurface,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            SliderTheme(
+              data: SliderThemeData(
+                activeTrackColor: theme.colorScheme.onSurface,
+                inactiveTrackColor: const Color(
+                  0xFF9D9D9D,
+                ).withValues(alpha: 0.3),
+                thumbColor: theme.colorScheme.onSurface,
+                trackHeight: 4,
+                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
+                overlayShape: const RoundSliderOverlayShape(overlayRadius: 16),
               ),
-            ],
-          ),
-        ],
+              child: Slider(
+                value: _volume,
+                onChanged: (val) => setState(() => _volume = val),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Auto Play Voice',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Switch(
+                  value: _autoPlay,
+                  onChanged: (val) => setState(() => _autoPlay = val),
+                  activeThumbColor: theme.colorScheme.primary,
+                  activeTrackColor: theme.colorScheme.primary.withValues(
+                    alpha: 0.5,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class LanguageSettingsScreen extends StatelessWidget {
+class LanguageSettingsScreen extends StatefulWidget {
   const LanguageSettingsScreen({super.key});
+
+  @override
+  State<LanguageSettingsScreen> createState() => _LanguageSettingsScreenState();
+}
+
+class _LanguageSettingsScreenState extends State<LanguageSettingsScreen> {
+  String _selectedLanguage = 'English';
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return _BaseDetailScreen(
-      title: 'Language',
-      content: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildLanguageOption(theme, 'Indonesia', true),
-          const SizedBox(height: 16),
-          _buildLanguageOption(theme, 'English', false),
-        ],
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      backgroundColor: theme.colorScheme.surface,
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.translate, color: theme.colorScheme.onSurface),
+                const SizedBox(width: 8),
+                Text(
+                  'Language',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: theme.colorScheme.onSurface,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            _buildLanguageOption(theme, 'Indonesia', _selectedLanguage == 'Indonesia'),
+            const SizedBox(height: 16),
+            _buildLanguageOption(theme, 'English', _selectedLanguage == 'English'),
+          ],
+        ),
       ),
     );
   }
@@ -189,28 +240,33 @@ class LanguageSettingsScreen extends StatelessWidget {
     String language,
     bool isSelected,
   ) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(language, style: theme.textTheme.bodyMedium),
-        Container(
-          width: 24,
-          height: 24,
-          decoration: BoxDecoration(
-            color: isSelected ? theme.colorScheme.primary : Colors.transparent,
-            borderRadius: BorderRadius.circular(4),
-            border: Border.all(
-              color: isSelected
-                  ? theme.colorScheme.primary
-                  : const Color(0xFF9D9D9D),
-              width: 2,
+    return InkWell(
+      onTap: () => setState(() => _selectedLanguage = language),
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4.0),
+        child: Row(
+          children: [
+            Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                color: isSelected 
+                    ? theme.colorScheme.primary 
+                    : (theme.brightness == Brightness.dark ? Colors.white : const Color(0xFFF5F6F8)),
+                borderRadius: BorderRadius.circular(4),
+              ),
             ),
-          ),
-          child: isSelected
-              ? const Icon(Icons.check, size: 16, color: Colors.white)
-              : null,
+            const SizedBox(width: 12),
+            Text(
+              language, 
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
