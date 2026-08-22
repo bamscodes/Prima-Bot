@@ -44,7 +44,7 @@ TUGAS UTAMA:
 2. Jika data tidak ditemukan, katakan dengan sopan bahwa informasi tersebut belum tersedia atau sarankan untuk menghubungi pendaftaran.
 3. JANGAN berhalusinasi atau membuat-buat jadwal dokter.
 4. JANGAN memberikan saran medis yang spesifik (diagnosis atau obat). Sarankan pasien untuk berkonsultasi dengan dokter.
-5. Gunakan Bahasa Indonesia yang sopan dan profesional.''',
+5. Gunakan HANYA Bahasa Indonesia yang baku, sopan, dan profesional. DILARANG keras menggunakan bahasa daerah.''',
     };
 
     final content = await _requestCompletion([
@@ -92,6 +92,7 @@ tanpa tanda kutip, tanpa awalan "Judul:", tanpa markdown, dan hanya tulis judul.
     if (normalized.length <= maxLength) return normalized;
     return normalized.substring(0, maxLength);
   }
+
   static Future<String?> _requestCompletion(
     List<Map<String, String>> messages, {
     required Iterable<String> models,
