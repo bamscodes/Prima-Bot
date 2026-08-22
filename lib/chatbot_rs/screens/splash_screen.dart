@@ -139,13 +139,17 @@ class _ChatbotSplashScreenState extends State<ChatbotSplashScreen>
                                         vertical: 8,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: Colors.white,
+                                        color: theme.brightness == Brightness.light
+                                            ? theme.colorScheme.primary
+                                            : Colors.white,
                                         borderRadius: BorderRadius.circular(30),
                                       ),
                                       child: Text(
                                         'Hospital Guide',
                                         style: theme.textTheme.displaySmall?.copyWith(
-                                          color: theme.colorScheme.primary,
+                                          color: theme.brightness == Brightness.light
+                                              ? Colors.white
+                                              : theme.colorScheme.primary,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
@@ -190,9 +194,11 @@ class _ChatbotSplashScreenState extends State<ChatbotSplashScreen>
                               top: 20,
                               bottom: 20,
                             ),
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.only(
+                            decoration: BoxDecoration(
+                              color: theme.brightness == Brightness.light
+                                  ? theme.colorScheme.primary
+                                  : Colors.white,
+                              borderRadius: const BorderRadius.only(
                                 topRight: Radius.circular(50),
                                 bottomRight: Radius.circular(50),
                               ),
@@ -203,21 +209,27 @@ class _ChatbotSplashScreenState extends State<ChatbotSplashScreen>
                                 Text(
                                   'Hospital Information',
                                   style: theme.textTheme.labelSmall?.copyWith(
-                                    color: theme.colorScheme.primary,
+                                    color: theme.brightness == Brightness.light
+                                        ? Colors.white
+                                        : theme.colorScheme.primary,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   'Fast Answers',
                                   style: theme.textTheme.labelSmall?.copyWith(
-                                    color: theme.colorScheme.primary,
+                                    color: theme.brightness == Brightness.light
+                                        ? Colors.white
+                                        : theme.colorScheme.primary,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   'Easy Access',
                                   style: theme.textTheme.labelSmall?.copyWith(
-                                    color: theme.colorScheme.primary,
+                                    color: theme.brightness == Brightness.light
+                                        ? Colors.white
+                                        : theme.colorScheme.primary,
                                   ),
                                 ),
                               ],
@@ -242,9 +254,11 @@ class _ChatbotSplashScreenState extends State<ChatbotSplashScreen>
                               top: 20,
                               bottom: 20,
                             ),
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.only(
+                            decoration: BoxDecoration(
+                              color: theme.brightness == Brightness.light
+                                  ? theme.colorScheme.primary
+                                  : Colors.white,
+                              borderRadius: const BorderRadius.only(
                                 topLeft: Radius.circular(50),
                                 bottomLeft: Radius.circular(50),
                               ),
@@ -255,28 +269,36 @@ class _ChatbotSplashScreenState extends State<ChatbotSplashScreen>
                                 Text(
                                   'Get Started',
                                   style: theme.textTheme.labelSmall?.copyWith(
-                                    color: theme.colorScheme.primary,
+                                    color: theme.brightness == Brightness.light
+                                        ? Colors.white
+                                        : theme.colorScheme.primary,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   'Explore Prima',
                                   style: theme.textTheme.labelSmall?.copyWith(
-                                    color: theme.colorScheme.primary,
+                                    color: theme.brightness == Brightness.light
+                                        ? Colors.white
+                                        : theme.colorScheme.primary,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   'Start Chatting',
                                   style: theme.textTheme.labelSmall?.copyWith(
-                                    color: theme.colorScheme.primary,
+                                    color: theme.brightness == Brightness.light
+                                        ? Colors.white
+                                        : theme.colorScheme.primary,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   'Let\'s Start Now',
                                   style: theme.textTheme.labelSmall?.copyWith(
-                                    color: theme.colorScheme.primary,
+                                    color: theme.brightness == Brightness.light
+                                        ? Colors.white
+                                        : theme.colorScheme.primary,
                                   ),
                                 ),
                               ],

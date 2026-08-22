@@ -9,4 +9,9 @@ class ThemeProvider with ChangeNotifier {
     _themeMode = isCurrentlyDark ? ThemeMode.light : ThemeMode.dark;
     notifyListeners();
   }
+
+  void setThemeMode(ThemeMode mode) {
+    _themeMode = mode;
+    notifyListeners();
+  }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-
+import 'package:provider/provider.dart';
+import '../presentation/providers/theme_provider.dart';
 class _BaseDetailScreen extends StatelessWidget {
   final String title;
   final Widget content;
@@ -222,7 +223,7 @@ class AboutScreen extends StatelessWidget {
     return _BaseDetailScreen(
       title: 'About Prima',
       content: Text(
-        'Prima Bot is an AI-powered hospital assistant designed to help patients and visitors access hospital information more easily.\n\nDeveloped for [Nama Rumah Sakit]\nUniversitas Catur Insan Cendekia\n\n© 2026 Prima Bot Team',
+        'Prima Bot adalah asisten rumah sakit berbasis kecerdasan buatan (AI) yang dirancang secara khusus untuk membantu pasien dan pengunjung dalam mengakses berbagai informasi dan layanan medis dengan lebih mudah, akurat, dan interaktif.\n\nDikembangkan untuk:\nRumah Sakit Prima Insan Mulia\nUniversitas Catur Insan Cendekia\n\n© 2026 Prima Bot Team',
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.6),
       ),
     );
@@ -246,32 +247,32 @@ class DeveloperScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           Text(
-            'PROJECT SUPERVISOR\nNama Dosen\nProject Supervisor',
+            'PROJECT SUPERVISOR\nBambang Sugiarto, S.Kom., M.Kom.',
             style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
           ),
           const SizedBox(height: 16),
           Text(
-            'Nama\nUI/UX Designer',
+            'UI/UX DESIGNER\nKharis Destian Maulana',
             style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
           ),
           const SizedBox(height: 16),
           Text(
-            'Nama\nMobile Developer',
+            'FRONTEND DEVELOPER\nNanda Putra Hartono',
             style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
           ),
           const SizedBox(height: 16),
           Text(
-            'Nama\nMobile Developer',
+            'BACKEND DEVELOPER\nRadhitya Hafif',
             style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
           ),
           const SizedBox(height: 16),
           Text(
-            'Nama\nMobile Developer',
+            'AI DEVELOPER\nMuhammad Arif Triyana',
             style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
           ),
           const SizedBox(height: 16),
           Text(
-            'Nama\nMobile Developer',
+            'QA TESTER\nAndra Oktoriza Ramadhan',
             style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
           ),
         ],
@@ -305,6 +306,83 @@ class TermsScreen extends StatelessWidget {
       content: Text(
         'Last updated: August 2026\n\n1. About Prima Bot\nPrima Bot is an AI-powered hospital assistant designed to help patients and visitors access general information about hospital services, facilities, schedules, registration procedures, and other hospital-related information.',
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.6),
+      ),
+    );
+  }
+}
+
+class ThemeSettingsScreen extends StatelessWidget {
+  const ThemeSettingsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
+    return _BaseDetailScreen(
+      title: 'App Theme',
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildThemeOption(
+            theme: theme,
+            title: 'System Default',
+            isSelected: themeProvider.themeMode == ThemeMode.system,
+            onTap: () => themeProvider.setThemeMode(ThemeMode.system),
+          ),
+          const SizedBox(height: 16),
+          _buildThemeOption(
+            theme: theme,
+            title: 'Light Mode',
+            isSelected: themeProvider.themeMode == ThemeMode.light,
+            onTap: () => themeProvider.setThemeMode(ThemeMode.light),
+          ),
+          const SizedBox(height: 16),
+          _buildThemeOption(
+            theme: theme,
+            title: 'Dark Mode',
+            isSelected: themeProvider.themeMode == ThemeMode.dark,
+            onTap: () => themeProvider.setThemeMode(ThemeMode.dark),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildThemeOption({
+    required ThemeData theme,
+    required String title,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(title, style: theme.textTheme.bodyMedium),
+            Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: isSelected ? theme.colorScheme.primary : Colors.transparent,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected
+                      ? theme.colorScheme.primary
+                      : const Color(0xFF9D9D9D),
+                  width: 2,
+                ),
+              ),
+              child: isSelected
+                  ? const Icon(Icons.check, size: 16, color: Colors.white)
+                  : null,
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -3,12 +3,12 @@ import 'package:google_fonts/google_fonts.dart';
 import 'presentation/widgets/app_motion.dart';
 
 class ChatbotTheme {
-  // Light Mode Legacy (Will be updated later)
-  static const Color primaryColor = Color(0xFF005A71);
-  static const Color primaryContainer = Color(0xFF0E7490);
-  static const Color secondaryColor = Color(0xFF006C49);
-  static const Color backgroundColor = Color(0xFFF8F9FF);
-  static const Color onSurfaceColor = Color(0xFF0B1C30);
+  // Light Mode Figma Redesign
+  static const Color lightBackground = Color(0xFFF7F9F9);
+  static const Color lightSurface = Color(0xFFFFFFFF);
+  static const Color lightBrandPrimary = Color(0xFF53B3A7);
+  static const Color lightTextMain = Color(0xFF3C3D3F);
+  static const Color lightTextSubtitle = Color(0xFF9D9D9D);
 
   // Dark Mode Figma Redesign
   static const Color darkBackground = Color(0xFF16181A);
@@ -41,71 +41,71 @@ class ChatbotTheme {
           TargetPlatform.linux: AppPageTransitionsBuilder(),
         },
       ),
-      scaffoldBackgroundColor: isDark ? darkBackground : backgroundColor,
+      scaffoldBackgroundColor: isDark ? darkBackground : lightBackground,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: isDark ? brandPrimary : primaryColor,
+        seedColor: isDark ? brandPrimary : lightBrandPrimary,
         brightness: brightness,
-        primary: isDark ? brandPrimary : primaryColor,
+        primary: isDark ? brandPrimary : lightBrandPrimary,
         onPrimary: isDark ? Colors.white : Colors.white,
         primaryContainer: isDark
             ? brandPrimary.withValues(alpha: 0.2)
-            : primaryContainer,
-        secondary: isDark ? darkSurface : secondaryColor,
-        surface: isDark ? darkBackground : backgroundColor,
-        onSurface: isDark ? textMain : onSurfaceColor,
+            : lightBrandPrimary.withValues(alpha: 0.2),
+        secondary: isDark ? darkSurface : lightSurface,
+        surface: isDark ? darkBackground : lightBackground,
+        onSurface: isDark ? textMain : lightTextMain,
         outlineVariant: isDark ? darkSurface : const Color(0xFFE2E8F0),
       ),
       textSelectionTheme: TextSelectionThemeData(
         selectionColor: isDark
             ? brandPrimary.withValues(alpha: 0.4)
-            : Colors.amber.withValues(alpha: 0.5),
-        selectionHandleColor: isDark ? brandPrimary : Colors.amber,
-        cursorColor: isDark ? brandPrimary : Colors.amber,
+            : lightBrandPrimary.withValues(alpha: 0.4),
+        selectionHandleColor: isDark ? brandPrimary : lightBrandPrimary,
+        cursorColor: isDark ? brandPrimary : lightBrandPrimary,
       ),
       textTheme: TextTheme(
         displayLarge: GoogleFonts.manrope(
           fontSize: 40,
           fontWeight: FontWeight.bold,
-          color: isDark ? textMain : onSurfaceColor,
+          color: isDark ? textMain : lightTextMain,
         ),
         displayMedium: GoogleFonts.manrope(
           fontSize: 32,
           fontWeight: FontWeight.w600,
-          color: isDark ? textMain : onSurfaceColor,
+          color: isDark ? textMain : lightTextMain,
         ),
         displaySmall: GoogleFonts.manrope(
           fontSize: 24,
           fontWeight: FontWeight.w600,
-          color: isDark ? textMain : onSurfaceColor,
+          color: isDark ? textMain : lightTextMain,
         ),
         bodyLarge: GoogleFonts.manrope(
           fontSize: 18,
           fontWeight: FontWeight.normal,
-          color: isDark ? textMain : onSurfaceColor,
+          color: isDark ? textMain : lightTextMain,
           height: 1.6,
         ),
         bodyMedium: GoogleFonts.manrope(
           fontSize: 16,
           fontWeight: FontWeight.normal,
-          color: isDark ? textMain : onSurfaceColor,
+          color: isDark ? textMain : lightTextMain,
           height: 1.6,
         ),
         bodySmall: GoogleFonts.manrope(
           fontSize: 14,
           fontWeight: FontWeight.normal,
-          color: isDark ? textSubtitle : Colors.black54,
+          color: isDark ? textSubtitle : lightTextSubtitle,
           height: 1.5,
         ),
         labelSmall: GoogleFonts.inter(
           fontSize: 14,
           fontWeight: FontWeight.w500,
           letterSpacing: 0.02,
-          color: isDark ? textSubtitle : Colors.black54,
+          color: isDark ? textSubtitle : lightTextSubtitle,
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: isDark ? brandPrimary : primaryColor,
+          backgroundColor: isDark ? brandPrimary : lightBrandPrimary,
           foregroundColor: Colors.white,
           textStyle: GoogleFonts.manrope(
             fontWeight: FontWeight.bold,
@@ -121,9 +121,9 @@ class ChatbotTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: isDark ? darkSurface : Colors.white,
+        fillColor: isDark ? darkSurface : lightSurface,
         hintStyle: GoogleFonts.manrope(
-          color: isDark ? textSubtitle : Colors.black54,
+          color: isDark ? textSubtitle : lightTextSubtitle,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(28),
@@ -135,11 +135,11 @@ class ChatbotTheme {
         ),
       ),
       dialogTheme: DialogThemeData(
-        backgroundColor: isDark ? darkSurface : Colors.white,
+        backgroundColor: isDark ? darkSurface : lightSurface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
       drawerTheme: DrawerThemeData(
-        backgroundColor: isDark ? darkBackground : backgroundColor,
+        backgroundColor: isDark ? darkBackground : lightBackground,
         elevation: 0,
       ),
     );

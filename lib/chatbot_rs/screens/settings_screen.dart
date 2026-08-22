@@ -42,7 +42,7 @@ class SettingsScreen extends StatelessWidget {
                     TextButton(
                       onPressed: () => Navigator.pop(context),
                       style: TextButton.styleFrom(
-                        foregroundColor: const Color(0xFFF7F9F9),
+                        foregroundColor: theme.colorScheme.onSurface,
                       ),
                       child: const Text(
                         'No',
@@ -118,10 +118,10 @@ class SettingsScreen extends StatelessWidget {
                       children: [
                         CircleAvatar(
                           radius: 24,
-                          backgroundColor: Colors.white,
+                          backgroundColor: theme.colorScheme.onSurface,
                           child: Icon(
                             Icons.people_alt,
-                            color: const Color(0xFF16181A),
+                            color: theme.colorScheme.surface,
                             size: 28,
                           ),
                         ),
@@ -165,6 +165,17 @@ class SettingsScreen extends StatelessWidget {
                         context,
                         MaterialPageRoute(
                           builder: (_) => const LanguageSettingsScreen(),
+                        ),
+                      ),
+                    ),
+                    _buildSettingsCard(
+                      theme,
+                      icon: Icons.color_lens_outlined,
+                      title: 'App Theme',
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ThemeSettingsScreen(),
                         ),
                       ),
                     ),
