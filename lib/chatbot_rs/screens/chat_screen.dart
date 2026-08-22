@@ -251,17 +251,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                       ? _buildEmptyChat(theme)
                       : _buildChatList(chatProvider, theme),
                 ),
-                AnimatedSize(
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeOutCubic,
-                  alignment: Alignment.bottomCenter,
-                  child:
-                      (chatProvider.messages.isNotEmpty &&
-                          chatProvider.suggestions.isNotEmpty &&
-                          !chatProvider.isLoading)
-                      ? _buildSuggestions(chatProvider, theme)
-                      : const SizedBox.shrink(),
-                ),
+                // Removed AnimatedSize for _buildSuggestions from here
                 _buildInputArea(theme),
               ],
             ),
@@ -714,106 +704,121 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     );
   }
 
-  Widget _buildSuggestions(ChatProvider provider, ThemeData theme) {
-    return Container(
-      height: 38,
-      margin: const EdgeInsets.only(top: 4, bottom: 10),
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        itemCount: provider.suggestions.length,
-        itemBuilder: (context, index) {
-          final suggestion = provider.suggestions[index];
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: ActionChip(
-              label: Text(suggestion),
-              onPressed: () {
-                FocusScope.of(context).unfocus();
-                _sendMessage(suggestion);
-              },
-              backgroundColor: theme.colorScheme.secondary,
-              side: BorderSide.none,
-              labelStyle: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurface,
-                fontSize: 13,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
   Widget _buildInputArea(ThemeData theme) {
+    final chatProvider = Provider.of<ChatProvider>(context);
+    final hasSuggestions = chatProvider.messages.isNotEmpty &&
+                           chatProvider.suggestions.isNotEmpty &&
+                           !chatProvider.isLoading;
+
     return Padding(
       padding: const EdgeInsets.only(left: 20, right: 20, bottom: 16, top: 2),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 4.0),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.secondary,
-          borderRadius: BorderRadius.circular(28),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            const SizedBox(width: 10),
-            Expanded(
-              child: TextField(
-                key: const ValueKey('chat_input'),
-                controller: _controller,
-                focusNode: _inputFocusNode,
-                autofocus: false,
-                keyboardType: TextInputType.multiline,
-                minLines: 1,
-                maxLines: 5,
-                textInputAction: TextInputAction.newline,
-                textAlignVertical: TextAlignVertical.center,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface,
-                  fontSize: 15,
-                ),
-                decoration: InputDecoration(
-                  hintText: 'Tanya Sesuatu...',
-                  hintStyle: theme.textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF9D9D9D),
-                    fontSize: 15,
+      child: AnimatedSize(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
+        alignment: Alignment.bottomCenter,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 4.0),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.secondary,
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (hasSuggestions)
+                Container(
+                  height: 40,
+                  margin: const EdgeInsets.only(top: 8, bottom: 4),
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    itemCount: chatProvider.suggestions.length,
+                    itemBuilder: (context, index) {
+                      final suggestion = chatProvider.suggestions[index];
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ActionChip(
+                          label: Text(suggestion),
+                          onPressed: () {
+                            FocusScope.of(context).unfocus();
+                            _sendMessage(suggestion);
+                          },
+                          backgroundColor: theme.colorScheme.surface,
+                          side: BorderSide(
+                            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.2),
+                          ),
+                          labelStyle: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.onSurface,
+                            fontSize: 13,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                  isDense: true,
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  fillColor: Colors.transparent,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 4,
-                    vertical: 12,
+                ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: TextField(
+                      key: const ValueKey('chat_input'),
+                      controller: _controller,
+                      focusNode: _inputFocusNode,
+                      autofocus: false,
+                      keyboardType: TextInputType.multiline,
+                      minLines: 1,
+                      maxLines: 5,
+                      textInputAction: TextInputAction.newline,
+                      textAlignVertical: TextAlignVertical.center,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurface,
+                        fontSize: 15,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'Tanya Sesuatu...',
+                        hintStyle: theme.textTheme.bodyMedium?.copyWith(
+                          color: const Color(0xFF9D9D9D),
+                          fontSize: 15,
+                        ),
+                        isDense: true,
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        fillColor: Colors.transparent,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 4,
+                          vertical: 12,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 6),
+                  AppScaleTap(
+                    semanticLabel: 'Kirim pesan',
+                    onTap: () => _sendMessage(),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.send_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(width: 6),
-            AppScaleTap(
-              semanticLabel: 'Kirim pesan',
-              onTap: () => _sendMessage(),
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.send_rounded,
-                  color: Colors.white,
-                  size: 20,
-                ),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -857,6 +862,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
+                      hoverColor: theme.colorScheme.secondary.withValues(alpha: 0.5),
+                      splashColor: theme.colorScheme.secondary.withValues(alpha: 0.7),
                       leading: Icon(
                         Icons.chat_bubble_outline_rounded,
                         color: theme.colorScheme.onSurface,
@@ -881,6 +888,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
+                      hoverColor: theme.colorScheme.secondary.withValues(alpha: 0.5),
+                      splashColor: theme.colorScheme.secondary.withValues(alpha: 0.7),
                       leading: Icon(
                         Icons.search_rounded,
                         color: theme.colorScheme.onSurface,
@@ -934,18 +943,20 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             // Dynamic History List (Isolated Scroll Area)
             Expanded(
               child: ClipRect(
-                child: chatProvider.sessions.isEmpty
-                    ? Center(
-                        child: Text(
-                          'Tidak Ada Chat',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: const Color(0xFF9D9D9D),
+                child: Material(
+                  type: MaterialType.transparency,
+                  child: chatProvider.sessions.isEmpty
+                      ? Center(
+                          child: Text(
+                            'Tidak Ada Chat',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: const Color(0xFF9D9D9D),
+                            ),
                           ),
-                        ),
-                      )
-                    : ListView.builder(
+                        )
+                      : ListView.builder(
                         physics: const ClampingScrollPhysics(),
-                        padding: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.symmetric(vertical: 4),
                         itemCount: chatProvider.sessions.length,
                         itemBuilder: (context, index) {
                           final session = chatProvider.sessions[index];
@@ -965,6 +976,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                               selected: isActive,
                               selectedTileColor:
                                   theme.colorScheme.secondary,
+                              hoverColor: theme.colorScheme.secondary
+                                  .withValues(alpha: 0.5),
+                              splashColor: theme.colorScheme.secondary
+                                  .withValues(alpha: 0.7),
                               leading: Icon(
                                 Icons.chat_outlined,
                                 color: isActive
@@ -1063,34 +1078,46 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                           );
                         },
                       ),
+                ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.secondary,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: IconButton(
-                    icon: Icon(
-                      Icons.settings,
-                      color: theme.colorScheme.onSurface,
+            // Solid Footer (Mencegah riwayat tembus/bocor saat di-scroll ke bawah)
+            Container(
+              color: theme.colorScheme.surface,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20.0,
+                vertical: 16.0,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.secondary,
+                      shape: BoxShape.circle,
                     ),
-                    onPressed: () {
-                      FocusScope.of(context).unfocus();
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const SettingsScreen(),
-                        ),
-                      );
-                    },
+                    child: IconButton(
+                      padding: EdgeInsets.zero,
+                      icon: Icon(
+                        Icons.settings,
+                        color: theme.colorScheme.onSurface,
+                        size: 22,
+                      ),
+                      onPressed: () {
+                        FocusScope.of(context).unfocus();
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const SettingsScreen(),
+                          ),
+                        );
+                      },
+                    ),
                   ),
-                ),
+                ],
               ),
             ),
           ],
