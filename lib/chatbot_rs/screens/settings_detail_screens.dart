@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../presentation/providers/theme_provider.dart';
+import '../../services/supertonic_tts_service.dart';
+
 class _BaseDetailScreen extends StatelessWidget {
   final String title;
   final Widget content;
@@ -59,57 +61,59 @@ class _BaseDetailScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 48), // Balance for centering
+                  const SizedBox(width: 48),
                 ],
               ),
             ),
-
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(24.0),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.secondary,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            title,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: theme.colorScheme.onSurface,
-                              fontWeight: FontWeight.bold,
-                            ),
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(24.0),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.secondary,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: theme.colorScheme.onSurface,
+                            fontWeight: FontWeight.bold,
                           ),
-                          const SizedBox(height: 16),
-                          content,
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 40),
-                    Center(
-                      child: Text(
-                        'Prima Bot Version 1.0.0',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: const Color(0xFF9D9D9D),
-                          fontSize: 12,
                         ),
+                        const SizedBox(height: 16),
+                        content,
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+                  Center(
+                    child: Text(
+                      'Prima Bot Version 1.0.0',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: const Color(0xFF9D9D9D),
+                        fontSize: 12,
                       ),
                     ),
-                    const SizedBox(height: 24),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-      );
+      ),
+    );
   }
 }
 
+/// Pengaturan suara berbasis Supertonic TTS.
+/// Mendukung pemilihan bahasa (Indonesia/English), jenis suara (Laki-laki/Perempuan),
+/// kecepatan bicara, dan pratinjau langsung.
 class SoundSettingsScreen extends StatefulWidget {
   const SoundSettingsScreen({super.key});
 
@@ -118,71 +122,283 @@ class SoundSettingsScreen extends StatefulWidget {
 }
 
 class _SoundSettingsScreenState extends State<SoundSettingsScreen> {
-  double _volume = 0.7;
-  bool _autoPlay = true;
+  final SupertonicTtsService _layananTts = SupertonicTtsService();
+
+  String _kodeBahasa = 'id';
+  String _gayaSuara = 'F1';
+  double _kecepatan = 1.0;
+  bool _sedangPratinjau = false;
+  bool _sedangMemuat = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _muatPengaturan();
+  }
+
+  Future<void> _muatPengaturan() async {
+    await _layananTts.init();
+    if (!mounted) return;
+    setState(() {
+      _kodeBahasa = _layananTts.kodeBahasa;
+      _gayaSuara = _layananTts.gayaSuara;
+      _kecepatan = _layananTts.kecepatanBicara;
+      _sedangMemuat = false;
+    });
+  }
+
+  Future<void> _ubahBahasa(String kode) async {
+    setState(() => _kodeBahasa = kode);
+    await _layananTts.setBahasa(kode);
+  }
+
+  Future<void> _ubahGaya(String gaya) async {
+    setState(() => _gayaSuara = gaya);
+    await _layananTts.setGayaSuara(gaya);
+  }
+
+  Future<void> _ubahKecepatan(double nilai) async {
+    setState(() => _kecepatan = nilai);
+    await _layananTts.setKecepatan(nilai);
+  }
+
+  Future<void> _pratinjau() async {
+    if (_sedangPratinjau) return;
+    setState(() => _sedangPratinjau = true);
+    try {
+      await _layananTts.pratinjauSuara();
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Gagal pratinjau suara, coba lagi')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _sedangPratinjau = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    if (_sedangMemuat) {
+      return Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: theme.colorScheme.surface,
+        child: const Padding(
+          padding: EdgeInsets.all(24.0),
+          child: SizedBox(height: 120, child: Center(child: CircularProgressIndicator())),
+        ),
+      );
+    }
+
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       backgroundColor: theme.colorScheme.surface,
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.volume_up_outlined, color: theme.colorScheme.onSurface),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Pengaturan Suara',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: theme.colorScheme.onSurface,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Supertonic TTS • On-device, 31 bahasa',
+                style: theme.textTheme.bodySmall?.copyWith(color: const Color(0xFF9D9D9D), fontSize: 11),
+              ),
+              const SizedBox(height: 20),
+              // Status model
+              if (!_layananTts.modelSiap)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Model Supertonic sedang disiapkan (~400MB download pertama)',
+                          style: theme.textTheme.bodySmall?.copyWith(color: Colors.orange.shade800, fontSize: 11),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              if (!_layananTts.modelSiap) const SizedBox(height: 20),
+              // Bahasa
+              Text(
+                'Bahasa',
+                style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(child: _opsiBahasa(theme, 'Indonesia', 'id', Icons.language)),
+                  const SizedBox(width: 12),
+                  Expanded(child: _opsiBahasa(theme, 'English', 'en', Icons.public)),
+                ],
+              ),
+              const SizedBox(height: 20),
+              // Jenis Suara
+              Text(
+                'Jenis Suara',
+                style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(child: _opsiSuara(theme, 'Laki-laki', 'M1', Icons.man)),
+                  const SizedBox(width: 12),
+                  Expanded(child: _opsiSuara(theme, 'Perempuan', 'F1', Icons.woman)),
+                ],
+              ),
+              const SizedBox(height: 20),
+              // Kecepatan
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Kecepatan', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+                  Text('${_kecepatan.toStringAsFixed(2)}x', style: theme.textTheme.bodySmall?.copyWith(color: const Color(0xFF9D9D9D))),
+                ],
+              ),
+              SliderTheme(
+                data: SliderThemeData(
+                  activeTrackColor: theme.colorScheme.primary,
+                  inactiveTrackColor: const Color(0xFF9D9D9D).withValues(alpha: 0.3),
+                  thumbColor: theme.colorScheme.primary,
+                  trackHeight: 4,
+                  thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
+                  overlayShape: const RoundSliderOverlayShape(overlayRadius: 16),
+                ),
+                child: Slider(
+                  value: _kecepatan,
+                  min: 0.8,
+                  max: 1.3,
+                  divisions: 5,
+                  onChanged: _ubahKecepatan,
+                ),
+              ),
+              const SizedBox(height: 20),
+              // Tombol Pratinjau
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton.icon(
+                  onPressed: _layananTts.modelSiap && !_sedangPratinjau ? _pratinjau : null,
+                  icon: _sedangPratinjau
+                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : const Icon(Icons.play_arrow_rounded, color: Colors.white),
+                  label: Text(
+                    _sedangPratinjau ? 'Memutar...' : 'Pratinjau Suara',
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.colorScheme.primary,
+                    disabledBackgroundColor: const Color(0xFF9D9D9D).withValues(alpha: 0.3),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Center(
+                child: Text(
+                  _kodeBahasa == 'id'
+                      ? (_gayaSuara.startsWith('M')
+                          ? 'Pratinjau: Halo, saya Prima laki-laki'
+                          : 'Pratinjau: Halo, saya Prima perempuan')
+                      : (_gayaSuara.startsWith('M') ? 'Preview: Hello, I am Prima male' : 'Preview: Hello, I am Prima female'),
+                  style: theme.textTheme.bodySmall?.copyWith(color: const Color(0xFF9D9D9D), fontSize: 11, fontStyle: FontStyle.italic),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _opsiBahasa(ThemeData theme, String label, String kode, IconData ikon) {
+    final bool terpilih = _kodeBahasa == kode;
+    return InkWell(
+      onTap: () => _ubahBahasa(kode),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+        decoration: BoxDecoration(
+          color: terpilih ? theme.colorScheme.primary.withValues(alpha: 0.12) : theme.colorScheme.secondary,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: terpilih ? theme.colorScheme.primary : Colors.transparent,
+            width: 1.5,
+          ),
+        ),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Icon(Icons.volume_up_outlined, color: theme.colorScheme.onSurface),
-                const SizedBox(width: 8),
-                Text(
-                  'Chat Sound',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: theme.colorScheme.onSurface,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            SliderTheme(
-              data: SliderThemeData(
-                activeTrackColor: theme.colorScheme.onSurface,
-                inactiveTrackColor: const Color(
-                  0xFF9D9D9D,
-                ).withValues(alpha: 0.3),
-                thumbColor: theme.colorScheme.onSurface,
-                trackHeight: 4,
-                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
-                overlayShape: const RoundSliderOverlayShape(overlayRadius: 16),
-              ),
-              child: Slider(
-                value: _volume,
-                onChanged: (val) => setState(() => _volume = val),
+            Icon(ikon, color: terpilih ? theme.colorScheme.primary : const Color(0xFF9D9D9D), size: 28),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontWeight: terpilih ? FontWeight.bold : FontWeight.w500,
+                color: terpilih ? theme.colorScheme.primary : theme.colorScheme.onSurface,
               ),
             ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Auto Play Voice',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Switch(
-                  value: _autoPlay,
-                  onChanged: (val) => setState(() => _autoPlay = val),
-                  activeThumbColor: theme.colorScheme.primary,
-                  activeTrackColor: theme.colorScheme.primary.withValues(
-                    alpha: 0.5,
-                  ),
-                ),
-              ],
+            const SizedBox(height: 2),
+            Text(kode, style: theme.textTheme.labelSmall?.copyWith(color: const Color(0xFF9D9D9D), fontSize: 10)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _opsiSuara(ThemeData theme, String label, String gaya, IconData ikon) {
+    final bool terpilih = _gayaSuara == gaya;
+    return InkWell(
+      onTap: () => _ubahGaya(gaya),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+        decoration: BoxDecoration(
+          color: terpilih ? theme.colorScheme.primary.withValues(alpha: 0.12) : theme.colorScheme.secondary,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: terpilih ? theme.colorScheme.primary : Colors.transparent,
+            width: 1.5,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(ikon, color: terpilih ? theme.colorScheme.primary : const Color(0xFF9D9D9D), size: 32),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontWeight: terpilih ? FontWeight.bold : FontWeight.w500,
+                color: terpilih ? theme.colorScheme.primary : theme.colorScheme.onSurface,
+              ),
             ),
+            const SizedBox(height: 2),
+            Text(gaya, style: theme.textTheme.labelSmall?.copyWith(color: const Color(0xFF9D9D9D), fontSize: 10)),
           ],
         ),
       ),
@@ -198,11 +414,43 @@ class LanguageSettingsScreen extends StatefulWidget {
 }
 
 class _LanguageSettingsScreenState extends State<LanguageSettingsScreen> {
-  String _selectedLanguage = 'English';
+  final SupertonicTtsService _layananTts = SupertonicTtsService();
+  String _kodeTerpilih = 'id';
+  bool _memuat = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _muat();
+  }
+
+  Future<void> _muat() async {
+    await _layananTts.init();
+    if (!mounted) return;
+    setState(() {
+      _kodeTerpilih = _layananTts.kodeBahasa;
+      _memuat = false;
+    });
+  }
+
+  Future<void> _pilihBahasa(String kode) async {
+    setState(() => _kodeTerpilih = kode);
+    await _layananTts.setBahasa(kode);
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    if (_memuat) {
+      return Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: theme.colorScheme.surface,
+        child: const Padding(
+          padding: EdgeInsets.all(24),
+          child: SizedBox(height: 80, child: Center(child: CircularProgressIndicator())),
+        ),
+      );
+    }
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       backgroundColor: theme.colorScheme.surface,
@@ -217,7 +465,7 @@ class _LanguageSettingsScreenState extends State<LanguageSettingsScreen> {
                 Icon(Icons.translate, color: theme.colorScheme.onSurface),
                 const SizedBox(width: 8),
                 Text(
-                  'Language',
+                  'Bahasa',
                   style: theme.textTheme.titleMedium?.copyWith(
                     color: theme.colorScheme.onSurface,
                     fontWeight: FontWeight.bold,
@@ -225,45 +473,63 @@ class _LanguageSettingsScreenState extends State<LanguageSettingsScreen> {
                 ),
               ],
             ),
+            const SizedBox(height: 8),
+            Text(
+              'Pilih bahasa untuk TTS dan antarmuka',
+              style: theme.textTheme.bodySmall?.copyWith(color: const Color(0xFF9D9D9D), fontSize: 11),
+            ),
             const SizedBox(height: 24),
-            _buildLanguageOption(theme, 'Indonesia', _selectedLanguage == 'Indonesia'),
+            _opsiBahasa(theme, 'Indonesia', 'id', Icons.language, 'Bahasa Indonesia'),
+            const SizedBox(height: 12),
+            _opsiBahasa(theme, 'English', 'en', Icons.public, 'English language'),
             const SizedBox(height: 16),
-            _buildLanguageOption(theme, 'English', _selectedLanguage == 'English'),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () async {
+                  await _layananTts.pratinjauSuara();
+                },
+                icon: const Icon(Icons.play_arrow_rounded, size: 18),
+                label: const Text('Pratinjau'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: theme.colorScheme.primary,
+                  side: BorderSide(color: theme.colorScheme.primary),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildLanguageOption(
-    ThemeData theme,
-    String language,
-    bool isSelected,
-  ) {
+  Widget _opsiBahasa(ThemeData theme, String label, String kode, IconData ikon, String deskripsi) {
+    final bool terpilih = _kodeTerpilih == kode;
     return InkWell(
-      onTap: () => setState(() => _selectedLanguage = language),
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4.0),
+      onTap: () => _pilihBahasa(kode),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: terpilih ? theme.colorScheme.primary.withValues(alpha: 0.1) : theme.colorScheme.secondary,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: terpilih ? theme.colorScheme.primary : Colors.transparent, width: 1.2),
+        ),
         child: Row(
           children: [
-            Container(
-              width: 20,
-              height: 20,
-              decoration: BoxDecoration(
-                color: isSelected 
-                    ? theme.colorScheme.primary 
-                    : (theme.brightness == Brightness.dark ? Colors.white : const Color(0xFFF5F6F8)),
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ),
+            Icon(ikon, color: terpilih ? theme.colorScheme.primary : const Color(0xFF9D9D9D)),
             const SizedBox(width: 12),
-            Text(
-              language, 
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w500,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label, style: theme.textTheme.bodyMedium?.copyWith(fontWeight: terpilih ? FontWeight.bold : FontWeight.w500, color: terpilih ? theme.colorScheme.primary : theme.colorScheme.onSurface)),
+                  Text(deskripsi, style: theme.textTheme.labelSmall?.copyWith(color: const Color(0xFF9D9D9D), fontSize: 11)),
+                ],
               ),
             ),
+            if (terpilih) Icon(Icons.check_circle, color: theme.colorScheme.primary, size: 20) else const Icon(Icons.circle_outlined, color: Color(0xFF9D9D9D), size: 20),
           ],
         ),
       ),
@@ -297,40 +563,19 @@ class DeveloperScreen extends StatelessWidget {
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'The people behind Prima Bot.',
-            style: theme.textTheme.bodyMedium,
-          ),
+          Text('The people behind Prima Bot.', style: theme.textTheme.bodyMedium),
           const SizedBox(height: 24),
-          Text(
-            'PROJECT SUPERVISOR\nBambang Sugiarto, S.Kom., M.Kom.',
-            style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
-          ),
+          Text('PROJECT SUPERVISOR\nBambang Sugiarto, S.Kom., M.Kom.', style: theme.textTheme.bodyMedium?.copyWith(height: 1.5)),
           const SizedBox(height: 16),
-          Text(
-            'UI/UX DESIGNER\nKharis Destian Maulana',
-            style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
-          ),
+          Text('UI/UX DESIGNER\nKharis Destian Maulana', style: theme.textTheme.bodyMedium?.copyWith(height: 1.5)),
           const SizedBox(height: 16),
-          Text(
-            'FRONTEND DEVELOPER\nNanda Putra Hartono',
-            style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
-          ),
+          Text('FRONTEND DEVELOPER\nNanda Putra Hartono', style: theme.textTheme.bodyMedium?.copyWith(height: 1.5)),
           const SizedBox(height: 16),
-          Text(
-            'BACKEND DEVELOPER\nRadhitya Hafif',
-            style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
-          ),
+          Text('BACKEND DEVELOPER\nRadhitya Hafif', style: theme.textTheme.bodyMedium?.copyWith(height: 1.5)),
           const SizedBox(height: 16),
-          Text(
-            'AI DEVELOPER\nMuhammad Arif Triyana',
-            style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
-          ),
+          Text('AI DEVELOPER\nMuhammad Arif Triyana', style: theme.textTheme.bodyMedium?.copyWith(height: 1.5)),
           const SizedBox(height: 16),
-          Text(
-            'QA TESTER\nAndra Oktoriza Ramadhan',
-            style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
-          ),
+          Text('QA TESTER\nAndra Oktoriza Ramadhan', style: theme.textTheme.bodyMedium?.copyWith(height: 1.5)),
         ],
       ),
     );
@@ -427,15 +672,11 @@ class ThemeSettingsScreen extends StatelessWidget {
                 color: isSelected ? theme.colorScheme.primary : Colors.transparent,
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSelected
-                      ? theme.colorScheme.primary
-                      : const Color(0xFF9D9D9D),
+                  color: isSelected ? theme.colorScheme.primary : const Color(0xFF9D9D9D),
                   width: 2,
                 ),
               ),
-              child: isSelected
-                  ? const Icon(Icons.check, size: 16, color: Colors.white)
-                  : null,
+              child: isSelected ? const Icon(Icons.check, size: 16, color: Colors.white) : null,
             ),
           ],
         ),

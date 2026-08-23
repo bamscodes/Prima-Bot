@@ -3,7 +3,7 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
-import '../../../services/edge_tts_service.dart';
+import '../../../services/supertonic_tts_service.dart';
 import '../../data/datasources/local_datasource.dart';
 import '../../domain/usecases/get_bot_response.dart';
 import '../../domain/usecases/generate_conversation_title.dart';
@@ -57,7 +57,7 @@ class ChatProvider extends ChangeNotifier {
   final GetBotResponse _getBotResponse = GetBotResponse();
   final GenerateConversationTitle _generateConversationTitle =
       GenerateConversationTitle();
-  final EdgeTtsService _tts = EdgeTtsService();
+  final SupertonicTtsService _tts = SupertonicTtsService();
   final Uuid _uuid = const Uuid();
 
   String _sessionId = '';
@@ -332,8 +332,23 @@ class ChatProvider extends ChangeNotifier {
     }
   }
 
+  /// Menangani aksi tombol Kembali tanpa mengirim pesan chat.
+  /// Mengembalikan daftar saran ke menu utama.
+  Future<void> navigasiKembali() async {
+    await stopSpeaking();
+    _suggestions = ['Jadwal Poliklinik', 'Informasi Kontak', 'Lokasi RS'];
+    notifyListeners();
+  }
+
   Future<void> sendMessage(String text) async {
     if (text.trim().isEmpty || _isLoading || _sessionId.isEmpty) return;
+
+    // Tangani tombol Kembali secara khusus: jangan kirim sebagai chat, hanya navigasi
+    final String teksLower = text.toLowerCase().trim();
+    if (teksLower == 'kembali') {
+      await navigasiKembali();
+      return;
+    }
 
     final requestSessionId = _sessionId;
     final requestToken = ++_requestTokenSequence;
@@ -645,7 +660,17 @@ class ChatProvider extends ChangeNotifier {
     }
 
     final String lowerText = text.toLowerCase().trim();
-    if (lowerText == 'informasi kontak') {
+    // Tangani Kembali jika lolos dari sendMessage (misal dari edit/regenerate)
+    if (lowerText == 'kembali') {
+      if (_sessionId == requestSessionId) {
+        _suggestions = ['Jadwal Poliklinik', 'Informasi Kontak', 'Lokasi RS'];
+        notifyListeners();
+      }
+      return;
+    }
+    // Normalisasi alias untuk jadwal dokter
+    final String lowerNormalized = lowerText == 'jadwal dokter' ? 'jadwal poliklinik' : lowerText;
+    if (lowerNormalized == 'informasi kontak') {
       await Future.delayed(const Duration(milliseconds: 600));
       final displayResponse = '''📞 **Layanan 24 Jam RS Prima Insan Mulia:**
 - **Informasi & Pendaftaran:** 0815 1100 0600
@@ -680,7 +705,7 @@ class ChatProvider extends ChangeNotifier {
       }
       unawaited(_tts.pregenerate(ttsResponse));
       return;
-    } else if (lowerText == 'jadwal poliklinik') {
+    } else if (lowerNormalized == 'jadwal poliklinik') {
       await Future.delayed(const Duration(milliseconds: 600));
       final response =
           '''Berikut adalah layanan Poliklinik yang tersedia di RS Prima Insan Mulia:

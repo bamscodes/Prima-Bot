@@ -1,5 +1,5 @@
 /// Kelas untuk menormalisasi teks Bahasa Indonesia agar dibaca lancar
-/// oleh suara Malay (ms-MY-YasminNeural) dari Microsoft Edge TTS.
+/// oleh Supertonic TTS (on-device, multilingual).
 ///
 /// Prinsip perbaikan:
 /// - Urutan pembersihan diperbaiki agar tidak merusak deteksi URL dan tautan
@@ -7,7 +7,7 @@
 /// - Normalisasi nomor telepon, alamat, dan waktu dibuat lebih robust
 /// - Semua komentar dan penamaan variabel menggunakan Bahasa Indonesia yang jelas
 class IndonesianTextProcessor {
-  /// Normalisasi teks utama sebelum dikirim ke Edge TTS.
+  /// Normalisasi teks utama sebelum dikirim ke Supertonic TTS.
   /// Menangani: markdown, emoji, tautan, singkatan, slang, dan simbol.
   static String normalizeForMalayVoice(String teks) {
     if (teks.trim().isEmpty) return teks;
@@ -63,9 +63,11 @@ class IndonesianTextProcessor {
       (cocok) => '${cocok.group(1)}, ',
     );
 
-    // 3d. Ganti tanda kurung yang mengapit hari atau jam dengan koma untuk jeda
-    //    Contoh: "dr. Akil (Senin, 10,30-12,30)" -> "dr. Akil, Senin, 10,30-12,30,"
-    hasil = hasil.replaceAll('(', ', ').replaceAll(')', ', ');
+    // 3d. Ganti tanda kurung yang mengapit singkatan atau alternatif dengan kata "atau" untuk jeda natural
+    //    Contoh: "Spesialis Kandungan (Obsgyn)" -> "Spesialis Kandungan atau Obsgyn"
+    //    Contoh: "dr. Akil (Senin, 10,30-12,30)" -> "dr. Akil atau Senin, 10,30-12,30"
+    //    Kurung buka dibaca "atau" agar tidak terbaca "satu" oleh TTS, kurung tutup jadi spasi
+    hasil = hasil.replaceAll('(', ' atau ').replaceAll(')', ' ');
 
     // 3e. Ganti garis miring dan pemisah vertikal dengan spasi
     hasil = hasil.replaceAll('/', ' ').replaceAll('|', ' ').replaceAll('\\', ' ');

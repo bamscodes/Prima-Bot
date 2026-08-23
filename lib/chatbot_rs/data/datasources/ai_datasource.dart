@@ -5,31 +5,29 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Layanan AI yang terhubung ke OpenRouter untuk generasi jawaban.
-/// Telah diperkuat dengan prompt anti-halusinasi dan penanganan fallback yang robust.
+/// Telah diperkuat dengan prompt anti-halusinasi, filter safety, dan penanganan RTO yang robust.
 class AIService {
   static const String _urlOpenRouter = 'https://openrouter.ai/api/v1/chat/completions';
+  // Urutan model dioptimalkan: model paling cepat dan stabil di depan untuk kurangi RTO
   static const List<String> _modelGratis = [
-    'openrouter/free',
+    'google/gemini-2.0-flash-exp:free',
     'google/gemini-2.5-pro:free',
+    'openrouter/free',
     'meta-llama/llama-3-8b-instruct:free',
     'mistralai/mistral-7b-instruct:free',
-    'google/gemma-7b-it:free',
   ];
 
   // API key dimuat dari environment. Untuk produksi sebaiknya dipindah ke server-side proxy
-  // agar kunci tidak terbundle di aplikasi klien.
   static String get _kunciOpenRouter => dotenv.env['OPENROUTER_API_KEY'] ?? '';
   static bool get _adaKunciOpenRouter =>
       _kunciOpenRouter.isNotEmpty && _kunciOpenRouter != 'YOUR_OPENROUTER_API_KEY';
 
   /// Klasifikasi intent sederhana berbasis kata kunci lokal.
-  /// Sengaja deterministik agar tidak salah mengarahkan pertanyaan umum ke alur jadwal.
   static Future<Map<String, dynamic>> classifyIntent(String teks) {
     return Future.value(_simulasiIntent(teks));
   }
 
   /// Generasi jawaban umum dari LLM dengan memori percakapan.
-  /// Menggunakan prompt sistem yang ketat agar tidak berhalusinasi.
   static Future<String> generateResponse(
     List<Map<String, String>> daftarPesan,
   ) async {
@@ -41,43 +39,71 @@ class AIService {
       'role': 'system',
       'content': '''Anda adalah Prima, asisten ramah RS Prima Insan Mulia.
 
-ATURAN KETAT ANTI-HALUSINASI:
-1. Jawab HANYA berdasarkan KONTEKS dan DATA RUMAH SAKIT yang diberikan di pesan pengguna. Jika konteks tidak menjawab, katakan: "Maaf, informasi tersebut belum tersedia di sistem kami. Silakan hubungi Informasi dan Pendaftaran di 0815 1100 0600 atau Call Center 0283 847 3333."
-2. DILARANG mengarang jadwal, nama dokter, jam praktek, atau tarif yang tidak ada di data.
-3. Jika menyebut jadwal, sebutkan persis nama dokter, hari, dan jam sesuai data dan beri sumber jika ada.
-4. JANGAN memberikan diagnosis atau resep obat spesifik. Sarankan konsultasi langsung dengan dokter.
-5. Gunakan HANYA Bahasa Indonesia baku, sopan, profesional. DILARANG menggunakan bahasa daerah.
-6. Format daftar dengan jelas dan beri jeda natural antar poin.
-7. Jika data jadwal kosong, jelaskan dengan sopan dan tawarkan bantuan lain.''',
+ATURAN KETAT:
+1. Jawab dengan Bahasa Indonesia baku, sopan, dan logis. Sapaan seperti halo, hai, selamat pagi harus dibalas dengan ramah tanpa mengatakan informasi belum tersedia.
+2. Jika pertanyaan tentang RS (jadwal, dokter, poli, layanan, kontak, lokasi), jawab HANYA berdasarkan konteks yang diberikan. Jika tidak ada di konteks, katakan: "Maaf, informasi tersebut belum tersedia di sistem kami. Silakan hubungi Informasi dan Pendaftaran di 0815 1100 0600 atau Call Center 0283 847 3333."
+3. Jika pertanyaan umum di luar RS (misal pengetahuan umum), jawab secara logis dan membantu dengan Bahasa Indonesia yang natural, tetap tawarkan bantuan terkait RS jika relevan.
+4. DILARANG mengarang jadwal, nama dokter, atau tarif. DILARANG output tag seperti "User Safety" atau "Response Safety".
+5. Format daftar dengan nomor dan beri jeda natural antar poin.''',
     };
 
     final String? konten = await _mintaCompletion([
       promptSistem,
       ...daftarPesan,
-    ], daftarModel: _modelGratis);
+    ], daftarModel: _modelGratis, batasWaktu: const Duration(seconds: 15));
 
-    return konten ??
-        'Maaf, semua layanan AI kami sedang padat. Silakan coba lagi beberapa saat lagi atau hubungi pendaftaran di 0815 1100 0600.';
+    if (konten == null) {
+      return 'Maaf, semua layanan AI kami sedang padat. Silakan coba lagi beberapa saat lagi atau hubungi pendaftaran di 0815 1100 0600.';
+    }
+    final String? bersih = _saringOutputSafety(konten);
+    return bersih ?? 'Maaf, saya belum bisa menjawab saat ini. Silakan coba lagi atau hubungi pendaftaran di 0815 1100 0600.';
   }
 
   /// Generasi jawaban dengan konteks RAG yang sudah terkurasi.
-  /// Konteks berisi hasil retrieval TF-IDF dari basis pengetahuan lokal.
   static Future<String> generateResponseDenganKonteks({
     required String pertanyaanPengguna,
     required String konteksTerkurasi,
     required List<Map<String, String>> riwayatPercakapan,
+    bool modeUmum = false,
   }) async {
     if (!_adaKunciOpenRouter) {
-      // Fallback akan ditangani di layer GetBotResponse
       return 'Maaf, saya sedang offline (API Key tidak ditemukan).';
     }
 
-    final String promptKonteks = '''KONTEKS TERKURASI DARI BASIS PENGETAHUAN RS PRIMA INSAN MULIA:
+    // Deteksi apakah pertanyaan adalah sapaan
+    final bool isSapaan = _adalahSapaan(pertanyaanPengguna);
+
+    String promptSistem;
+    String promptKonteks;
+
+    if (modeUmum) {
+      promptSistem = '''Anda adalah Prima, asisten RS Prima Insan Mulia yang ramah dan cerdas.
+- Jawab pertanyaan umum di luar RS secara logis, informatif, dengan Bahasa Indonesia baku.
+- Tetap tawarkan bantuan terkait RS jika relevan di akhir jawaban.
+- DILARANG output tag safety seperti "User Safety".''';
+      promptKonteks = 'Pertanyaan umum pasien: "$pertanyaanPengguna"\n\nJawab secara logis dan membantu.';
+    } else if (isSapaan) {
+      promptSistem = '''Anda adalah Prima, asisten RS Prima Insan Mulia yang ramah.
+- Balas sapaan dengan natural, hangat, dan tawarkan bantuan (jadwal dokter, layanan, lokasi).
+- Jangan katakan informasi belum tersedia untuk sapaan.
+- Bahasa Indonesia baku, sopan.''';
+      promptKonteks = 'Sapaan pasien: "$pertanyaanPengguna"\n\nBalas dengan salam yang sesuai dan tawarkan bantuan.';
+    } else {
+      promptSistem = '''Anda adalah Prima, asisten RS Prima Insan Mulia yang akurat dan anti-halusinasi.
+
+ATURAN KETAT:
+- Jawab HANYA dari KONTEKS yang diberikan. Jika tidak ada di konteks, katakan: "Maaf, informasi tersebut belum tersedia di sistem kami. Silakan hubungi Informasi dan Pendaftaran di 0815 1100 0600 atau Call Center 0283 847 3333."
+- Jangan membuat jadwal dokter palsu. Sebutkan hanya yang ada di konteks.
+- Bahasa Indonesia baku, sopan, jelas. Format daftar dengan nomor agar mudah dibaca TTS.
+- DILARANG output tag seperti "User Safety" atau "Response Safety".
+- Jika ragu, utamakan menyarankan hubungi pendaftaran.''';
+      promptKonteks = '''KONTEKS TERKURASI DARI BASIS PENGETAHUAN RS PRIMA INSAN MULIA:
 $konteksTerkurasi
 
 PERTANYAAN PASIEN: "$pertanyaanPengguna"
 
 Instruksi: Jawab dengan ramah berdasarkan konteks di atas. Jika konteks tidak cukup, katakan informasi belum tersedia dan arahkan ke kontak resmi. Jangan mengarang.''';
+    }
 
     final List<Map<String, String>> pesanLengkap = [
       ...riwayatPercakapan,
@@ -86,27 +112,47 @@ Instruksi: Jawab dengan ramah berdasarkan konteks di atas. Jika konteks tidak cu
 
     final String? jawaban = await _mintaCompletion(
       [
-        {
-          'role': 'system',
-          'content': '''Anda adalah Prima, asisten RS Prima Insan Mulia yang akurat dan anti-halusinasi.
-ATURAN:
-- Hanya jawab dari konteks yang diberikan. Jika tidak ada di konteks, katakan belum tersedia dan beri nomor kontak 0815 1100 0600.
-- Jangan membuat jadwal dokter palsu. Sebutkan hanya yang ada di konteks.
-- Bahasa Indonesia baku, sopan, jelas. Format daftar dengan nomor agar mudah dibaca TTS.
-- Jika ragu, utamakan menyarankan hubungi pendaftaran.''',
-        },
+        {'role': 'system', 'content': promptSistem},
         ...pesanLengkap,
       ],
       daftarModel: _modelGratis,
-      batasWaktu: const Duration(seconds: 12),
+      batasWaktu: const Duration(seconds: 15),
+      maxTokens: modeUmum || isSapaan ? 300 : 600,
+      temperature: 0.7,
     );
 
-    return jawaban ??
-        'Maaf, layanan AI sedang padat. Silakan coba lagi atau hubungi pendaftaran di 0815 1100 0600.';
+    if (jawaban == null) {
+      return 'Maaf, layanan AI sedang padat. Silakan coba lagi atau hubungi pendaftaran di 0815 1100 0600.';
+    }
+    final String? bersih = _saringOutputSafety(jawaban);
+    return bersih ?? 'Maaf, saya belum bisa menjawab saat ini. Silakan coba lagi atau hubungi pendaftaran di 0815 1100 0600.';
   }
 
-  /// Menghasilkan judul percakapan yang ringkas setelah jawaban pertama tersedia.
-  /// Berjalan terpisah dari respons chat sehingga tidak menunda render jawaban.
+  /// Deteksi sapaan sederhana
+  static bool _adalahSapaan(String teks) {
+    final String lower = teks.toLowerCase().trim();
+    if (RegExp(r'^(halo|hai|hey|hello|hi|pagi|siang|sore|malam|assalamu alaikum|selamat|permisi)\b').hasMatch(lower)) {
+      return true;
+    }
+    if (lower.length <= 20 && RegExp(r'\b(halo|hai|hey)\b').hasMatch(lower)) return true;
+    return false;
+  }
+
+  /// Saring output yang mengandung tag safety moderation yang tidak diinginkan
+  static String? _saringOutputSafety(String teks) {
+    final String lower = teks.toLowerCase();
+    if (lower.contains('user safety') && lower.contains('response safety')) return null;
+    if (lower.contains('user safety: safe') || lower.contains('response safety: safe')) return null;
+    if (RegExp(r'^\s*(user safety|response safety|safe)\s*[:\-]?\s*safe\s*$', caseSensitive: false).hasMatch(teks.trim())) return null;
+    if (teks.trim().length < 60 && lower.contains('safe') && (lower.contains('user') || lower.contains('response'))) return null;
+    // Filter tag moderation lain
+    if (lower.contains('content policy') || lower.contains('as an ai') && lower.contains('cannot')) {
+      // Biarkan tapi log, karena mungkin genuine refusal
+    }
+    return teks;
+  }
+
+  /// Menghasilkan judul percakapan yang ringkas
   static Future<String?> generateConversationTitle({
     required String userMessage,
     required String assistantMessage,
@@ -131,6 +177,7 @@ tanpa tanda kutip, tanpa awalan "Judul:", tanpa markdown, dan hanya tulis judul.
       daftarModel: const ['openrouter/free', 'google/gemini-2.5-pro:free'],
       maxTokens: 24,
       temperature: 0.2,
+      batasWaktu: const Duration(seconds: 10),
     );
   }
 
@@ -140,13 +187,13 @@ tanpa tanda kutip, tanpa awalan "Judul:", tanpa markdown, dan hanya tulis judul.
     return normal.substring(0, panjangMaks);
   }
 
-  /// Meminta completion ke OpenRouter dengan fallback antar model.
+  /// Meminta completion ke OpenRouter dengan fallback antar model dan penanganan RTO
   static Future<String?> _mintaCompletion(
     List<Map<String, String>> daftarPesan, {
     required Iterable<String> daftarModel,
     int? maxTokens,
     double? temperature,
-    Duration batasWaktu = const Duration(seconds: 8),
+    Duration batasWaktu = const Duration(seconds: 12),
   }) async {
     for (final String model in daftarModel) {
       try {
@@ -171,20 +218,43 @@ tanpa tanda kutip, tanpa awalan "Judul:", tanpa markdown, dan hanya tulis judul.
         if (respons.statusCode == 200) {
           final Map<String, dynamic> data = jsonDecode(respons.body) as Map<String, dynamic>;
           final List<dynamic>? daftarPilihan = data['choices'] as List<dynamic>?;
-          if (daftarPilihan == null || daftarPilihan.isEmpty) continue;
+          if (daftarPilihan == null || daftarPilihan.isEmpty) {
+            log('Model $model: choices kosong, coba model berikut');
+            continue;
+          }
 
           final Map<String, dynamic> pilihan = daftarPilihan.first as Map<String, dynamic>;
           final Map<String, dynamic>? pesan = pilihan['message'] as Map<String, dynamic>?;
           final String? konten = pesan?['content'] as String?;
           if (konten != null && konten.trim().isNotEmpty) {
-            return konten;
+            // Saring safety sebelum return
+            final String? bersih = _saringOutputSafety(konten);
+            if (bersih == null) {
+              log('Model $model: output terfilter safety, coba model berikut');
+              continue;
+            }
+            return bersih;
+          } else {
+            log('Model $model: konten kosong, coba berikut');
           }
+        } else if (respons.statusCode == 429) {
+          log('Model $model rate limit 429, coba model berikut');
+          // Jeda singkat sebelum retry
+          await Future.delayed(const Duration(milliseconds: 500));
+        } else if (respons.statusCode >= 500) {
+          log('Model $model server error ${respons.statusCode}, coba berikut');
         } else {
-          log('Model $model gagal: ${respons.statusCode} - ${respons.body}');
+          log('Model $model gagal: ${respons.statusCode} - ${respons.body.substring(0, 200)}');
         }
       } catch (error) {
-        log('Error model $model: $error');
+        log('Error model $model: $error (timeout ${batasWaktu.inSeconds}s)');
+        // Jika timeout, langsung coba model berikut tanpa delay panjang
+        if (error.toString().contains('TimeoutException')) {
+          log('Timeout model $model, lanjut ke model berikut');
+        }
       }
+      // Jeda kecil antar model untuk hindari rate limit
+      await Future.delayed(const Duration(milliseconds: 300));
     }
 
     return null;
@@ -194,7 +264,6 @@ tanpa tanda kutip, tanpa awalan "Judul:", tanpa markdown, dan hanya tulis judul.
   static Map<String, dynamic> _simulasiIntent(String teks) {
     final String teksLower = teks.toLowerCase();
 
-    // Kata kunci untuk memicu pencarian jadwal
     final bool isCariJadwal =
         teksLower.contains('jadwal') ||
         teksLower.contains('dokter') ||
@@ -214,7 +283,6 @@ tanpa tanda kutip, tanpa awalan "Judul:", tanpa markdown, dan hanya tulis judul.
         teksLower.contains('kebidanan')) {
       entitas = 'Kandungan';
     } else if (teksLower.contains('penyakit dalam') || teksLower.contains('dalam')) {
-      // Cek penyakit dalam sebelum dalam saja agar lebih spesifik
       if (teksLower.contains('penyakit dalam')) {
         entitas = 'Penyakit Dalam';
       } else if (teksLower.contains('dalam')) {
@@ -231,7 +299,6 @@ tanpa tanda kutip, tanpa awalan "Judul:", tanpa markdown, dan hanya tulis judul.
     if (isCariJadwal || entitas != null) {
       String? hari;
       if (teksLower.contains('besok')) {
-        // Logika sederhana untuk besok
         final DateTime besok = DateTime.now().add(const Duration(days: 1));
         hari = _hariIndo(besok.weekday);
       } else if (teksLower.contains('lusa')) {
