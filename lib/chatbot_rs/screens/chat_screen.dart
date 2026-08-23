@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart' show ScrollCacheExtent;
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -380,7 +379,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       controller: _scrollController,
       reverse: false,
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-      scrollCacheExtent: const ScrollCacheExtent.pixels(350),
+      // Penyangga scroll agar animasi tetap halus tanpa menggunakan ScrollCacheExtent yang belum tersedia di versi Flutter ini
+      cacheExtent: 350,
       padding: const EdgeInsets.only(left: 18, right: 18, top: 16, bottom: 8),
       itemCount: totalCount,
       itemBuilder: (context, index) {

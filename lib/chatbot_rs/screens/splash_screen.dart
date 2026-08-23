@@ -2,6 +2,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'chat_screen.dart';
 import '../data/datasources/seeder.dart';
+import '../../services/rag_service.dart';
 
 class ChatbotSplashScreen extends StatefulWidget {
   const ChatbotSplashScreen({super.key});
@@ -39,7 +40,16 @@ class _ChatbotSplashScreenState extends State<ChatbotSplashScreen>
 
   Future<void> _initializeData() async {
     try {
+      // Seed database lokal terlebih dahulu
       await DataSeeder.seedData();
+      // Inisialisasi indeks RAG enterprise (TF-IDF) di background
+      // Proses ini membaca assets/data_rs.json dan membangun vektor pencarian
+      try {
+        await LayananRag().inisialisasi();
+        log('Indeks RAG berhasil diinisialisasi: ${LayananRag().jumlahDokumen} dokumen');
+      } catch (errorRag) {
+        log('Inisialisasi RAG gagal (akan dicoba ulang saat chat): $errorRag');
+      }
     } catch (e) {
       log('Seeding failed: $e');
     } finally {
