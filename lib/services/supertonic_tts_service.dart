@@ -152,18 +152,25 @@ class SupertonicTtsService {
       _onCompletion?.call();
     });
 
-    // Cek model tanpa download (cepat, tidak block UI)
+    // Cek model Supertonic tanpa download (cepat, tidak block UI)
+    // Jika belum ada, fallback sistem langsung pakai, dan mulai download background diam-diam
+    // agar next time bisa pakai high quality tanpa user perlu download manual.
+    // Download 400MB di background tidak bikin lag karena pakai fallback dulu.
     try {
       debugPrint('[TTS] Cek model Supertonic (tanpa download)...');
       _modelSiap = await SupertonicTTS.modelsReady().timeout(const Duration(seconds: 3), onTimeout: () => false);
       if (_modelSiap) {
-        // Jika model sudah ada, initialize ringan
         await _mesinSupertonic!.initialize().timeout(const Duration(seconds: 5), onTimeout: () {
           throw TimeoutException('Init Supertonic timeout');
         });
-        debugPrint('[TTS] Supertonic siap');
+        debugPrint('[TTS] Supertonic siap (model sudah ada)');
       } else {
-        debugPrint('[TTS] Model Supertonic belum ada, pakai fallback sistem (tidak download otomatis agar tidak lag)');
+        debugPrint('[TTS] Model Supertonic belum ada, pakai fallback sistem dulu, mulai download background');
+        // Mulai download di background setelah 2 detik, tidak block UI
+        // Jika gagal atau user offline, tetap pakai fallback tanpa lag
+        Future.delayed(const Duration(seconds: 2), () {
+          unawaited(downloadModel());
+        });
       }
     } catch (e) {
       debugPrint('[TTS] Cek model gagal, pakai fallback: $e');

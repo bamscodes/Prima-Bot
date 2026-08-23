@@ -291,8 +291,8 @@ class IndonesianTextProcessor {
       hasil = '$hasil.';
     }
 
-    // 12b. Rapikan spasi sebelum tanda baca
-    hasil = hasil.replaceAll(RegExp(r'\s+([.,!?])'), r'$1');
+    // 12b. Rapikan spasi sebelum tanda baca (gunakan replaceAllMapped agar $1 terbaca sebagai grup)
+    hasil = hasil.replaceAllMapped(RegExp(r'\s+([.,!?])'), (cocok) => cocok.group(1)!);
     hasil = hasil.replaceAll(RegExp(r'\s+'), ' ').trim();
 
     return hasil;
