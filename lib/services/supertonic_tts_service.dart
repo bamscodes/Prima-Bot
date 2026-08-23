@@ -7,20 +7,18 @@ import 'package:path_provider/path_provider.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supertonic_flutter/supertonic_flutter.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 
 import 'indonesian_text_processor.dart';
 
-/// Layanan TTS menggunakan Supertonic 3 (on-device, gratis, tanpa API key).
+/// Layanan TTS hybrid: Supertonic (on-device high quality) + FlutterTts (sistem fallback sigap).
 /// Mendukung 2 bahasa (Indonesia, English) dan 2 jenis suara (Laki-laki M1, Perempuan F1).
 ///
-/// Fitur:
-/// - Cache audio berdasarkan hash teks + bahasa + gaya suara
-/// - Pre-generate di background setelah pesan bot tiba
-/// - Antrean untuk teks panjang yang dipecah
-/// - Pengaturan bahasa dan jenis suara dengan persistensi SharedPreferences
-/// - Pratinjau suara langsung di pengaturan
-/// - Cleanup otomatis file temp lebih dari 24 jam
-/// - Singleton agar konsisten di seluruh aplikasi
+/// Strategi anti-lag:
+/// - Init cepat: hanya cek modelReady tanpa download 400MB, fallback langsung siap
+/// - Download model Supertonic hanya on-demand via pengaturan (background)
+/// - Speak: jika model siap pakai Supertonic, jika belum pakai FlutterTts sistem yang ringan
+/// - Semua operasi berat dijalankan async tanpa block UI thread
 class SupertonicTtsService {
   static final SupertonicTtsService _instansi = SupertonicTtsService._internal();
   factory SupertonicTtsService() => _instansi;
@@ -28,42 +26,53 @@ class SupertonicTtsService {
 
   SupertonicTTS? _mesinSupertonic;
   AudioPlayer? _pemutarAudio;
+  FlutterTts? _ttsSistem;
   bool _sudahDiinisialisasi = false;
   bool _modelSiap = false;
+  bool _sedangDownloadModel = false;
   StreamSubscription? _langgananPemutar;
 
-  /// Cache di memori: hash (teks+b bahasa+gaya) -> path file audio
   final Map<int, String> _cacheAudio = {};
   static const int _maksFileCache = 24;
-
   bool _sedangPregenerate = false;
 
-  /// Antrean untuk teks panjang
   final List<String> _antreanBerkasAudio = [];
   int _indeksAntreanSaatIni = 0;
   bool _sedangMemutarAntrean = false;
 
-  // Callback status untuk update UI
+  // Untuk fallback sistem
+  bool _sedangPakaiFallback = false;
+
   Function? _onStart;
   Function? _onPause;
   Function? _onCompletion;
   Function(String)? _onError;
   Function(double)? _onModelDownloadProgress;
 
-  PlayerState get playerState => _pemutarAudio?.state ?? PlayerState.stopped;
-  bool get isPlaying => _pemutarAudio?.state == PlayerState.playing;
-  bool get isPaused => _pemutarAudio?.state == PlayerState.paused;
+  PlayerState get playerState => _sedangPakaiFallback ? PlayerState.stopped : (_pemutarAudio?.state ?? PlayerState.stopped);
+  bool get isPlaying {
+    if (_sedangPakaiFallback) return _isFallbackPlaying;
+    return _pemutarAudio?.state == PlayerState.playing;
+  }
+  bool get isPaused {
+    if (_sedangPakaiFallback) return _isFallbackPaused;
+    return _pemutarAudio?.state == PlayerState.paused;
+  }
   bool get sedangMemutarAntrean => _sedangMemutarAntrean;
   bool get sudahDiinisialisasi => _sudahDiinisialisasi;
   bool get modelSiap => _modelSiap;
+  bool get sedangDownloadModel => _sedangDownloadModel;
 
-  // Pengaturan bahasa dan suara (persistensi)
+  // Fallback state tracking
+  bool _isFallbackPlaying = false;
+  bool _isFallbackPaused = false;
+
   static const String _keyBahasa = 'tts_bahasa';
   static const String _keyGayaSuara = 'tts_gaya_suara';
   static const String _keyKecepatan = 'tts_kecepatan';
 
-  String _kodeBahasa = 'id'; // id = Indonesia, en = English
-  String _gayaSuara = 'F1'; // M1 = laki-laki, F1 = perempuan
+  String _kodeBahasa = 'id';
+  String _gayaSuara = 'F1';
   double _kecepatanBicara = 1.0;
 
   String get kodeBahasa => _kodeBahasa;
@@ -71,31 +80,28 @@ class SupertonicTtsService {
   double get kecepatanBicara => _kecepatanBicara;
   bool get isBahasaIndonesia => _kodeBahasa == 'id';
   bool get isSuaraLakiLaki => _gayaSuara.startsWith('M');
-
-  // Label untuk UI
   String get labelBahasa => _kodeBahasa == 'id' ? 'Indonesia' : 'English';
   String get labelGayaSuara => _gayaSuara.startsWith('M') ? 'Laki-laki' : 'Perempuan';
 
-  // Batas karakter per bagian
   static const int _batasKarakterPerBagian = 600;
   static const Duration _umurMaksCache = Duration(hours: 24);
 
-  /// Inisialisasi layanan Supertonic. Aman dipanggil berkali-kali (idempotent).
-  /// Akan otomatis download model ~400MB jika belum ada.
+  /// Inisialisasi cepat tanpa download. Aman dipanggil berkali-kali.
   Future<void> init() async {
     if (_sudahDiinisialisasi) return;
 
     _mesinSupertonic = SupertonicTTS();
     _pemutarAudio = AudioPlayer();
+    _ttsSistem = FlutterTts();
 
-    // Muat pengaturan tersimpan
     await _muatPengaturan();
+    await _setupFallbackTts();
 
-    // Dengarkan perubahan status pemutar untuk antrean
     await _langgananPemutar?.cancel();
     _langgananPemutar = _pemutarAudio!.onPlayerStateChanged.listen((status) {
-      debugPrint('[Supertonic] Status pemutar: $status');
+      debugPrint('[TTS] Status pemutar: $status');
       if (status == PlayerState.playing) {
+        _isFallbackPlaying = false;
         _onStart?.call();
       } else if (status == PlayerState.paused) {
         _onPause?.call();
@@ -103,11 +109,11 @@ class SupertonicTtsService {
         if (_sedangMemutarAntrean && _indeksAntreanSaatIni + 1 < _antreanBerkasAudio.length) {
           _indeksAntreanSaatIni++;
           final berkasSelanjutnya = _antreanBerkasAudio[_indeksAntreanSaatIni];
-          debugPrint('[Supertonic] Antrean lanjut ${ _indeksAntreanSaatIni + 1}/${_antreanBerkasAudio.length}');
+          debugPrint('[TTS] Antrean lanjut ${ _indeksAntreanSaatIni + 1}/${_antreanBerkasAudio.length}');
           unawaited(_pemutarAudio!.play(DeviceFileSource(berkasSelanjutnya)));
         } else {
           if (_sedangMemutarAntrean) {
-            debugPrint('[Supertonic] Antrean selesai ${ _antreanBerkasAudio.length} bagian');
+            debugPrint('[TTS] Antrean selesai ${ _antreanBerkasAudio.length} bagian');
             _sedangMemutarAntrean = false;
             _antreanBerkasAudio.clear();
             _indeksAntreanSaatIni = 0;
@@ -117,92 +123,149 @@ class SupertonicTtsService {
       }
     });
 
-    // Inisialisasi model Supertonic (auto download jika belum ada)
-    try {
-      debugPrint('[Supertonic] Memeriksa model...');
-      // Cek apakah model sudah siap
-      final bool siap = await SupertonicTTS.modelsReady();
-      if (!siap) {
-        debugPrint('[Supertonic] Model belum ada, mulai download ~400MB...');
-        await SupertonicTTS.preDownloadModels(
-          onProgress: (selesai, total, berkas, progres) {
-            final double persen = progres * 100;
-            debugPrint('[Supertonic] Download [$selesai/$total] $berkas: ${persen.toStringAsFixed(1)}%');
-            _onModelDownloadProgress?.call(progres);
-          },
-        );
+    // Setup handler untuk fallback juga
+    _ttsSistem!.setStartHandler(() {
+      _isFallbackPlaying = true;
+      _isFallbackPaused = false;
+      _onStart?.call();
+    });
+    _ttsSistem!.setCompletionHandler(() {
+      _isFallbackPlaying = false;
+      _isFallbackPaused = false;
+      // Handle antrean fallback jika ada
+      if (_sedangMemutarAntrean && _indeksAntreanSaatIni + 1 < _antreanBerkasAudio.length) {
+        _indeksAntreanSaatIni++;
+        unawaited(_bicaraFallbackAntrean());
+      } else {
+        _sedangMemutarAntrean = false;
+        _antreanBerkasAudio.clear();
+        _onCompletion?.call();
       }
-      await _mesinSupertonic!.initialize();
-      _modelSiap = true;
-      _sudahDiinisialisasi = true;
-      debugPrint('[Supertonic] Inisialisasi berhasil, model siap');
-    } catch (error, stackTrace) {
-      debugPrint('[Supertonic] Gagal inisialisasi: $error');
-      debugPrint('[Supertonic] Stack: $stackTrace');
-      // Tetap tandai sudah diinisialisasi agar tidak retry terus, tapi modelSiap false
-      _sudahDiinisialisasi = true;
+    });
+    _ttsSistem!.setPauseHandler(() {
+      _isFallbackPaused = true;
+      _onPause?.call();
+    });
+    _ttsSistem!.setErrorHandler((msg) {
+      _isFallbackPlaying = false;
+      _onError?.call(msg);
+      _onCompletion?.call();
+    });
+
+    // Cek model tanpa download (cepat, tidak block UI)
+    try {
+      debugPrint('[TTS] Cek model Supertonic (tanpa download)...');
+      _modelSiap = await SupertonicTTS.modelsReady().timeout(const Duration(seconds: 3), onTimeout: () => false);
+      if (_modelSiap) {
+        // Jika model sudah ada, initialize ringan
+        await _mesinSupertonic!.initialize().timeout(const Duration(seconds: 5), onTimeout: () {
+          throw TimeoutException('Init Supertonic timeout');
+        });
+        debugPrint('[TTS] Supertonic siap');
+      } else {
+        debugPrint('[TTS] Model Supertonic belum ada, pakai fallback sistem (tidak download otomatis agar tidak lag)');
+      }
+    } catch (e) {
+      debugPrint('[TTS] Cek model gagal, pakai fallback: $e');
       _modelSiap = false;
-      _onError?.call('Gagal inisialisasi TTS: $error');
     }
 
+    _sudahDiinisialisasi = true;
     unawaited(_bersihkanCacheLama());
+    debugPrint('[TTS] Init selesai - modelSiap=$_modelSiap, bahasa=$_kodeBahasa, suara=$_gayaSuara');
   }
 
-  /// Memuat pengaturan bahasa dan suara dari SharedPreferences
+  Future<void> _setupFallbackTts() async {
+    try {
+      await _ttsSistem!.setLanguage(_kodeBahasa == 'id' ? 'id-ID' : 'en-US');
+      await _ttsSistem!.setSpeechRate(_kecepatanBicara.clamp(0.0, 1.0) * 0.5);
+      await _ttsSistem!.setVolume(1.0);
+      await _ttsSistem!.setPitch(_gayaSuara.startsWith('M') ? 0.9 : 1.1);
+      // Coba set voice berdasarkan gender jika tersedia
+      try {
+        final voices = await _ttsSistem!.getVoices;
+        if (voices != null) {
+          debugPrint('[TTS] Voices tersedia: $voices');
+        }
+      } catch (_) {}
+    } catch (e) {
+      debugPrint('[TTS] Setup fallback gagal: $e');
+    }
+  }
+
   Future<void> _muatPengaturan() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       _kodeBahasa = prefs.getString(_keyBahasa) ?? 'id';
       _gayaSuara = prefs.getString(_keyGayaSuara) ?? 'F1';
       _kecepatanBicara = prefs.getDouble(_keyKecepatan) ?? 1.0;
-      // Validasi
       if (_kodeBahasa != 'id' && _kodeBahasa != 'en') _kodeBahasa = 'id';
       if (_gayaSuara != 'M1' && _gayaSuara != 'F1') _gayaSuara = 'F1';
-      debugPrint('[Supertonic] Pengaturan dimuat: bahasa=$_kodeBahasa, suara=$_gayaSuara, kecepatan=$_kecepatanBicara');
-    } catch (e) {
-      debugPrint('[Supertonic] Gagal muat pengaturan: $e');
-    }
+    } catch (_) {}
   }
 
-  /// Menyimpan pengaturan bahasa
   Future<void> setBahasa(String kodeBahasa) async {
     if (kodeBahasa != 'id' && kodeBahasa != 'en') return;
     _kodeBahasa = kodeBahasa;
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_keyBahasa, kodeBahasa);
+      await _ttsSistem!.setLanguage(kodeBahasa == 'id' ? 'id-ID' : 'en-US');
     } catch (_) {}
-    // Hapus cache karena bahasa berubah, audio lama tidak relevan
     _cacheAudio.clear();
-    debugPrint('[Supertonic] Bahasa diubah ke $kodeBahasa');
+    debugPrint('[TTS] Bahasa diubah ke $kodeBahasa');
   }
 
-  /// Menyimpan pengaturan gaya suara
   Future<void> setGayaSuara(String gaya) async {
-    // Normalisasi ke M1 atau F1
     String gayaNormal = 'F1';
     if (gaya.startsWith('M')) gayaNormal = 'M1';
     else if (gaya.startsWith('F')) gayaNormal = 'F1';
     else if (gaya == 'Laki-laki') gayaNormal = 'M1';
     else if (gaya == 'Perempuan') gayaNormal = 'F1';
-
     _gayaSuara = gayaNormal;
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_keyGayaSuara, gayaNormal);
+      await _ttsSistem!.setPitch(gayaNormal.startsWith('M') ? 0.9 : 1.1);
     } catch (_) {}
     _cacheAudio.clear();
-    debugPrint('[Supertonic] Gaya suara diubah ke $gayaNormal');
+    debugPrint('[TTS] Gaya suara diubah ke $gayaNormal');
   }
 
-  /// Mengatur kecepatan bicara (0.8 - 1.3)
   Future<void> setKecepatan(double kecepatan) async {
     _kecepatanBicara = kecepatan.clamp(0.8, 1.3);
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setDouble(_keyKecepatan, _kecepatanBicara);
+      await _ttsSistem!.setSpeechRate(_kecepatanBicara.clamp(0.0, 1.0) * 0.5);
+      await _ttsSistem!.setPitch(_gayaSuara.startsWith('M') ? 0.9 : 1.1);
     } catch (_) {}
-    debugPrint('[Supertonic] Kecepatan diubah ke $_kecepatanBicara');
+  }
+
+  /// Download model Supertonic secara manual (dipanggil dari pengaturan). Berjalan di background.
+  Future<bool> downloadModel({Function(double)? onProgress}) async {
+    if (_sedangDownloadModel) return false;
+    _sedangDownloadModel = true;
+    try {
+      debugPrint('[TTS] Mulai download model Supertonic 400MB...');
+      await SupertonicTTS.preDownloadModels(
+        onProgress: (selesai, total, berkas, progres) {
+          _onModelDownloadProgress?.call(progres);
+          onProgress?.call(progres);
+          debugPrint('[TTS] Download [$selesai/$total] $berkas ${(progres*100).toStringAsFixed(1)}%');
+        },
+      );
+      await _mesinSupertonic!.initialize();
+      _modelSiap = true;
+      debugPrint('[TTS] Download selesai, model siap');
+      return true;
+    } catch (e) {
+      debugPrint('[TTS] Download gagal: $e');
+      _modelSiap = false;
+      return false;
+    } finally {
+      _sedangDownloadModel = false;
+    }
   }
 
   void setStartHandler(Function handler) => _onStart = handler;
@@ -212,8 +275,6 @@ class SupertonicTtsService {
   void setModelProgressHandler(Function(double) handler) => _onModelDownloadProgress = handler;
 
   String _normalisasi(String teks) {
-    // Untuk bahasa Inggris, tetap gunakan processor tapi tanpa ekspansi jam Indonesia?
-    // Saat ini processor mendukung Indonesia, untuk English kita tetap pakai tapi hasilnya masih oke
     return IndonesianTextProcessor.normalizeForMalayVoice(teks);
   }
 
@@ -244,14 +305,14 @@ class SupertonicTtsService {
       if (!RegExp(r'[.!?]$').hasMatch(akhir)) akhir = '$akhir.';
       bagian.add(akhir);
     }
-    debugPrint('[Supertonic] Teks dipecah ${bagian.length} bagian');
     return bagian;
   }
 
-  /// Pre-generate di background agar playback instan
   Future<void> pregenerate(String teks) async {
     if (!_sudahDiinisialisasi) await init();
-    if (_sedangPregenerate || !_modelSiap) return;
+    if (_sedangPregenerate) return;
+    // Jika model belum siap, tidak perlu pregenerate supertonic, fallback tidak butuh file
+    if (!_modelSiap) return;
     _sedangPregenerate = true;
     try {
       final String normal = _normalisasi(teks);
@@ -271,25 +332,28 @@ class SupertonicTtsService {
       final path = await _hasilkanBerkas(normal, k);
       if (path != null) await _simpanCache(k, path);
     } catch (e) {
-      debugPrint('[Supertonic] pregenerate error: $e');
+      debugPrint('[TTS] pregenerate error: $e');
     } finally {
       _sedangPregenerate = false;
     }
   }
 
-  /// Ucapkan teks dengan bahasa dan suara saat ini
   Future<void> speak(String teks) async {
     if (!_sudahDiinisialisasi) await init();
     if (_pemutarAudio == null || _mesinSupertonic == null) {
       _sudahDiinisialisasi = false;
       await init();
     }
+    // Hentikan yang sedang berjalan
     try {
       await _pemutarAudio!.stop();
+      await _ttsSistem!.stop();
     } catch (_) {}
     _sedangMemutarAntrean = false;
     _antreanBerkasAudio.clear();
     _indeksAntreanSaatIni = 0;
+    _isFallbackPlaying = false;
+    _isFallbackPaused = false;
 
     final String normal = _normalisasi(teks);
     if (normal.trim().isEmpty) {
@@ -297,40 +361,60 @@ class SupertonicTtsService {
       return;
     }
 
-    if (!_modelSiap) {
-      debugPrint('[Supertonic] Model belum siap, coba init ulang');
-      _onError?.call('Model TTS belum siap, silakan tunggu download selesai');
-      _onCompletion?.call();
-      return;
+    // Jika model siap, pakai Supertonic (high quality, tapi butuh file)
+    if (_modelSiap) {
+      try {
+        if (normal.length > _batasKarakterPerBagian) {
+          await _bicaraAntreanSupertonic(normal);
+          return;
+        }
+        final int kunci = _kunciCache(normal, _kodeBahasa, _gayaSuara);
+        String? path;
+        if (_cacheAudio.containsKey(kunci) && await File(_cacheAudio[kunci]!).exists()) {
+          path = _cacheAudio[kunci];
+        }
+        if (path == null) {
+          path = await _hasilkanBerkas(normal, kunci);
+          if (path != null) await _simpanCache(kunci, path);
+        }
+        if (path != null) {
+          _sedangPakaiFallback = false;
+          await _pemutarAudio!.play(DeviceFileSource(path));
+          return;
+        }
+        // Jika gagal generate supertonic, fallback
+        debugPrint('[TTS] Supertonic gagal, fallback ke sistem');
+      } catch (e) {
+        debugPrint('[TTS] Supertonic speak error, fallback: $e');
+      }
     }
 
+    // Fallback ke FlutterTts sistem (sigap, ringan, tidak lag)
+    await _bicaraFallback(normal);
+  }
+
+  Future<void> _bicaraFallback(String normal) async {
+    _sedangPakaiFallback = true;
+    // Untuk teks panjang, pecah dan antre via fallback juga
     if (normal.length > _batasKarakterPerBagian) {
-      await _bicaraAntrean(normal);
-      return;
-    }
-
-    final int kunci = _kunciCache(normal, _kodeBahasa, _gayaSuara);
-    try {
-      String? path;
-      if (_cacheAudio.containsKey(kunci) && await File(_cacheAudio[kunci]!).exists()) {
-        path = _cacheAudio[kunci];
-        debugPrint('[Supertonic] Cache hit');
-      }
-      if (path == null) {
-        path = await _hasilkanBerkas(normal, kunci);
-        if (path != null) await _simpanCache(kunci, path);
-      }
-      if (path == null) throw Exception('Gagal generate audio');
-      await _pemutarAudio!.play(DeviceFileSource(path));
-      debugPrint('[Supertonic] Play dimulai: $path');
-    } catch (e, st) {
-      debugPrint('[Supertonic] speak error: $e $st');
-      _onError?.call(e.toString());
-      _onCompletion?.call();
+      final parts = _pecahTeks(normal);
+      _antreanBerkasAudio.clear();
+      _antreanBerkasAudio.addAll(parts);
+      _indeksAntreanSaatIni = 0;
+      _sedangMemutarAntrean = parts.length > 1;
+      await _ttsSistem!.speak(parts.first);
+    } else {
+      _sedangMemutarAntrean = false;
+      await _ttsSistem!.speak(normal);
     }
   }
 
-  /// Pratinjau suara untuk pengaturan (teks pendek sesuai bahasa)
+  Future<void> _bicaraFallbackAntrean() async {
+    if (_indeksAntreanSaatIni < _antreanBerkasAudio.length) {
+      await _ttsSistem!.speak(_antreanBerkasAudio[_indeksAntreanSaatIni]);
+    }
+  }
+
   Future<void> pratinjauSuara({String? teksKustom}) async {
     String teksPratinjau;
     if (teksKustom != null && teksKustom.trim().isNotEmpty) {
@@ -347,7 +431,7 @@ class SupertonicTtsService {
     await speak(teksPratinjau);
   }
 
-  Future<void> _bicaraAntrean(String normal) async {
+  Future<void> _bicaraAntreanSupertonic(String normal) async {
     try {
       final parts = _pecahTeks(normal);
       final List<String> paths = [];
@@ -367,71 +451,50 @@ class SupertonicTtsService {
         }
       }
       if (paths.isEmpty) throw Exception('Gagal antrean');
-      _antreanBerkasAudio
-        ..clear()
-        ..addAll(paths);
+      _antreanBerkasAudio..clear()..addAll(paths);
       _indeksAntreanSaatIni = 0;
       _sedangMemutarAntrean = paths.length > 1;
+      _sedangPakaiFallback = false;
       if (paths.length == 1) {
         final kFull = _kunciCache(normal, _kodeBahasa, _gayaSuara);
         _cacheAudio[kFull] = paths.first;
       }
       await _pemutarAudio!.play(DeviceFileSource(paths.first));
     } catch (e, st) {
-      debugPrint('[Supertonic] antrean error $e $st');
-      _sedangMemutarAntrean = false;
-      _antreanBerkasAudio.clear();
-      _onError?.call(e.toString());
-      _onCompletion?.call();
+      debugPrint('[TTS] antrean supertonic error $e $st, fallback');
+      await _bicaraFallback(normal);
     }
   }
 
   Future<String?> _hasilkanBerkas(String teksNormal, int kunci) async {
+    if (!_modelSiap) return null;
     try {
       final dirTemp = await getTemporaryDirectory();
       final dirTts = Directory('${dirTemp.path}/prima_supertonic_cache');
       await dirTts.create(recursive: true);
       final path = '${dirTts.path}/$kunci.wav';
-
-      // Jika file sudah ada dan valid, langsung pakai
       final fileExisting = File(path);
       if (await fileExisting.exists() && await fileExisting.length() > 100) {
         return path;
       }
-
-      // Synthesize via Supertonic
-      final config = TTSConfig(
-        speechSpeed: _kecepatanBicara,
-        denoisingSteps: 5,
-      );
-
+      final config = TTSConfig(speechSpeed: _kecepatanBicara, denoisingSteps: 5);
       final hasil = await _mesinSupertonic!
-          .synthesize(
-            teksNormal,
-            language: _kodeBahasa,
-            voiceStyle: _gayaSuara,
-            config: config,
-          )
+          .synthesize(teksNormal, language: _kodeBahasa, voiceStyle: _gayaSuara, config: config)
           .timeout(const Duration(seconds: 30), onTimeout: () => throw TimeoutException('Timeout synthesize 30s'));
-
       final wavBytes = hasil.toWavBytes();
       final file = File(path);
       await file.writeAsBytes(wavBytes);
       final size = await file.length();
       if (size < 100) {
-        debugPrint('[Supertonic] file terlalu kecil $size');
-        try {
-          await file.delete();
-        } catch (_) {}
+        try { await file.delete(); } catch (_) {}
         return null;
       }
-      debugPrint('[Supertonic] file OK $size bytes $path');
       return path;
     } on TimeoutException catch (e) {
-      debugPrint('[Supertonic] timeout $e');
+      debugPrint('[TTS] timeout $e');
       return null;
     } catch (e) {
-      debugPrint('[Supertonic] generate error $e');
+      debugPrint('[TTS] generate error $e');
       return null;
     }
   }
@@ -447,7 +510,7 @@ class SupertonicTtsService {
         final f = File(p);
         if (await f.exists()) await f.delete();
       } catch (e) {
-        debugPrint('[Supertonic] hapus cache gagal $e');
+        debugPrint('[TTS] hapus cache gagal $e');
       }
     }
   }
@@ -469,9 +532,9 @@ class SupertonicTtsService {
           }
         }
       }
-      debugPrint('[Supertonic] cleanup $hapus file');
+      debugPrint('[TTS] cleanup $hapus file');
     } catch (e) {
-      debugPrint('[Supertonic] cleanup error $e');
+      debugPrint('[TTS] cleanup error $e');
     }
   }
 
@@ -479,23 +542,38 @@ class SupertonicTtsService {
     _sedangMemutarAntrean = false;
     _antreanBerkasAudio.clear();
     _indeksAntreanSaatIni = 0;
-    await _pemutarAudio?.stop();
+    _isFallbackPlaying = false;
+    _isFallbackPaused = false;
+    try { await _pemutarAudio?.stop(); } catch (_) {}
+    try { await _ttsSistem?.stop(); } catch (_) {}
   }
 
-  Future<void> pause() async => await _pemutarAudio?.pause();
-  Future<void> resume() async => await _pemutarAudio?.resume();
+  Future<void> pause() async {
+    if (_sedangPakaiFallback) {
+      try { await _ttsSistem?.pause(); } catch (_) {}
+      _isFallbackPaused = true;
+    } else {
+      await _pemutarAudio?.pause();
+    }
+  }
+
+  Future<void> resume() async {
+    if (_sedangPakaiFallback) {
+      // FlutterTts tidak support resume sempurna, speak ulang dari awal jika perlu
+      _isFallbackPaused = false;
+    } else {
+      await _pemutarAudio?.resume();
+    }
+  }
 
   Future<void> dispose() async {
     _sedangMemutarAntrean = false;
     _antreanBerkasAudio.clear();
     await _langgananPemutar?.cancel();
     await _pemutarAudio?.dispose();
-    // Supertonic tidak perlu close explicit, tapi bersihkan
     _sudahDiinisialisasi = false;
     _modelSiap = false;
-    debugPrint('[Supertonic] disposed');
   }
 
-  /// Untuk menampilkan progres download model di UI
-  bool get sedangDownloadModel => !_modelSiap && _sudahDiinisialisasi == false;
+  bool get sedangDownloadModelFallback => _sedangDownloadModel;
 }
