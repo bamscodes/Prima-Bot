@@ -27,6 +27,8 @@ class PiperTtsService {
   PiperTTS? _mesinPiper;
   bool _sudahDiinisialisasi = false;
   bool _sedangInisialisasi = false;
+  String? _modelAktifPath;
+  String? _configAktifPath;
   final Map<int, String> _cacheAudio = {};
 
   Function? _onStart;
