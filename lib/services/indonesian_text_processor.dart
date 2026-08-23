@@ -148,12 +148,37 @@ class IndonesianTextProcessor {
       r'\bSpPD\b': 'Spesialis Penyakit Dalam',
     };
 
+    // Lindungi frasa "atau <Singkatan>" agar tidak menjadi duplikat setelah ekspansi
+    // Contoh: "Spesialis Kandungan (Obsgyn)" sudah menjadi " atau Obsgyn " setelah langkah 3d
+    // Jika langsung di-expand, akan menjadi "atau Spesialis Kandungan" sehingga duplikat
+    // Simpan placeholder sebelum mapping, kembalikan setelahnya
+    final Map<String, String> petaPlaceholder = {};
+    int indeksPlaceholder = 0;
+    for (final kunci in petaRumahSakit.keys) {
+      // Ekstrak singkatan dari pola regex, contoh r'\bSpA\b' -> SpA
+      // Hapus \b dan karakter regex lain agar dapat singkatan murni
+      final String singkatan = kunci.replaceAll(r'\b', '').replaceAll(RegExp(r'[^A-Za-z0-9]'), '');
+      if (singkatan.isEmpty) continue;
+      final RegExp polaAtauSingkatan = RegExp(r'atau\s+' + RegExp.escape(singkatan), caseSensitive: false);
+      if (polaAtauSingkatan.hasMatch(hasil)) {
+        final String placeholder = '__PH_${indeksPlaceholder}__';
+        petaPlaceholder[placeholder] = 'atau $singkatan';
+        hasil = hasil.replaceAll(polaAtauSingkatan, placeholder);
+        indeksPlaceholder++;
+      }
+    }
+
     // Urutkan dari kunci terpanjang agar RSUD tidak tertimpa RS
     final daftarKunciRs = petaRumahSakit.keys.toList()..sort((a, b) => b.length.compareTo(a.length));
     for (final kunci in daftarKunciRs) {
       final pengganti = petaRumahSakit[kunci]!;
       hasil = hasil.replaceAll(RegExp(kunci, caseSensitive: false), pengganti);
     }
+
+    // Kembalikan placeholder menjadi bentuk natural "atau <Singkatan>"
+    petaPlaceholder.forEach((placeholder, asli) {
+      hasil = hasil.replaceAll(placeholder, asli);
+    });
 
     // 8b. Ekspansi jam dan waktu
     //     Peta waktu menggunakan koma karena titik dua sudah diubah menjadi koma
