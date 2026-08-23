@@ -104,35 +104,41 @@ class GetBotResponse {
     // 5. Deteksi apakah pertanyaan di luar konteks RS (umum)
     final bool isPertanyaanRs = _polaRs.hasMatch(masukanBersih.toLowerCase()) || intent == 'Cari_Jadwal' || hasilRetrieval.isNotEmpty;
     if (!isPertanyaanRs) {
-      // Pertanyaan umum di luar RS: jawab secara logis tanpa mengarang data RS
+      // Pertanyaan umum di luar RS: coba LLM cepat, jika gagal langsung fallback tanpa tampilkan "padat"
       try {
-        final String jawabanUmum = await AIService.generateResponseDenganKonteks(
+        final String? jawabanUmum = await AIService.generateResponseDenganKonteks(
           pertanyaanPengguna: masukanBersih,
           konteksTerkurasi: 'Konteks RS tidak relevan untuk pertanyaan umum ini. Jawab secara umum dengan Bahasa Indonesia yang ramah, tetap tawarkan bantuan terkait RS jika diperlukan.',
           riwayatPercakapan: riwayat.length > 5 ? riwayat.sublist(riwayat.length - 5) : riwayat,
           modeUmum: true,
-        ).timeout(const Duration(seconds: 30));
-        final String? jawabanBersih = _saringJawabanSafety(jawabanUmum);
-        if (jawabanBersih != null && jawabanBersih.trim().isNotEmpty) {
-          return jawabanBersih;
+        ).timeout(const Duration(seconds: 12));
+        if (jawabanUmum != null) {
+          final String? jawabanBersih = _saringJawabanSafety(jawabanUmum);
+          if (jawabanBersih != null && jawabanBersih.trim().isNotEmpty) {
+            return jawabanBersih;
+          }
         }
       } catch (error) {
         log('Error jawaban umum: $error');
       }
-      // Fallback untuk pertanyaan umum jika LLM gagal
+      // Fallback untuk pertanyaan umum jika LLM gagal (tidak tampilkan "padat")
       return 'Terima kasih atas pertanyaannya. Saya adalah asisten RS Prima Insan Mulia yang fokus membantu informasi layanan rumah sakit. Untuk pertanyaan umum tersebut, saya sarankan mencari sumber terpercaya atau hubungi layanan kami di 0815 1100 0600 jika ada kaitannya dengan kesehatan.';
     }
 
     // 6. Siapkan riwayat yang relevan (ambil 5 pesan terakhir agar tidak terlalu panjang)
     final List<Map<String, String>> riwayatRelevan = riwayat.length > 5 ? riwayat.sublist(riwayat.length - 5) : riwayat;
 
-    // 7. Coba generasi via LLM dengan konteks RAG dan filter safety
+    // 7. Coba generasi via LLM dengan konteks RAG dan filter safety (cepat, fallback langsung jika null)
     try {
-      final String jawabanLlmMentah = await AIService.generateResponseDenganKonteks(
+      final String? jawabanLlmMentah = await AIService.generateResponseDenganKonteks(
         pertanyaanPengguna: masukanBersih,
         konteksTerkurasi: konteksTerkurasi,
         riwayatPercakapan: riwayatRelevan,
-      ).timeout(const Duration(seconds: 45));
+      ).timeout(const Duration(seconds: 20));
+      if (jawabanLlmMentah == null) {
+        log('LLM mengembalikan null (RTO/cache miss), fallback ke ekstaktif');
+        return _jawabanFallbackEkstraktif(masukanBersih, hasilRetrieval, daftarJadwal, konteksJadwalPresisi);
+      }
 
       // Saring output safety yang tidak diinginkan
       final String? jawabanLlm = _saringJawabanSafety(jawabanLlmMentah);

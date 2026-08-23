@@ -16,10 +16,10 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.2+3
+version: 1.0.3+4
 
 environment:
-  sdk: ^3.9.0
+  sdk: ^3.11.5
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -42,8 +42,7 @@ dependencies:
   intl: ^0.20.2
   provider: ^6.1.2
   flutter_markdown: ^0.7.5
-  supertonic_flutter: ^2.0.0
-  flutter_tts: ^4.2.2
+  flutter_piper_tts: ^0.5.2
   audioplayers: ^6.0.0
   path_provider: ^2.1.0
   flutter_dotenv: ^5.1.0
@@ -90,6 +89,7 @@ flutter:
     - .env
     - assets/images/logo.png
     - assets/images/logo_splash.png
+    - assets/piper/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

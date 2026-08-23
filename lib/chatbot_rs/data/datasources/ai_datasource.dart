@@ -5,17 +5,19 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Layanan AI yang terhubung ke OpenRouter untuk generasi jawaban.
-/// Telah diperkuat dengan prompt anti-halusinasi, filter safety, dan penanganan RTO yang robust.
+/// Dioptimalkan anti-RTO: hanya 2 model tercepat, cache, dan fallback langsung ke RAG ekstaktif
+/// tanpa menampilkan "layanan AI sedang padat" ke user.
 class AIService {
   static const String _urlOpenRouter = 'https://openrouter.ai/api/v1/chat/completions';
-  // Urutan model dioptimalkan: model paling cepat dan stabil di depan untuk kurangi RTO
+  // Hanya 2 model paling stabil dan cepat untuk hindari RTO berurutan 75 detik
   static const List<String> _modelGratis = [
     'google/gemini-2.0-flash-exp:free',
-    'google/gemini-2.5-pro:free',
-    'openrouter/free',
-    'meta-llama/llama-3-8b-instruct:free',
-    'mistralai/mistral-7b-instruct:free',
+    'google/gemini-2.0-flash-001',
   ];
+
+  // Cache sederhana untuk jawaban yang sudah pernah di-generate (hemat API dan anti RTO)
+  static final Map<String, String> _cacheJawaban = {};
+  static const int _maksCache = 50;
 
   // API key dimuat dari environment. Untuk produksi sebaiknya dipindah ke server-side proxy
   static String get _kunciOpenRouter => dotenv.env['OPENROUTER_API_KEY'] ?? '';
@@ -28,11 +30,17 @@ class AIService {
   }
 
   /// Generasi jawaban umum dari LLM dengan memori percakapan.
-  static Future<String> generateResponse(
+  /// Mengembalikan null jika gagal agar caller bisa fallback ke RAG ekstaktif (tidak menampilkan "padat" ke user).
+  static Future<String?> generateResponse(
     List<Map<String, String>> daftarPesan,
   ) async {
-    if (!_adaKunciOpenRouter) {
-      return 'Maaf, saya sedang offline (API Key tidak ditemukan). Silakan hubungi pendaftaran di 0815 1100 0600.';
+    if (!_adaKunciOpenRouter) return null;
+
+    // Cek cache dulu
+    final String kunciCache = _buatKunciCache(daftarPesan);
+    if (_cacheJawaban.containsKey(kunciCache)) {
+      log('AI cache hit');
+      return _cacheJawaban[kunciCache];
     }
 
     final Map<String, String> promptSistem = {
@@ -50,24 +58,32 @@ ATURAN KETAT:
     final String? konten = await _mintaCompletion([
       promptSistem,
       ...daftarPesan,
-    ], daftarModel: _modelGratis, batasWaktu: const Duration(seconds: 15));
+    ], daftarModel: _modelGratis, batasWaktu: const Duration(seconds: 10));
 
-    if (konten == null) {
-      return 'Maaf, semua layanan AI kami sedang padat. Silakan coba lagi beberapa saat lagi atau hubungi pendaftaran di 0815 1100 0600.';
-    }
+    if (konten == null) return null;
     final String? bersih = _saringOutputSafety(konten);
-    return bersih ?? 'Maaf, saya belum bisa menjawab saat ini. Silakan coba lagi atau hubungi pendaftaran di 0815 1100 0600.';
+    if (bersih == null) return null;
+    _simpanCache(kunciCache, bersih);
+    return bersih;
   }
 
   /// Generasi jawaban dengan konteks RAG yang sudah terkurasi.
-  static Future<String> generateResponseDenganKonteks({
+  /// Mengembalikan null jika gagal agar caller fallback ke jawaban ekstaktif lokal.
+  static Future<String?> generateResponseDenganKonteks({
     required String pertanyaanPengguna,
     required String konteksTerkurasi,
     required List<Map<String, String>> riwayatPercakapan,
     bool modeUmum = false,
   }) async {
-    if (!_adaKunciOpenRouter) {
-      return 'Maaf, saya sedang offline (API Key tidak ditemukan).';
+    if (!_adaKunciOpenRouter) return null;
+
+    final String kunciCache = _buatKunciCache([
+      {'role': 'user', 'content': pertanyaanPengguna},
+      {'role': 'system', 'content': konteksTerkurasi}
+    ]);
+    if (_cacheJawaban.containsKey(kunciCache)) {
+      log('AI konteks cache hit');
+      return _cacheJawaban[kunciCache];
     }
 
     // Deteksi apakah pertanyaan adalah sapaan
@@ -116,16 +132,16 @@ Instruksi: Jawab dengan ramah berdasarkan konteks di atas. Jika konteks tidak cu
         ...pesanLengkap,
       ],
       daftarModel: _modelGratis,
-      batasWaktu: const Duration(seconds: 15),
+      batasWaktu: const Duration(seconds: 10),
       maxTokens: modeUmum || isSapaan ? 300 : 600,
       temperature: 0.7,
     );
 
-    if (jawaban == null) {
-      return 'Maaf, layanan AI sedang padat. Silakan coba lagi atau hubungi pendaftaran di 0815 1100 0600.';
-    }
+    if (jawaban == null) return null;
     final String? bersih = _saringOutputSafety(jawaban);
-    return bersih ?? 'Maaf, saya belum bisa menjawab saat ini. Silakan coba lagi atau hubungi pendaftaran di 0815 1100 0600.';
+    if (bersih == null) return null;
+    _simpanCache(kunciCache, bersih);
+    return bersih;
   }
 
   /// Deteksi sapaan sederhana
@@ -185,6 +201,18 @@ tanpa tanda kutip, tanpa awalan "Judul:", tanpa markdown, dan hanya tulis judul.
     final String normal = nilai.replaceAll(RegExp(r'\s+'), ' ').trim();
     if (normal.length <= panjangMaks) return normal;
     return normal.substring(0, panjangMaks);
+  }
+
+  static String _buatKunciCache(List<Map<String, String>> pesan) {
+    final String gabungan = pesan.map((m) => m['content'] ?? '').join('|');
+    return gabungan.hashCode.toString();
+  }
+
+  static void _simpanCache(String kunci, String nilai) {
+    if (_cacheJawaban.length >= _maksCache) {
+      _cacheJawaban.remove(_cacheJawaban.keys.first);
+    }
+    _cacheJawaban[kunci] = nilai;
   }
 
   /// Meminta completion ke OpenRouter dengan fallback antar model dan penanganan RTO

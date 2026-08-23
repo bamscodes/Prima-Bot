@@ -3,7 +3,7 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
-import '../../../services/supertonic_tts_service.dart';
+import '../../../services/piper_tts_service.dart';
 import '../../data/datasources/local_datasource.dart';
 import '../../domain/usecases/get_bot_response.dart';
 import '../../domain/usecases/generate_conversation_title.dart';
@@ -57,7 +57,7 @@ class ChatProvider extends ChangeNotifier {
   final GetBotResponse _getBotResponse = GetBotResponse();
   final GenerateConversationTitle _generateConversationTitle =
       GenerateConversationTitle();
-  final SupertonicTtsService _tts = SupertonicTtsService();
+  final PiperTtsService _tts = PiperTtsService();
   final Uuid _uuid = const Uuid();
 
   String _sessionId = '';

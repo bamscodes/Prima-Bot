@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../presentation/providers/theme_provider.dart';
-import '../../services/supertonic_tts_service.dart';
+import '../../services/piper_tts_service.dart';
 
 class _BaseDetailScreen extends StatelessWidget {
   final String title;
@@ -122,7 +122,7 @@ class SoundSettingsScreen extends StatefulWidget {
 }
 
 class _SoundSettingsScreenState extends State<SoundSettingsScreen> {
-  final SupertonicTtsService _layananTts = SupertonicTtsService();
+  final PiperTtsService _layananTts = PiperTtsService();
 
   String _kodeBahasa = 'id';
   String _gayaSuara = 'F1';
@@ -218,11 +218,11 @@ class _SoundSettingsScreenState extends State<SoundSettingsScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Supertonic TTS • On-device, 31 bahasa',
+                'Piper TTS • On-device, ringan & tidak robotik',
                 style: theme.textTheme.bodySmall?.copyWith(color: const Color(0xFF9D9D9D), fontSize: 11),
               ),
               const SizedBox(height: 20),
-              // Status model
+              // Status model - Piper langsung siap karena bundle, tidak perlu download
               if (!_layananTts.modelSiap)
                 Container(
                   padding: const EdgeInsets.all(12),
@@ -237,7 +237,7 @@ class _SoundSettingsScreenState extends State<SoundSettingsScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'Model Supertonic sedang disiapkan (~400MB download pertama)',
+                          'Model Piper sedang disiapkan...',
                           style: theme.textTheme.bodySmall?.copyWith(color: Colors.orange.shade800, fontSize: 11),
                         ),
                       ),
@@ -414,7 +414,7 @@ class LanguageSettingsScreen extends StatefulWidget {
 }
 
 class _LanguageSettingsScreenState extends State<LanguageSettingsScreen> {
-  final SupertonicTtsService _layananTts = SupertonicTtsService();
+  final PiperTtsService _layananTts = PiperTtsService();
   String _kodeTerpilih = 'id';
   bool _memuat = true;
 
