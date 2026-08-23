@@ -21,11 +21,14 @@ class IndonesianTextProcessor {
       RegExp(r'!\[([^\]]*)\]\([^)]*\)'),
       (cocok) => cocok.group(1) ?? '',
     );
-    //    Tautan: [teks](url) -> teks
-    //    Wajib pakai replaceAllMapped karena Dart tidak mendukung backreference di replaceAll biasa
+    //    Tautan: [teks](url) -> teks (jika teks hanya angka, abaikan agar tidak dibaca sebagai nomor urut)
     hasil = hasil.replaceAllMapped(
       RegExp(r'\[([^\]]*)\]\([^)]*\)'),
-      (cocok) => cocok.group(1) ?? '',
+      (cocok) {
+        final text = cocok.group(1) ?? '';
+        if (RegExp(r'^\d+$').hasMatch(text)) return ' '; // Jika tautan hanya angka misal [1], hilangkan saja
+        return text;
+      },
     );
 
     // 1b. Bersihkan sisa tanda kurung siku berisi angka rujukan seperti [1], [2] yang kadang muncul dari markdown
@@ -40,19 +43,22 @@ class IndonesianTextProcessor {
     // 2b. Hapus email mentah agar tidak dibaca karakter per karakter
     hasil = hasil.replaceAll(RegExp(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b'), ' ');
 
-    // 3. Tangani jeda untuk daftar sebelum baris baru diubah
+    // 3. Tangani baris baru dan pemisah
+    hasil = hasil.replaceAll(RegExp(r'\r\n'), '\n');
+
     //    Daftar bullet dengan tanda - atau * atau bullet di awal baris
     hasil = hasil.replaceAll(RegExp(r'\n\s*[-*•]\s+'), '. ');
     hasil = hasil.replaceAll(RegExp(r'^\s*[-*•]\s+'), '');
-    //    Daftar bernomor di baris baru: \n 1. teks -> . 1, teks (beri jeda setelah nomor)
+    
+    //    Daftar bernomor di baris baru atau awal string: 1. teks -> . 1, teks (beri jeda setelah nomor)
     hasil = hasil.replaceAllMapped(
-      RegExp(r'\n\s*(\d+)[\.\)]\s+'),
-      (cocok) => '. ${cocok.group(1)}, ',
+      RegExp(r'(?:^|\n)\s*(\d+)[\.\)]\s+'),
+      (cocok) => '.\n${cocok.group(1)}, ',
     );
 
     // 3b. Ganti baris baru dengan titik untuk memberi jeda natural pada setiap baris/daftar
-    hasil = hasil.replaceAll(RegExp(r'\r\n'), '\n');
     hasil = hasil.replaceAll(RegExp(r'\n+'), '. ');
+    
     //    Ganti titik dua dengan koma agar tidak terbaca aneh oleh sebagian engine TTS
     //    Dilakukan setelah URL dihapus agar tidak merusak URL
     hasil = hasil.replaceAll(':', ',');
@@ -180,7 +186,22 @@ class IndonesianTextProcessor {
       hasil = hasil.replaceAll(placeholder, asli);
     });
 
-    // 8b. Ekspansi jam dan waktu
+    // 8b. Tangani tanda hubung untuk rentang dan jeda SEBELUM konversi jam
+    //    Rentang angka/waktu tanpa spasi: 10,30-12,30 -> 10,30 sampai 12,30
+    //    Regex mendukung koma di dalam angka agar jam (10,30) tetap terdeteksi utuh
+    hasil = hasil.replaceAllMapped(
+      RegExp(r'(\d+(?:,\d+)?)\s*[-–—]\s*(\d+(?:,\d+)?)'),
+      (cocok) => '${cocok.group(1)} sampai ${cocok.group(2)}',
+    );
+    //    Rentang hari: Senin - Jumat -> Senin sampai Jumat
+    hasil = hasil.replaceAllMapped(
+      RegExp(r'\b(Senin|Selasa|Rabu|Kamis|Jumat|Sabtu|Minggu)\s*[-–—]\s*(Senin|Selasa|Rabu|Kamis|Jumat|Sabtu|Minggu)\b', caseSensitive: false),
+      (cocok) => '${cocok.group(1)} sampai ${cocok.group(2)}',
+    );
+    //    Strip yang dikelilingi spasi sebagai pemisah umum -> ganti dengan koma untuk jeda
+    hasil = hasil.replaceAll(RegExp(r'\s+-\s+'), ', ');
+
+    // 8c. Ekspansi jam dan waktu
     //     Peta waktu menggunakan koma karena titik dua sudah diubah menjadi koma
     final Map<String, String> petaWaktu = {
       '10,30': 'setengah sebelas',
@@ -202,7 +223,7 @@ class IndonesianTextProcessor {
       hasil = hasil.replaceAll(waktu, ucapan);
     });
 
-    // 8c. Tangani waktu generik yang belum ada di peta, misal 09,15 -> jam sembilan lewat lima belas
+    // 8d. Tangani waktu generik yang belum ada di peta, misal 09,15 -> jam sembilan lewat lima belas
     //     Pola: angka jam , angka menit yang belum diubah
     hasil = hasil.replaceAllMapped(
       RegExp(r'\b(\d{1,2}),(\d{2})\b'),
@@ -215,28 +236,10 @@ class IndonesianTextProcessor {
       },
     );
 
-    // 9. Tangani tanda hubung untuk rentang dan jeda
-    //    9a. Rentang angka/waktu tanpa spasi: 10,30-12,30 -> 10,30 sampai 12,30 (sudah diubah jadi ucapan)
-    //        Lakukan sebelum penggantian spasi-dash agar tidak ganda
+    // 9. Verbalisasi nomor telepon agar dibaca per digit dengan jeda
+    //    Deteksi pola nomor Indonesia: 0 atau +62 diikuti 7-15 digit
     hasil = hasil.replaceAllMapped(
-      RegExp(r'(\d+)\s*[-–—]\s*(\d+)'),
-      (cocok) => '${cocok.group(1)} sampai ${cocok.group(2)}',
-    );
-    //    9b. Rentang hari: Senin - Jumat -> Senin sampai Jumat
-    hasil = hasil.replaceAllMapped(
-      RegExp(r'\b(Senin|Selasa|Rabu|Kamis|Jumat|Sabtu|Minggu)\s*[-–—]\s*(Senin|Selasa|Rabu|Kamis|Jumat|Sabtu|Minggu)\b', caseSensitive: false),
-      (cocok) => '${cocok.group(1)} sampai ${cocok.group(2)}',
-    );
-    //    9c. Strip yang dikelilingi spasi sebagai pemisah umum -> ganti dengan koma untuk jeda (bukan "sampai" kecuali rentang)
-    //        Untuk bullet yang sudah ditangani di atas, sisa " - " di tengah kalimat kita ubah jadi koma
-    //        Contoh: "Informasi - Pendaftaran" -> "Informasi, Pendaftaran"
-    //        Tapi jangan ubah jika sudah menjadi "sampai"
-    hasil = hasil.replaceAll(RegExp(r'\s+-\s+'), ', ');
-
-    // 9d. Verbalisasi nomor telepon agar dibaca per digit dengan jeda
-    //     Deteksi pola nomor Indonesia: 0 diikuti 9-12 digit dengan spasi atau strip
-    hasil = hasil.replaceAllMapped(
-      RegExp(r'\b0\d[\d\s\-]{8,14}\d\b'),
+      RegExp(r'\b(?:0|\+62)[\d\s\-]{7,15}\b'),
       (cocok) => _verbalisasiNomorTelepon(cocok.group(0)!),
     );
 
@@ -301,9 +304,15 @@ class IndonesianTextProcessor {
   /// Mengubah nomor telepon menjadi ucapan per digit dengan jeda koma.
   /// Contoh: "0815 1100 0600" -> "kosong delapan satu lima, satu satu kosong kosong, kosong enam kosong kosong"
   static String _verbalisasiNomorTelepon(String nomorMentah) {
-    // Bersihkan non-digit kecuali spasi dan strip dulu, lalu ambil digit saja
-    final String hanyaDigit = nomorMentah.replaceAll(RegExp(r'[^\d]'), '');
-    if (hanyaDigit.length < 9) return nomorMentah;
+    // Bersihkan non-digit dulu, tangani +62
+    String hanyaDigit = nomorMentah.replaceAll(RegExp(r'[^\d]'), '');
+    if (nomorMentah.startsWith('+62') || nomorMentah.startsWith('62')) {
+      if (hanyaDigit.startsWith('62')) {
+        hanyaDigit = '0${hanyaDigit.substring(2)}';
+      }
+    }
+    
+    if (hanyaDigit.length < 8) return nomorMentah;
 
     const Map<String, String> petaDigit = {
       '0': 'kosong',
