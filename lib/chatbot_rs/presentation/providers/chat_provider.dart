@@ -117,7 +117,7 @@ class ChatProvider extends ChangeNotifier {
 
   /// Load all sessions from database
   Future<void> deleteAllSessions() async {
-    PiperTtsService.instance.stop(); // Hentikan TTS jika semua sesi dihapus
+    PiperTtsService().stop(); // Hentikan TTS jika semua sesi dihapus
     _sessions.clear();
     _messages.clear();
     await DatabaseHelper.instance.deleteAllSessions();
@@ -165,7 +165,7 @@ class ChatProvider extends ChangeNotifier {
 
   /// Delete a specific session
   Future<void> deleteSessionById(String sessionId) async {
-    PiperTTSService.instance.stop(); // Hentikan TTS jika sesi dihapus
+    PiperTtsService().stop(); // Hentikan TTS jika sesi dihapus
     _clearLoadingForSession(sessionId);
     await DatabaseHelper.instance.deleteSession(sessionId);
 
@@ -825,7 +825,7 @@ Silakan pilih pintasan di bawah ini atau ketik poli mana yang jadwalnya ingin An
   }
 
   Future<void> clearChat() async {
-    PiperTtsService.instance.stop();
+    PiperTtsService().stop();
     await DatabaseHelper.instance.deleteAllSessions();
     _messages.clear();
     _sessions.clear();
