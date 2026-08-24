@@ -282,5 +282,9 @@ class PiperTtsService {
   }
 
   bool get sedangDownloadModel => false;
-  bool get modelSiap => _sudahDiinisialisasi;
+  // Model dianggap siap jika inisialisasi selesai dan path model aktif sudah terisi
+  bool get modelSiap => _sudahDiinisialisasi && _modelAktifPath != null;
+  // Path model aktif, dipakai untuk diagnostik dan log penggantian suara
+  String? get modelAktifPath => _modelAktifPath;
+  String? get configAktifPath => _configAktifPath;
 }

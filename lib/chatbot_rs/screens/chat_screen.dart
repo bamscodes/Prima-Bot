@@ -379,7 +379,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       controller: _scrollController,
       reverse: false,
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-      // Penyangga scroll agar animasi tetap halus tanpa menggunakan ScrollCacheExtent yang belum tersedia di versi Flutter ini
+      // Penyangga scroll agar animasi tetap halus saat daftar pesan panjang.
+      // Catatan: tetap memakai cacheExtent karena penggantinya (ScrollCacheExtent)
+      // memakai tipe objek khusus dan belum kompatibel dengan nilai piksel sederhana.
+      // ignore: deprecated_member_use
       cacheExtent: 350,
       padding: const EdgeInsets.only(left: 18, right: 18, top: 16, bottom: 8),
       itemCount: totalCount,

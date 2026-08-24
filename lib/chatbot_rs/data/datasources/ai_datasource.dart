@@ -9,10 +9,12 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 /// tanpa menampilkan "layanan AI sedang padat" ke user.
 class AIService {
   static const String _urlOpenRouter = 'https://openrouter.ai/api/v1/chat/completions';
-  // Hanya 2 model paling stabil dan cepat untuk hindari RTO berurutan 75 detik
+  // Daftar model gratis OpenRouter pilihan, dicoba berurutan dengan fallback cepat
+  // agar tidak terjadi RTO beruntun dan pengguna tidak melihat pesan "layanan padat"
   static const List<String> _modelGratis = [
-    'google/gemini-2.0-flash-exp:free',
-    'google/gemini-2.0-flash-001',
+    'nvidia/nemotron-3-super-120b-a12b:free',
+    'openrouter/free',
+    'poolside/laguna-xs-2.1:free',
   ];
 
   // Cache sederhana untuk jawaban yang sudah pernah di-generate (hemat API dan anti RTO)
@@ -190,7 +192,8 @@ tanpa tanda kutip, tanpa awalan "Judul:", tanpa markdown, dan hanya tulis judul.
           'content': 'Pesan pengguna: $kutipanPengguna\n\nRespons asisten: $kutipanAsisten',
         },
       ],
-      daftarModel: const ['openrouter/free', 'google/gemini-2.5-pro:free'],
+      // Pembuatan judul cukup pakai model ringan yang sama agar konsisten dan hemat kuota
+      daftarModel: const ['openrouter/free', 'nvidia/nemotron-3-super-120b-a12b:free'],
       maxTokens: 24,
       temperature: 0.2,
       batasWaktu: const Duration(seconds: 10),

@@ -111,7 +111,7 @@ class _BaseDetailScreen extends StatelessWidget {
   }
 }
 
-/// Pengaturan suara berbasis Supertonic TTS.
+/// Pengaturan suara berbasis Piper TTS.
 /// Mendukung pemilihan bahasa (Indonesia/English), jenis suara (Laki-laki/Perempuan),
 /// kecepatan bicara, dan pratinjau langsung.
 class SoundSettingsScreen extends StatefulWidget {

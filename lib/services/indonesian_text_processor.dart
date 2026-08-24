@@ -1,5 +1,5 @@
 /// Kelas untuk menormalisasi teks Bahasa Indonesia agar dibaca lancar
-/// oleh Supertonic TTS (on-device, multilingual).
+/// oleh Piper TTS (on-device, ringan, neural, tidak robotik).
 ///
 /// Prinsip perbaikan:
 /// - Urutan pembersihan diperbaiki agar tidak merusak deteksi URL dan tautan
@@ -7,7 +7,7 @@
 /// - Normalisasi nomor telepon, alamat, dan waktu dibuat lebih robust
 /// - Semua komentar dan penamaan variabel menggunakan Bahasa Indonesia yang jelas
 class IndonesianTextProcessor {
-  /// Normalisasi teks utama sebelum dikirim ke Supertonic TTS.
+  /// Normalisasi teks utama sebelum dikirim ke Piper TTS.
   /// Menangani: markdown, emoji, tautan, singkatan, slang, dan simbol.
   static String normalizeForMalayVoice(String teks) {
     if (teks.trim().isEmpty) return teks;
