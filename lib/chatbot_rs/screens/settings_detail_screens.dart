@@ -565,7 +565,7 @@ class DeveloperScreen extends StatelessWidget {
         children: [
           Text('The people behind Prima Bot.', style: theme.textTheme.bodyMedium),
           const SizedBox(height: 24),
-          Text('PROJECT SUPERVISOR\nBambang Sugiarto, S.Kom., M.Kom.', style: theme.textTheme.bodyMedium?.copyWith(height: 1.5)),
+          Text('PROJECT SUPERVISOR\nBambang Sugiarto, S.Kom., M.Kom.\nPetrus Sokibi, S. Kom., M. Kom.\nRidho Taufiq Subagio, M.Kom.', style: theme.textTheme.bodyMedium?.copyWith(height: 1.5)),
           const SizedBox(height: 16),
           Text('UI/UX DESIGNER\nKharis Destian Maulana', style: theme.textTheme.bodyMedium?.copyWith(height: 1.5)),
           const SizedBox(height: 16),
@@ -620,32 +620,52 @@ class ThemeSettingsScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final themeProvider = Provider.of<ThemeProvider>(context);
 
-    return _BaseDetailScreen(
-      title: 'App Theme',
-      content: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildThemeOption(
-            theme: theme,
-            title: 'System Default',
-            isSelected: themeProvider.themeMode == ThemeMode.system,
-            onTap: () => themeProvider.setThemeMode(ThemeMode.system),
-          ),
-          const SizedBox(height: 16),
-          _buildThemeOption(
-            theme: theme,
-            title: 'Light Mode',
-            isSelected: themeProvider.themeMode == ThemeMode.light,
-            onTap: () => themeProvider.setThemeMode(ThemeMode.light),
-          ),
-          const SizedBox(height: 16),
-          _buildThemeOption(
-            theme: theme,
-            title: 'Dark Mode',
-            isSelected: themeProvider.themeMode == ThemeMode.dark,
-            onTap: () => themeProvider.setThemeMode(ThemeMode.dark),
-          ),
-        ],
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      backgroundColor: theme.colorScheme.surface,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.color_lens_outlined, color: theme.colorScheme.onSurface),
+                const SizedBox(width: 8),
+                Text(
+                  'App Theme',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: theme.colorScheme.onSurface,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            _buildThemeOption(
+              theme: theme,
+              title: 'System Default',
+              isSelected: themeProvider.themeMode == ThemeMode.system,
+              onTap: () => themeProvider.setThemeMode(ThemeMode.system),
+            ),
+            const SizedBox(height: 16),
+            _buildThemeOption(
+              theme: theme,
+              title: 'Light Mode',
+              isSelected: themeProvider.themeMode == ThemeMode.light,
+              onTap: () => themeProvider.setThemeMode(ThemeMode.light),
+            ),
+            const SizedBox(height: 16),
+            _buildThemeOption(
+              theme: theme,
+              title: 'Dark Mode',
+              isSelected: themeProvider.themeMode == ThemeMode.dark,
+              onTap: () => themeProvider.setThemeMode(ThemeMode.dark),
+            ),
+          ],
+        ),
       ),
     );
   }

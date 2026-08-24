@@ -168,11 +168,9 @@ class SettingsScreen extends StatelessWidget {
                       theme,
                       icon: Icons.color_lens_outlined,
                       title: 'App Theme',
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const ThemeSettingsScreen(),
-                        ),
+                      onTap: () => showDialog(
+                        context: context,
+                        builder: (_) => const ThemeSettingsScreen(),
                       ),
                     ),
 

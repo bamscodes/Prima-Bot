@@ -1552,6 +1552,11 @@ class _TypewriterMarkdownBodyState extends State<TypewriterMarkdownBody> {
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
+                a: const TextStyle(
+                  color: Colors.white,
+                  decoration: TextDecoration.underline,
+                  decorationColor: Colors.white,
+                ),
               ),
             )
           : Text(
