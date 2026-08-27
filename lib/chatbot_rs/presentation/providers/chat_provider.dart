@@ -68,6 +68,7 @@ class ChatProvider extends ChangeNotifier {
   int _requestTokenSequence = 0;
   int? _speakingMessageIndex;
   bool _isTtsPaused = false;
+  Timer? _ttsDeleteTimer;
   List<String> _suggestions = [
     'Jadwal Poliklinik',
     'Informasi Kontak',
@@ -290,12 +291,18 @@ class ChatProvider extends ChangeNotifier {
       await _tts.pause();
       _isTtsPaused = true;
       notifyListeners();
+      
+      _ttsDeleteTimer?.cancel();
+      _ttsDeleteTimer = Timer(const Duration(seconds: 15), () {
+        stopSpeaking(); // Reset setelah 15 detik pause agar next play mengulang dari awal
+      });
     }
   }
 
   /// Lanjutkan pemutaran suara dari posisi terakhir
   Future<void> resumeSpeaking() async {
     if (_speakingMessageIndex != null && _isTtsPaused) {
+      _ttsDeleteTimer?.cancel();
       await _tts.resume();
       _isTtsPaused = false;
       notifyListeners();
@@ -303,6 +310,7 @@ class ChatProvider extends ChangeNotifier {
   }
 
   Future<void> stopSpeaking() async {
+    _ttsDeleteTimer?.cancel();
     await _tts.stop();
     _speakingMessageIndex = null;
     _isTtsPaused = false;
@@ -698,7 +706,6 @@ class ChatProvider extends ChangeNotifier {
       if (_sessionId == requestSessionId) {
         _suggestions = ['Lokasi RS', 'Jadwal Dokter', 'Kembali'];
       }
-      unawaited(_tts.pregenerate(ttsResponse));
       return;
     } else if (lowerText == 'lokasi rs') {
       await Future.delayed(const Duration(milliseconds: 600));
@@ -713,7 +720,6 @@ class ChatProvider extends ChangeNotifier {
       if (_sessionId == requestSessionId) {
         _suggestions = ['Jadwal Poliklinik', 'Informasi Kontak', 'Kembali'];
       }
-      unawaited(_tts.pregenerate(ttsResponse));
       return;
     } else if (lowerNormalized == 'jadwal poliklinik') {
       await Future.delayed(const Duration(milliseconds: 600));
@@ -738,7 +744,6 @@ Silakan pilih pintasan di bawah ini atau ketik poli mana yang jadwalnya ingin An
           'Poli VCT',
         ];
       }
-      unawaited(_tts.pregenerate(response));
       return;
     }
 
@@ -758,7 +763,6 @@ Silakan pilih pintasan di bawah ini atau ketik poli mana yang jadwalnya ingin An
 
     final response = await _getBotResponse.execute(text, aiHistory);
     await saveResponse(response);
-    unawaited(_tts.pregenerate(response));
 
     if (_sessionId == requestSessionId) {
       _suggestions = ['Jadwal Poliklinik', 'Informasi Kontak', 'Lokasi RS'];
