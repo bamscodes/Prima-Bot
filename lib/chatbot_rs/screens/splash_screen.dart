@@ -12,7 +12,7 @@ class ChatbotSplashScreen extends StatefulWidget {
 }
 
 class _ChatbotSplashScreenState extends State<ChatbotSplashScreen>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   bool _isInitializing = true;
   late final AnimationController _introController;
   late final AnimationController _floatingTextController;
@@ -20,6 +20,7 @@ class _ChatbotSplashScreenState extends State<ChatbotSplashScreen>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _introController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1250),
@@ -33,9 +34,21 @@ class _ChatbotSplashScreenState extends State<ChatbotSplashScreen>
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _introController.dispose();
     _floatingTextController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      _floatingTextController.stop();
+    } else if (state == AppLifecycleState.resumed) {
+      if (!_floatingTextController.isAnimating) {
+        _floatingTextController.repeat(reverse: true);
+      }
+    }
   }
 
   Future<void> _initializeData() async {
@@ -92,13 +105,11 @@ class _ChatbotSplashScreenState extends State<ChatbotSplashScreen>
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            return SingleChildScrollView(
+            return CustomScrollView(
               physics: const ClampingScrollPhysics(),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight,
-                ),
-                child: IntrinsicHeight(
+              slivers: [
+                SliverFillRemaining(
+                  hasScrollBody: false,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -188,7 +199,7 @@ class _ChatbotSplashScreenState extends State<ChatbotSplashScreen>
                         ),
                       ),
 
-                      const Spacer(),
+                      const SizedBox(height: 32),
 
                       // Left Bubble
                       _introItem(
@@ -248,7 +259,7 @@ class _ChatbotSplashScreenState extends State<ChatbotSplashScreen>
                         ),
                       ),
 
-                      const Spacer(),
+                      const SizedBox(height: 32),
 
                       // Right Bubble
                       _introItem(
@@ -368,7 +379,7 @@ class _ChatbotSplashScreenState extends State<ChatbotSplashScreen>
                     ],
                   ),
                 ),
-              ),
+              ],
             );
           },
         ),

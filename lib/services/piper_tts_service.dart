@@ -1,290 +1,431 @@
-// ignore_for_file: curly_braces_in_flow_control_structures
-import 'dart:io';
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_piper_tts/flutter_piper_tts.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_piper_tts/flutter_piper_tts.dart';
 
 import 'indonesian_text_processor.dart';
+import 'piper_voice_catalog.dart';
 
-/// Layanan TTS menggunakan Piper (on-device, ringan, tidak robotik).
-/// Mendukung 4 suara: Indonesia (news_tts-medium, irwan-low) dan English (amy, lessac).
+/// TTS Piper yang seluruhnya berjalan di perangkat.
 ///
-/// Keunggulan Piper dibanding Supertonic/Edge:
-/// - Model kecil (15-20MB per suara, total ~70MB bundle, bukan 400MB)
-/// - Tidak perlu download 400MB, langsung pakai setelah install (copy dari assets)
-/// - Tidak robotik, neural, sigap (low latency)
-/// - Full Flutter, 100% offline
+/// Piper resmi saat ini hanya menyediakan satu model Bahasa Indonesia,
+/// [id_ID-news_tts-medium]. Karena itu pilihan jenis suara hanya tersedia
+/// untuk Bahasa Inggris; aplikasi tidak lagi menyamarkan model yang sama
+/// sebagai dua suara Indonesia berbeda.
 class PiperTtsService {
-  static final PiperTtsService _instansi = PiperTtsService._internal();
-  factory PiperTtsService() => _instansi;
+  static final PiperTtsService _instance = PiperTtsService._internal();
+
+  factory PiperTtsService() => _instance;
+
   PiperTtsService._internal();
 
-  PiperTTS? _mesinPiper;
-  bool _sudahDiinisialisasi = false;
-  bool _sedangInisialisasi = false;
-  String? _modelAktifPath;
-  String? _configAktifPath;
-  final Map<int, String> _cacheAudio = {};
+  static const String _languagePreferenceKey = 'tts_bahasa';
+  static const String _voiceStylePreferenceKey = 'tts_gaya_suara';
 
-  Function? _onStart;
-  Function? _onPause;
-  Function? _onCompletion;
-  Function(String)? _onError;
+  PiperTTS? _engine;
+  Future<void>? _initialization;
+  bool _isInitialized = false;
+  bool _settingsLoaded = false;
+  String? _activeModelPath;
+  String? _activeConfigPath;
+  String? _lastError;
+  int _playbackGeneration = 0;
+  bool _isReloading = false;
+
+  VoidCallback? _onStart;
+  VoidCallback? _onPause;
+  VoidCallback? _onCompletion;
+  ValueChanged<String>? _onError;
 
   bool _isPlaying = false;
   bool _isPaused = false;
+  String _languageCode = 'id';
+  String _voiceStyle = 'F1';
+  SharedPreferences? _prefsCache;
 
   bool get isPlaying => _isPlaying;
   bool get isPaused => _isPaused;
   bool get sedangMemutarAntrean => false;
-  bool get sudahDiinisialisasi => _sudahDiinisialisasi;
+  bool get sudahDiinisialisasi => _isInitialized;
+  bool get sedangDownloadModel => false;
+  bool get modelSiap => _isInitialized && _activeModelPath != null && _engine != null;
+  bool get supportsVoiceStyle =>
+      PiperVoiceCatalog.supportsVoiceStyle(_languageCode);
+  String? get modelAktifPath => _activeModelPath;
+  String? get configAktifPath => _activeConfigPath;
+  String? get lastError => _lastError;
+  String get kodeBahasa => _languageCode;
+  String get gayaSuara => _voiceStyle;
+  bool get isBahasaIndonesia => _languageCode == 'id';
+  bool get isSuaraLakiLaki => _voiceStyle.startsWith('M');
+  String get labelBahasa => _languageCode == 'id' ? 'Indonesia' : 'English';
+  String get labelGayaSuara => supportsVoiceStyle
+      ? (isSuaraLakiLaki ? 'Laki-laki' : 'Perempuan')
+      : 'Piper News';
+  String get namaModelAktif => PiperVoiceCatalog.modelNameFor(
+    languageCode: _languageCode,
+    voiceStyle: _voiceStyle,
+  );
 
-  static const String _keyBahasa = 'tts_bahasa';
-  static const String _keyGayaSuara = 'tts_gaya_suara';
-  static const String _keyKecepatan = 'tts_kecepatan';
+  String get _assetOnnx => 'assets/piper/$namaModelAktif.onnx';
+  String get _assetJson => 'assets/piper/$namaModelAktif.onnx.json';
+  String get _assetRevision =>
+      PiperVoiceCatalog.assetRevisions[namaModelAktif] ?? '1';
 
-  String _kodeBahasa = 'id';
-  String _gayaSuara = 'F1';
-  double _kecepatanBicara = 1.0;
-
-  String get kodeBahasa => _kodeBahasa;
-  String get gayaSuara => _gayaSuara;
-  double get kecepatanBicara => _kecepatanBicara;
-  bool get isBahasaIndonesia => _kodeBahasa == 'id';
-  bool get isSuaraLakiLaki => _gayaSuara.startsWith('M');
-  String get labelBahasa => _kodeBahasa == 'id' ? 'Indonesia' : 'English';
-  String get labelGayaSuara => _gayaSuara.startsWith('M') ? 'Laki-laki' : 'Perempuan';
-
-  // Mapping bahasa+gender ke file model Piper
-  // Indonesia: news_tts-medium (perempuan), irwan-low (laki-laki)
-  // English: amy-medium (perempuan), lessac-medium (laki-laki)
-  String get _namaModelAktif {
-    if (_kodeBahasa == 'id') {
-      return _gayaSuara.startsWith('M') ? 'id_ID-irwan-low' : 'id_ID-news_tts-medium';
-    } else {
-      return _gayaSuara.startsWith('M') ? 'en_US-lessac-medium' : 'en_US-amy-medium';
-    }
+  Future<SharedPreferences> _prefs() async {
+    return _prefsCache ??= await SharedPreferences.getInstance();
   }
 
-  String get _assetOnnx => 'assets/piper/$_namaModelAktif.onnx';
-  String get _assetJson => 'assets/piper/$_namaModelAktif.onnx.json';
+  Future<void> init() {
+    if (_isInitialized && _engine != null) return Future.value();
+    // Jika sedang reload, tunggu reload selesai dulu
+    if (_isReloading && _initialization != null) return _initialization!;
+    if (_initialization != null) return _initialization!;
+    _initialization = _initialize().whenComplete(
+      () => _initialization = null,
+    );
+    return _initialization!;
+  }
 
-  /// Inisialisasi cepat: copy model dari assets ke support dir jika belum ada, lalu buat engine.
-  /// Tidak perlu download, langsung pakai.
-  Future<void> init() async {
-    if (_sudahDiinisialisasi || _sedangInisialisasi) return;
-    _sedangInisialisasi = true;
+  Future<void> _initialize() async {
     try {
-      await _muatPengaturan();
-      await _siapkanModel();
-      _sudahDiinisialisasi = true;
-      debugPrint('[Piper] Init selesai - model=$_namaModelAktif bahasa=$_kodeBahasa suara=$_gayaSuara');
-    } catch (e, st) {
-      debugPrint('[Piper] Init gagal: $e $st');
-      _onError?.call(e.toString());
-    } finally {
-      _sedangInisialisasi = false;
-    }
-  }
-
-  Future<void> _muatPengaturan() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      _kodeBahasa = prefs.getString(_keyBahasa) ?? 'id';
-      _gayaSuara = prefs.getString(_keyGayaSuara) ?? 'F1';
-      _kecepatanBicara = prefs.getDouble(_keyKecepatan) ?? 1.0;
-      if (_kodeBahasa != 'id' && _kodeBahasa != 'en') _kodeBahasa = 'id';
-      if (_gayaSuara != 'M1' && _gayaSuara != 'F1') _gayaSuara = 'F1';
-    } catch (_) {}
-  }
-
-  Future<void> setBahasa(String kodeBahasa) async {
-    if (kodeBahasa != 'id' && kodeBahasa != 'en') return;
-    if (_kodeBahasa == kodeBahasa) return;
-    _kodeBahasa = kodeBahasa;
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_keyBahasa, kodeBahasa);
-    } catch (_) {}
-    _cacheAudio.clear();
-    // Ganti model sesuai bahasa+gender baru
-    _sudahDiinisialisasi = false;
-    await init();
-    debugPrint('[Piper] Bahasa diubah ke $kodeBahasa model=$_namaModelAktif');
-  }
-
-  Future<void> setGayaSuara(String gaya) async {
-    String gayaNormal = 'F1';
-    if (gaya.startsWith('M')) gayaNormal = 'M1';
-    else if (gaya.startsWith('F')) gayaNormal = 'F1';
-    else if (gaya == 'Laki-laki') gayaNormal = 'M1';
-    else if (gaya == 'Perempuan') gayaNormal = 'F1';
-    if (_gayaSuara == gayaNormal) return;
-    _gayaSuara = gayaNormal;
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_keyGayaSuara, gayaNormal);
-    } catch (_) {}
-    _cacheAudio.clear();
-    _sudahDiinisialisasi = false;
-    await init();
-    debugPrint('[Piper] Gaya suara diubah ke $gayaNormal model=$_namaModelAktif');
-  }
-
-  Future<void> setKecepatan(double kecepatan) async {
-    _kecepatanBicara = kecepatan.clamp(0.8, 1.3);
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setDouble(_keyKecepatan, _kecepatanBicara);
-    } catch (_) {}
-    // Piper flutter_piper_tts belum support speed adjust, simpan saja untuk future
-  }
-
-  void setStartHandler(Function handler) => _onStart = handler;
-  void setPauseHandler(Function handler) => _onPause = handler;
-  void setCompletionHandler(Function handler) => _onCompletion = handler;
-  void setErrorHandler(Function(String) handler) => _onError = handler;
-  void setModelProgressHandler(Function(double) handler) {}
-
-  String _normalisasi(String teks) {
-    return IndonesianTextProcessor.normalizeForMalayVoice(teks);
-  }
-
-  /// Siapkan file model: copy dari assets ke support dir jika belum ada
-  Future<void> _siapkanModel() async {
-    final dirSupport = await getApplicationSupportDirectory();
-    final modelPath = p.join(dirSupport.path, '$_namaModelAktif.onnx');
-    final configPath = p.join(dirSupport.path, '$_namaModelAktif.onnx.json');
-
-    final fileModel = File(modelPath);
-    final fileConfig = File(configPath);
-
-    // Jika sudah ada dan valid, langsung pakai
-    if (await fileModel.exists() && await fileConfig.exists()) {
-      final lenModel = await fileModel.length();
-      final lenConfig = await fileConfig.length();
-      if (lenModel > 1000 && lenConfig > 100) {
-        _modelAktifPath = modelPath;
-        _configAktifPath = configPath;
-        // Buat engine jika belum atau ganti model
-        if (_mesinPiper == null) {
-          _mesinPiper = await PiperTTS.create(modelPath: modelPath, configPath: configPath);
-        } else {
-          // Jika model berganti, dispose lama dan buat baru
-          try { await _mesinPiper!.dispose(); } catch (_) {}
-          _mesinPiper = await PiperTTS.create(modelPath: modelPath, configPath: configPath);
-        }
-        return;
+      if (!_settingsLoaded) {
+        await _loadSettings();
       }
-    }
-
-    // Copy dari assets
-    debugPrint('[Piper] Copy model $_namaModelAktif dari assets...');
-    try {
-      final dataModel = await rootBundle.load(_assetOnnx);
-      final bytesModel = dataModel.buffer.asUint8List(dataModel.offsetInBytes, dataModel.lengthInBytes);
-      await fileModel.writeAsBytes(bytesModel, flush: true);
-
-      final dataConfig = await rootBundle.load(_assetJson);
-      final bytesConfig = dataConfig.buffer.asUint8List(dataConfig.offsetInBytes, dataConfig.lengthInBytes);
-      await fileConfig.writeAsBytes(bytesConfig, flush: true);
-
-      _modelAktifPath = modelPath;
-      _configAktifPath = configPath;
-      if (_mesinPiper != null) try { await _mesinPiper!.dispose(); } catch (_) {}
-      _mesinPiper = await PiperTTS.create(modelPath: modelPath, configPath: configPath);
-      debugPrint('[Piper] Model siap: $modelPath');
-    } catch (e, st) {
-      debugPrint('[Piper] Gagal copy model $_namaModelAktif: $e $st');
-      // Fallback: coba cari file di assets tanpa subfolder piper (untuk backward compat)
+      await _prepareModel();
+      _isInitialized = true;
+      _lastError = null;
+      debugPrint('[Piper] Model siap: $namaModelAktif');
+    } catch (error, stackTrace) {
+      _isInitialized = false;
+      _lastError = error.toString();
+      debugPrint('[Piper] Inisialisasi gagal: $error\n$stackTrace');
+      _onError?.call(_lastError!);
       rethrow;
     }
   }
 
-  Future<void> pregenerate(String teks) async {
-    // Piper sangat cepat, tidak perlu pregenerate file, cukup no-op
-    // Tetap panggil init agar model siap
-    if (!_sudahDiinisialisasi) await init();
+  Future<void> _loadSettings() async {
+    final preferences = await _prefs();
+    _languageCode = preferences.getString(_languagePreferenceKey) ?? 'id';
+    _voiceStyle = preferences.getString(_voiceStylePreferenceKey) ?? 'F1';
+    if (_languageCode != 'id' && _languageCode != 'en') _languageCode = 'id';
+    if (_voiceStyle != 'M1' && _voiceStyle != 'F1') _voiceStyle = 'F1';
+    // Indonesia hanya punya satu suara — paksa F1 agar tidak ada state nyasar M1
+    if (_languageCode == 'id') _voiceStyle = 'F1';
+    _settingsLoaded = true;
   }
 
-  Future<void> speak(String teks) async {
-    if (!_sudahDiinisialisasi) await init();
-    if (_mesinPiper == null) {
-      await _siapkanModel();
+  Future<void> setBahasa(String languageCode) async {
+    if (languageCode != 'id' && languageCode != 'en') return;
+    await init();
+    if (_languageCode == languageCode) return;
+
+    final previousLanguage = _languageCode;
+    final previousStyle = _voiceStyle;
+    // Jika pindah ke id, paksa F1
+    _languageCode = languageCode;
+    if (_languageCode == 'id') _voiceStyle = 'F1';
+
+    try {
+      await _reloadModel();
+      final preferences = await _prefs();
+      await preferences.setString(_languagePreferenceKey, languageCode);
+      // Simpan gaya juga jika berubah karena pindah ke id
+      if (previousStyle != _voiceStyle) {
+        await preferences.setString(_voiceStylePreferenceKey, _voiceStyle);
+      }
+      _lastError = null;
+    } catch (e) {
+      _languageCode = previousLanguage;
+      _voiceStyle = previousStyle;
+      // Coba kembalikan model sebelumnya — jangan rethrow tanpa coba restore
+      try {
+        await _reloadModel();
+      } catch (_) {}
+      rethrow;
     }
-    final String normal = _normalisasi(teks);
-    if (normal.trim().isEmpty) {
-      _onCompletion?.call();
+  }
+
+  Future<void> setGayaSuara(String voiceStyle) async {
+    if (!supportsVoiceStyle) {
+      debugPrint('[Piper] setGayaSuara diabaikan: bahasa $_languageCode tidak dukung varian suara');
       return;
     }
-    // Jika teks panjang, piper bisa handle langsung, tapi kita pecah agar tidak terlalu lama
-    // Piper catatan: tidak support angka, tapi sudah di-normalisasi jadi kata
+    final normalizedStyle = voiceStyle.startsWith('M') ? 'M1' : 'F1';
+    await init();
+    if (_voiceStyle == normalizedStyle) return;
+
+    final previousStyle = _voiceStyle;
+    _voiceStyle = normalizedStyle;
+    try {
+      await _reloadModel();
+      final preferences = await _prefs();
+      await preferences.setString(_voiceStylePreferenceKey, normalizedStyle);
+      _lastError = null;
+    } catch (e) {
+      _voiceStyle = previousStyle;
+      try {
+        await _reloadModel();
+      } catch (_) {}
+      rethrow;
+    }
+  }
+
+  Future<void> _reloadModel() async {
+    if (_isReloading) return;
+    _isReloading = true;
+    try {
+      await stop();
+      await _disposeEngine();
+      _isInitialized = false;
+      _activeModelPath = null;
+      _activeConfigPath = null;
+      // Reset initialization future agar init() benar-benar rebuild
+      _initialization = null;
+      await init();
+    } finally {
+      _isReloading = false;
+    }
+  }
+
+  void setStartHandler(VoidCallback handler) => _onStart = handler;
+  void setPauseHandler(VoidCallback handler) => _onPause = handler;
+  void setCompletionHandler(VoidCallback handler) => _onCompletion = handler;
+  void setErrorHandler(ValueChanged<String> handler) => _onError = handler;
+  void setModelProgressHandler(ValueChanged<double> handler) {}
+
+  /// Hapus semua handler — dipanggil saat ChatProvider dispose agar tidak retain.
+  void clearHandlers() {
+    _onStart = null;
+    _onPause = null;
+    _onCompletion = null;
+    _onError = null;
+  }
+
+  String _normalize(String text) {
+    if (_languageCode == 'id') {
+      return IndonesianTextProcessor.normalizeForMalayVoice(text);
+    }
+    // English juga perlu dibersihkan minimal (trim + hapus markdown kasar)
+    // agar URL/link tidak terbaca aneh
+    var t = text.trim();
+    // hapus markdown link/image singkat untuk EN
+    t = t.replaceAll(RegExp(r'!\[([^\]]*)\]\([^)]*\)'), r'$1');
+    t = t.replaceAll(RegExp(r'\[([^\]]*)\]\([^)]*\)'), r'$1');
+    t = t.replaceAll(RegExp(r'https?://\S+'), ' ');
+    return t.trim();
+  }
+
+  Future<void> _prepareModel() async {
+    final supportDirectory = await getApplicationSupportDirectory();
+    await _removeLegacyIndonesianModel(supportDirectory);
+    final modelPath = p.join(supportDirectory.path, '$namaModelAktif.onnx');
+    final configPath = p.join(
+      supportDirectory.path,
+      '$namaModelAktif.onnx.json',
+    );
+    final modelFile = File(modelPath);
+    final configFile = File(configPath);
+    final preferences = await _prefs();
+    final revisionKey = 'piper_model_revision_$namaModelAktif';
+    final shouldCopy =
+        preferences.getString(revisionKey) != _assetRevision ||
+        !await modelFile.exists() ||
+        !await configFile.exists() ||
+        await modelFile.length() < 1000 ||
+        await configFile.length() < 100;
+
+    if (shouldCopy) {
+      debugPrint('[Piper] Memperbarui aset model $namaModelAktif (rev $_assetRevision)');
+      try {
+        final modelData = await rootBundle.load(_assetOnnx);
+        final configData = await rootBundle.load(_assetJson);
+        // Tulis file — lakukan sequential agar I/O tidak double memory sekaligus
+        await modelFile.writeAsBytes(
+          modelData.buffer.asUint8List(
+            modelData.offsetInBytes,
+            modelData.lengthInBytes,
+          ),
+          flush: true,
+        );
+        await configFile.writeAsBytes(
+          configData.buffer.asUint8List(
+            configData.offsetInBytes,
+            configData.lengthInBytes,
+          ),
+          flush: true,
+        );
+        await preferences.setString(revisionKey, _assetRevision);
+        debugPrint('[Piper] Aset $namaModelAktif berhasil disalin');
+      } catch (e) {
+        debugPrint('[Piper] Gagal menyalin aset $namaModelAktif: $e');
+        // Bersihkan file setengah jadi
+        try { if (await modelFile.exists()) await modelFile.delete(); } catch (_) {}
+        try { if (await configFile.exists()) await configFile.delete(); } catch (_) {}
+        rethrow;
+      }
+    }
+
+    // Validasi file ada sebelum create engine
+    if (!await modelFile.exists() || !await configFile.exists()) {
+      throw StateError('Model file tidak ditemukan: $modelPath');
+    }
+
+    _activeModelPath = modelPath;
+    _activeConfigPath = configPath;
+    try {
+      _engine = await PiperTTS.create(
+        modelPath: modelPath,
+        configPath: configPath,
+      );
+    } catch (e) {
+      _activeModelPath = null;
+      _activeConfigPath = null;
+      rethrow;
+    }
+  }
+
+  Future<void> _removeLegacyIndonesianModel(Directory directory) async {
+    for (final filename in const [
+      'id_ID-irwan-low.onnx',
+      'id_ID-irwan-low.onnx.json',
+    ]) {
+      final file = File(p.join(directory.path, filename));
+      try {
+        if (await file.exists()) {
+          await file.delete();
+          debugPrint('[Piper] Menghapus aset legacy $filename');
+        }
+      } catch (error) {
+        // File legacy tidak boleh menggagalkan pemuatan model aktif.
+        debugPrint('[Piper] Gagal menghapus aset legacy $filename: $error');
+      }
+    }
+  }
+
+  Future<void> pregenerate(String text) async {
+    await init();
+  }
+
+  Future<void> speak(String text) async {
+    final playbackGeneration = ++_playbackGeneration;
+    await stop(invalidatePlayback: false);
+    try {
+      await init();
+    } catch (e) {
+      if (playbackGeneration == _playbackGeneration) {
+        _isPlaying = false;
+        _isPaused = false;
+        _lastError = e.toString();
+        _onError?.call(_lastError!);
+      }
+      rethrow;
+    }
+    final engine = _engine;
+    final normalizedText = _normalize(text);
+    if (engine == null || normalizedText.isEmpty) {
+      debugPrint('[Piper] speak dibatalkan: engine null atau teks kosong (normalized len ${normalizedText.length})');
+      if (playbackGeneration == _playbackGeneration) _onCompletion?.call();
+      return;
+    }
+
     try {
       _isPlaying = true;
       _isPaused = false;
       _onStart?.call();
-      // Pilih strategi phonemizer yang cepat dan akurat: dictionaryWithNeuralFallback
-      await _mesinPiper!.speak(
-        normal,
+      await engine.speak(
+        normalizedText,
         phonemizerStrategy: PhonemizerStrategy.dictionaryWithNeuralFallback,
-        waitForCompletion: true,
+        phonemeChunkSize: 255, // Max chunk size to avoid starvation without blocking
+        waitForCompletion: false, // PREVENT NATIVE HANG on Xiaomi
       );
-      _isPlaying = false;
-      _onCompletion?.call();
-    } catch (e, st) {
-      debugPrint('[Piper] speak error: $e $st');
-      _isPlaying = false;
-      _onError?.call(e.toString());
-      _onCompletion?.call();
+      
+      // Karena waitForCompletion = false, kita harus mensimulasikan selesainya
+      // pemutaran suara berdasarkan panjang teks (asumsi ~75ms per karakter).
+      final estimatedTime = Duration(milliseconds: normalizedText.length * 85 + 1000);
+      await Future.delayed(estimatedTime);
+
+      if (playbackGeneration == _playbackGeneration) {
+        _isPlaying = false;
+        _onCompletion?.call();
+      }
+    } catch (error, stackTrace) {
+      debugPrint('[Piper] Speak gagal: $error\n$stackTrace');
+      if (playbackGeneration == _playbackGeneration) {
+        _isPlaying = false;
+        _isPaused = false;
+        _lastError = error.toString();
+        _onError?.call(_lastError!);
+      }
     }
   }
 
   Future<void> pratinjauSuara({String? teksKustom}) async {
-    String teksPratinjau;
-    if (teksKustom != null && teksKustom.trim().isNotEmpty) {
-      teksPratinjau = teksKustom;
-    } else if (_kodeBahasa == 'id') {
-      teksPratinjau = _gayaSuara.startsWith('M')
-          ? 'Halo, saya Prima asisten Rumah Sakit Prima Insan Mulia. Saya siap membantu Anda.'
-          : 'Halo, saya Prima asisten Rumah Sakit Prima Insan Mulia. Ada yang bisa saya bantu?';
-    } else {
-      teksPratinjau = _gayaSuara.startsWith('M')
-          ? 'Hello, I am Prima, your hospital assistant. How can I help you today?'
-          : 'Hello, I am Prima, your hospital assistant. How may I assist you?';
-    }
-    await speak(teksPratinjau);
+    final previewText = teksKustom?.trim().isNotEmpty == true
+        ? teksKustom!
+        : _languageCode == 'id'
+        ? 'Halo, saya Prima, asisten Rumah Sakit Prima Insan Mulia. Ada yang bisa saya bantu?'
+        : isSuaraLakiLaki
+        ? 'Hello, I am Prima, your hospital assistant. How can I help you today?'
+        : 'Hello, I am Prima, your hospital assistant. How may I assist you?';
+    await speak(previewText);
   }
 
-  Future<void> stop() async {
-    try { await _mesinPiper?.stop(); } catch (_) {}
+  Future<void> stop({bool invalidatePlayback = true}) async {
+    if (invalidatePlayback) ++_playbackGeneration;
+    try {
+      await _engine?.stop();
+    } catch (error) {
+      debugPrint('[Piper] Stop gagal: $error');
+    }
     _isPlaying = false;
     _isPaused = false;
   }
 
   Future<void> pause() async {
-    try { await _mesinPiper?.pause(); _isPaused = true; _onPause?.call(); } catch (_) {}
+    if (!_isPlaying || _isPaused) return;
+    try {
+      await _engine?.pause();
+      _isPaused = true;
+      _onPause?.call();
+    } catch (e) {
+      debugPrint('[Piper] Pause gagal: $e');
+    }
   }
 
   Future<void> resume() async {
-    try { await _mesinPiper?.resume(); _isPaused = false; _onStart?.call(); } catch (_) {}
+    if (!_isPlaying || !_isPaused) return;
+    try {
+      await _engine?.resume();
+      _isPaused = false;
+      _onStart?.call();
+    } catch (e) {
+      debugPrint('[Piper] Resume gagal: $e');
+    }
+  }
+
+  Future<void> _disposeEngine() async {
+    try {
+      await _engine?.dispose();
+    } catch (error) {
+      debugPrint('[Piper] Dispose gagal: $error');
+    } finally {
+      _engine = null;
+    }
   }
 
   Future<void> dispose() async {
-    try { await _mesinPiper?.dispose(); } catch (_) {}
-    _sudahDiinisialisasi = false;
-    _isPlaying = false;
-    _isPaused = false;
+    await stop();
+    await _disposeEngine();
+    _isInitialized = false;
+    _activeModelPath = null;
+    _activeConfigPath = null;
+    clearHandlers();
   }
-
-  bool get sedangDownloadModel => false;
-  // Model dianggap siap jika inisialisasi selesai dan path model aktif sudah terisi
-  bool get modelSiap => _sudahDiinisialisasi && _modelAktifPath != null;
-  // Path model aktif, dipakai untuk diagnostik dan log penggantian suara
-  String? get modelAktifPath => _modelAktifPath;
-  String? get configAktifPath => _configAktifPath;
 }

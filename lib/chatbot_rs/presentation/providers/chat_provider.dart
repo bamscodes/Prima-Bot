@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
@@ -45,8 +46,8 @@ class ChatSession {
     return ChatSession(
       id: map['id'] as String,
       title: map['title'] as String,
-      createdAt: DateTime.parse(map['created_at'] as String),
-      updatedAt: DateTime.parse(map['updated_at'] as String),
+      createdAt: DateTime.tryParse(map['created_at'] as String? ?? '') ?? DateTime.now(),
+      updatedAt: DateTime.tryParse(map['updated_at'] as String? ?? '') ?? DateTime.now(),
       isTitlePending: (map['title_generated'] as int? ?? 1) == 0,
     );
   }
@@ -76,7 +77,9 @@ class ChatProvider extends ChangeNotifier {
   ];
   List<ChatSession> _sessions = [];
 
-  List<ChatMessage> get messages => _messages;
+  List<ChatMessage> get messages => UnmodifiableListView(_messages);
+  List<String> get suggestions => UnmodifiableListView(_suggestions);
+  List<ChatSession> get sessions => UnmodifiableListView(_sessions);
   bool get isLoading => _isLoading;
   bool get isSpeaking => _speakingMessageIndex != null;
   bool get isTtsPaused => _isTtsPaused;
@@ -86,8 +89,6 @@ class ChatProvider extends ChangeNotifier {
   bool isMessagePaused(int index) =>
       _speakingMessageIndex == index && _isTtsPaused;
   String get sessionId => _sessionId;
-  List<String> get suggestions => _suggestions;
-  List<ChatSession> get sessions => _sessions;
 
   void markMessageAnimated(int index) {
     if (index >= 0 && index < _messages.length) {
@@ -95,9 +96,26 @@ class ChatProvider extends ChangeNotifier {
     }
   }
 
+  bool _disposed = false;
+
   ChatProvider() {
     _initTts();
     _initSessions();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    _ttsDeleteTimer?.cancel();
+    // Clear TTS handlers agar tidak retain ChangeNotifier setelah dispose
+    _tts.clearHandlers();
+    // Jangan await di dispose — fire and forget stop
+    unawaited(_tts.stop());
+    super.dispose();
+  }
+
+  void _safeNotify() {
+    if (!_disposed) notifyListeners();
   }
 
   /// Initialize: load session list for drawer, but ALWAYS start on a fresh draft ("Hai Hai" landing page)
@@ -118,7 +136,7 @@ class ChatProvider extends ChangeNotifier {
 
   /// Load all sessions from database
   Future<void> deleteAllSessions() async {
-    PiperTtsService().stop(); // Hentikan TTS jika semua sesi dihapus
+    await _tts.stop();
     _sessions.clear();
     _messages.clear();
     await DatabaseHelper.instance.deleteAllSessions();
@@ -130,7 +148,7 @@ class ChatProvider extends ChangeNotifier {
     try {
       final sessionMaps = await DatabaseHelper.instance.getAllSessions();
       _sessions = sessionMaps.map((m) => ChatSession.fromMap(m)).toList();
-      notifyListeners();
+      _safeNotify();
     } catch (e) {
       log('Failed to load sessions: $e');
     }
@@ -145,7 +163,7 @@ class ChatProvider extends ChangeNotifier {
     _isSessionPersisted = false;
     _messages.clear();
     _suggestions = [];
-    notifyListeners();
+    _safeNotify();
   }
 
   /// Switch to an existing session
@@ -166,7 +184,7 @@ class ChatProvider extends ChangeNotifier {
 
   /// Delete a specific session
   Future<void> deleteSessionById(String sessionId) async {
-    PiperTtsService().stop(); // Hentikan TTS jika sesi dihapus
+    await _tts.stop();
     _clearLoadingForSession(sessionId);
     await DatabaseHelper.instance.deleteSession(sessionId);
 
@@ -191,10 +209,10 @@ class ChatProvider extends ChangeNotifier {
       for (final item in history) {
         loadedMessages.add(
           ChatMessage(
-            text: item['text'],
-            ttsText: item['tts_text'],
+            text: item['text'] as String,
+            ttsText: item['tts_text'] as String?,
             isBot: item['is_bot'] == 1,
-            time: DateTime.parse(item['timestamp']),
+            time: DateTime.tryParse(item['timestamp'] as String? ?? '') ?? DateTime.now(),
           ),
         );
       }
@@ -207,40 +225,58 @@ class ChatProvider extends ChangeNotifier {
     _messages
       ..clear()
       ..addAll(loadedMessages);
-    notifyListeners();
+    _safeNotify();
   }
 
-  void _initTts() async {
+  void _initTts() {
+    // Inisialisasi tidak boleh menghasilkan unhandled async error saat model
+    // belum bisa disalin/di-load. UI tetap dapat menampilkan status error dari
+    // service melalui callback yang sudah dipasang di bawah.
+    unawaited(_initTtsAsync());
+  }
+
+  Future<void> _initTtsAsync() async {
     // Pasang callback handler SEBELUM init agar tidak terlewat
     _tts.setStartHandler(() {
       debugPrint('[TTS Provider] Suara mulai diputar');
       _isTtsPaused = false;
-      notifyListeners();
+      _safeNotify();
     });
 
     _tts.setPauseHandler(() {
       debugPrint('[TTS Provider] Suara dijeda (paused)');
       _isTtsPaused = true;
-      notifyListeners();
+      _safeNotify();
     });
 
     _tts.setCompletionHandler(() {
       debugPrint('[TTS Provider] Suara selesai diputar');
       _speakingMessageIndex = null;
       _isTtsPaused = false;
-      notifyListeners();
+      _safeNotify();
     });
 
     _tts.setErrorHandler((msg) {
       debugPrint('[TTS Provider] Error saat memutar suara: $msg');
       _speakingMessageIndex = null;
       _isTtsPaused = false;
-      notifyListeners();
+      _safeNotify();
     });
 
     // Inisialisasi setelah handler terpasang
-    await _tts.init();
-    debugPrint('[TTS Provider] TTS service siap digunakan');
+    try {
+      await _tts.init();
+      debugPrint('[TTS Provider] TTS service siap digunakan');
+    } catch (error, stackTrace) {
+      log(
+        '[TTS Provider] Gagal menyiapkan Piper TTS',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      _speakingMessageIndex = null;
+      _isTtsPaused = false;
+      _safeNotify();
+    }
   }
 
   /// Toggle antara Play, Pause, dan Resume untuk pesan ke-[index]
@@ -264,9 +300,11 @@ class ChatProvider extends ChangeNotifier {
   }
 
   Future<void> speak(String text, int index) async {
+    if (index < 0 || index >= _messages.length) return;
+    _ttsDeleteTimer?.cancel();
     _speakingMessageIndex = index;
     _isTtsPaused = false;
-    notifyListeners();
+    _safeNotify();
 
     // Gunakan ttsText jika tersedia (teks bersih tanpa markdown/link),
     // jika tidak ada, kirim teks asli dan biarkan IndonesianTextProcessor yang membersihkan
@@ -281,7 +319,7 @@ class ChatProvider extends ChangeNotifier {
       debugPrint('[TTS Provider] Exception dari speak(): $e');
       _speakingMessageIndex = null;
       _isTtsPaused = false;
-      notifyListeners();
+      _safeNotify();
     }
   }
 
@@ -290,11 +328,11 @@ class ChatProvider extends ChangeNotifier {
     if (_speakingMessageIndex != null && !_isTtsPaused) {
       await _tts.pause();
       _isTtsPaused = true;
-      notifyListeners();
-      
+      _safeNotify();
+
       _ttsDeleteTimer?.cancel();
       _ttsDeleteTimer = Timer(const Duration(seconds: 15), () {
-        stopSpeaking(); // Reset setelah 15 detik pause agar next play mengulang dari awal
+        unawaited(stopSpeaking()); // Reset setelah 15 detik pause agar next play mengulang dari awal
       });
     }
   }
@@ -305,7 +343,7 @@ class ChatProvider extends ChangeNotifier {
       _ttsDeleteTimer?.cancel();
       await _tts.resume();
       _isTtsPaused = false;
-      notifyListeners();
+      _safeNotify();
     }
   }
 
@@ -314,7 +352,7 @@ class ChatProvider extends ChangeNotifier {
     await _tts.stop();
     _speakingMessageIndex = null;
     _isTtsPaused = false;
-    notifyListeners();
+    _safeNotify();
   }
 
   void _clearLoadingForSession(String sessionId) {
@@ -355,7 +393,7 @@ class ChatProvider extends ChangeNotifier {
   Future<void> navigasiKembali() async {
     await stopSpeaking();
     _suggestions = ['Jadwal Poliklinik', 'Informasi Kontak', 'Lokasi RS'];
-    notifyListeners();
+    _safeNotify();
   }
 
   Future<void> sendMessage(String text) async {
@@ -381,7 +419,7 @@ class ChatProvider extends ChangeNotifier {
     _loadingSessionId = requestSessionId;
     _activeRequestToken = requestToken;
     _suggestions = [];
-    notifyListeners();
+    _safeNotify();
 
     try {
       // Add and save the user message before requesting a response.
@@ -475,7 +513,7 @@ class ChatProvider extends ChangeNotifier {
         _loadingSessionId = null;
         _activeRequestToken = null;
         _isLoading = false;
-        notifyListeners();
+        _safeNotify();
       }
     }
   }
@@ -538,7 +576,7 @@ class ChatProvider extends ChangeNotifier {
     _loadingSessionId = requestSessionId;
     _activeRequestToken = requestToken;
     _suggestions = [];
-    notifyListeners();
+    _safeNotify();
 
     try {
       final messagesForRequest = List<ChatMessage>.of(_messages);
@@ -568,7 +606,7 @@ class ChatProvider extends ChangeNotifier {
         _loadingSessionId = null;
         _activeRequestToken = null;
         _isLoading = false;
-        notifyListeners();
+        _safeNotify();
       }
     }
   }
@@ -617,7 +655,7 @@ class ChatProvider extends ChangeNotifier {
     _loadingSessionId = requestSessionId;
     _activeRequestToken = requestToken;
     _suggestions = [];
-    notifyListeners();
+    _safeNotify();
 
     try {
       final messagesForRequest = List<ChatMessage>.of(_messages);
@@ -647,7 +685,7 @@ class ChatProvider extends ChangeNotifier {
         _loadingSessionId = null;
         _activeRequestToken = null;
         _isLoading = false;
-        notifyListeners();
+        _safeNotify();
       }
     }
   }
@@ -682,12 +720,14 @@ class ChatProvider extends ChangeNotifier {
     if (lowerText == 'kembali') {
       if (_sessionId == requestSessionId) {
         _suggestions = ['Jadwal Poliklinik', 'Informasi Kontak', 'Lokasi RS'];
-        notifyListeners();
+        _safeNotify();
       }
       return;
     }
     // Normalisasi alias untuk jadwal dokter
-    final String lowerNormalized = lowerText == 'jadwal dokter' ? 'jadwal poliklinik' : lowerText;
+    final String lowerNormalized = lowerText == 'jadwal dokter'
+        ? 'jadwal poliklinik'
+        : lowerText;
     if (lowerNormalized == 'informasi kontak') {
       await Future.delayed(const Duration(milliseconds: 600));
       final displayResponse = '''📞 **Layanan 24 Jam RS Prima Insan Mulia:**
@@ -829,7 +869,7 @@ Silakan pilih pintasan di bawah ini atau ketik poli mana yang jadwalnya ingin An
   }
 
   Future<void> clearChat() async {
-    PiperTtsService().stop();
+    await _tts.stop();
     await DatabaseHelper.instance.deleteAllSessions();
     _messages.clear();
     _sessions.clear();

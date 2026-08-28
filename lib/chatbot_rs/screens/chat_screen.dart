@@ -24,6 +24,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   final FocusNode _editFocusNode = FocusNode(skipTraversal: true);
   final ScrollController _scrollController = ScrollController();
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  ChatProvider? _chatProviderRef;
   int? _editingMessageIndex;
   DateTime? _lastTypewriterScrollTime;
 
@@ -50,6 +51,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final chatProvider = Provider.of<ChatProvider>(context, listen: false);
+      _chatProviderRef = chatProvider;
       _lastMessageCount = chatProvider.messages.length;
       _lastIsLoading = chatProvider.isLoading;
       chatProvider.addListener(_onChatUpdated);
@@ -63,8 +65,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    final chatProvider = Provider.of<ChatProvider>(context, listen: false);
-    chatProvider.removeListener(_onChatUpdated);
+    _chatProviderRef?.removeListener(_onChatUpdated);
     _controller.dispose();
     _editController.dispose();
     _inputFocusNode.dispose();
@@ -90,7 +91,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   void _onChatUpdated() {
     if (!mounted) return;
 
-    final chatProvider = Provider.of<ChatProvider>(context, listen: false);
+    final chatProvider = _chatProviderRef ?? Provider.of<ChatProvider>(context, listen: false);
     final currentCount = chatProvider.messages.length;
     final currentIsLoading = chatProvider.isLoading;
 
@@ -659,62 +660,86 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        InkWell(
-                          borderRadius: BorderRadius.circular(12),
-                          onTap: () {
-                            chatProvider.togglePlayPause(
-                              messageIndex,
-                              message.text,
-                            );
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.all(6.0),
-                            child: Icon(
-                              chatProvider.isMessagePlaying(messageIndex)
-                                  ? Icons.pause_rounded
-                                  : Icons.play_arrow_rounded,
-                              size: 20,
-                              color: chatProvider.isMessagePlaying(messageIndex)
-                                  ? theme.colorScheme.primary
-                                  : theme.colorScheme.onSurface,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        InkWell(
-                          borderRadius: BorderRadius.circular(12),
-                          onTap: () {
-                            chatProvider.regenerateResponse(messageIndex);
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.all(6.0),
-                            child: Icon(
-                              Icons.refresh_rounded,
-                              size: 20,
-                              color: theme.colorScheme.onSurface,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        InkWell(
-                          borderRadius: BorderRadius.circular(12),
-                          onTap: () {
-                            Clipboard.setData(
-                              ClipboardData(text: message.text),
-                            );
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Teks disalin'),
-                                duration: Duration(seconds: 1),
+                        Semantics(
+                          button: true,
+                          label: chatProvider.isMessagePlaying(messageIndex) ? 'Jeda suara' : 'Putar suara',
+                          child: Tooltip(
+                            message: chatProvider.isMessagePlaying(messageIndex) ? 'Jeda' : 'Putar',
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(12),
+                              onTap: () {
+                                chatProvider.togglePlayPause(
+                                  messageIndex,
+                                  message.text,
+                                );
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(6.0),
+                                child: Icon(
+                                  chatProvider.isMessagePlaying(messageIndex)
+                                      ? Icons.pause_rounded
+                                      : Icons.play_arrow_rounded,
+                                  size: 20,
+                                  color: chatProvider.isMessagePlaying(messageIndex)
+                                      ? theme.colorScheme.primary
+                                      : theme.colorScheme.onSurface,
+                                  semanticLabel: chatProvider.isMessagePlaying(messageIndex) ? 'Jeda' : 'Putar',
+                                ),
                               ),
-                            );
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.all(6.0),
-                            child: Icon(
-                              Icons.copy_rounded,
-                              size: 18,
-                              color: theme.colorScheme.onSurface,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Semantics(
+                          button: true,
+                          label: 'Regenerasi jawaban',
+                          child: Tooltip(
+                            message: 'Regenerasi',
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(12),
+                              onTap: () {
+                                chatProvider.regenerateResponse(messageIndex);
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(6.0),
+                                child: Icon(
+                                  Icons.refresh_rounded,
+                                  size: 20,
+                                  color: theme.colorScheme.onSurface,
+                                  semanticLabel: 'Regenerasi',
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Semantics(
+                          button: true,
+                          label: 'Salin teks',
+                          child: Tooltip(
+                            message: 'Salin',
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(12),
+                              onTap: () {
+                                Clipboard.setData(
+                                  ClipboardData(text: message.text),
+                                );
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Teks disalin'),
+                                    duration: Duration(seconds: 1),
+                                  ),
+                                );
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(6.0),
+                                child: Icon(
+                                  Icons.copy_rounded,
+                                  size: 18,
+                                  color: theme.colorScheme.onSurface,
+                                  semanticLabel: 'Salin',
+                                ),
+                              ),
                             ),
                           ),
                         ),

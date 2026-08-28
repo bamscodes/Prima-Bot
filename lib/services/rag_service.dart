@@ -119,13 +119,23 @@ class LayananRag {
 
   bool get sudahSiap => _sudahDiindeks && _koleksiDokumen.isNotEmpty;
   int get jumlahDokumen => _koleksiDokumen.length;
+  Future<void>? _initFuture;
 
   /// Inisialisasi indeks RAG dari data lokal.
   /// Dipanggil sekali saat aplikasi mulai, data diambil dari assets/data_rs.json
   /// dan dokumen statis kontak/lokasi.
   Future<void> inisialisasi() async {
     if (_sudahDiindeks) return;
+    if (_initFuture != null) return await _initFuture;
+    _initFuture = _doInit();
+    try {
+      await _initFuture;
+    } finally {
+      _initFuture = null;
+    }
+  }
 
+  Future<void> _doInit() async {
     await _muatDokumenDariAset();
     _bangunIndeksTfidf();
     _sudahDiindeks = true;
@@ -196,8 +206,10 @@ class LayananRag {
           ),
         );
       }
-    } catch (e) {
-      // Jika gagal memuat JSON, tetap lanjutkan dengan dokumen statis
+    } catch (e, st) {
+      // Jika gagal memuat JSON, tetap lanjutkan dengan dokumen statis tapi log
+      // ignore: avoid_print
+      print('[RAG] Gagal memuat data_rs.json: $e\n$st');
     }
 
     // 2. Dokumen statis: kontak, lokasi, informasi umum
@@ -272,22 +284,35 @@ class LayananRag {
     }
   }
 
+  // Precompiled regex untuk performa
+  static final RegExp _reNonWord = RegExp(r'[^\w\s]');
+  static final RegExp _reSpaces = RegExp(r'\s+');
+  // Simpan angka (jam) sebagai token agar query "jam 10" tetap match
+  static final RegExp _reTimeColon = RegExp(r'(\d{1,2}):(\d{2})');
+
   /// Tokenisasi teks menjadi daftar kata yang sudah dinormalisasi.
   /// Menghapus tanda baca, mengubah ke huruf kecil, dan membuang stopwords.
+  /// Angka dipertahankan (mis. jam 10:30 -> token "1030" + "10" + "30") agar
+  /// pencarian jadwal berbasis waktu tetap relevan.
   List<String> _tokenisasi(String teks) {
     if (teks.trim().isEmpty) return [];
 
-    // Normalisasi: huruf kecil, ganti tanda baca dengan spasi
+    // Normalisasi: huruf kecil, pertahankan angka, ganti tanda baca dengan spasi
     String normal = teks.toLowerCase();
-    normal = normal.replaceAll(RegExp(r'[^\w\s]'), ' ');
-    normal = normal.replaceAll(RegExp(r'\d+'), ' ');
-    normal = normal.replaceAll(RegExp(r'\s+'), ' ').trim();
+    // Ubah jam 10:30 -> 10 30 agar angka tidak hilang
+    normal = normal.replaceAll(_reTimeColon, r'$1 $2');
+    normal = normal.replaceAll(_reNonWord, ' ');
+    normal = normal.replaceAll(_reSpaces, ' ').trim();
 
     if (normal.isEmpty) return [];
 
     final List<String> semuaToken = normal.split(' ');
-    // Buang stopwords dan token terlalu pendek
-    return semuaToken.where((t) => t.length > 1 && !_stopwords.contains(t)).toList();
+    // Buang stopwords dan token terlalu pendek, tapi pertahankan token angka
+    return semuaToken.where((t) {
+      if (t.length <= 1) return false;
+      if (_stopwords.contains(t)) return false;
+      return true;
+    }).toList();
   }
 
   /// Ekspansi query dengan sinonim untuk meningkatkan recall
@@ -591,5 +616,6 @@ class LayananRag {
     _vektorTfidfDokumen.clear();
     _normaVektorDokumen.clear();
     _sudahDiindeks = false;
+    _initFuture = null;
   }
 }

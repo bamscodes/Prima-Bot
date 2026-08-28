@@ -5,7 +5,7 @@ Chatbot asisten Rumah Sakit Prima Insan Mulia berbasis Flutter.
 ## Fitur Utama
 
 - Chatbot RAG berbasis data RS lokal (`assets/data_rs.json`) dengan jawaban AI via OpenRouter (model gratis, fallback cepat tanpa pesan "layanan padat").
-- TTS on-device memakai Piper (`flutter_piper_tts`): 4 suara (Indonesia news_tts & irwan, English amy & lessac), langsung pakai tanpa download, pratinjau di pengaturan.
+- TTS on-device memakai Piper (`flutter_piper_tts`): satu suara Indonesia resmi (`news_tts`) dan dua suara English (`amy` & `lessac`), langsung pakai tanpa download, pratinjau di pengaturan.
 - Riwayat obrolan lokal SQLite, pencarian realtime, mode gelap/terang.
 
 ## Cara Build (PENTING)

@@ -144,106 +144,104 @@ class SettingsScreen extends StatelessWidget {
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  children: [
-                    _buildSectionTitle(theme, 'GENERAL'),
-                    _buildSettingsCard(
-                      theme,
-                      icon: Icons.volume_up_rounded,
-                      title: 'Sound',
-                      onTap: () => showDialog(
-                        context: context,
-                        builder: (_) => const SoundSettingsScreen(),
-                      ),
+                children: [
+                  _buildSectionTitle(theme, 'GENERAL'),
+                  _buildSettingsCard(
+                    theme,
+                    icon: Icons.volume_up_rounded,
+                    title: 'Sound',
+                    onTap: () => showDialog(
+                      context: context,
+                      builder: (_) => const SoundSettingsScreen(),
                     ),
-                    _buildSettingsCard(
-                      theme,
-                      icon: Icons.language,
-                      title: 'Language',
-                      onTap: () => showDialog(
-                        context: context,
-                        builder: (_) => const LanguageSettingsScreen(),
-                      ),
+                  ),
+                  _buildSettingsCard(
+                    theme,
+                    icon: Icons.language,
+                    title: 'Language',
+                    onTap: () => showDialog(
+                      context: context,
+                      builder: (_) => const LanguageSettingsScreen(),
                     ),
-                    _buildSettingsCard(
-                      theme,
-                      icon: Icons.color_lens_outlined,
-                      title: 'App Theme',
-                      onTap: () => showDialog(
-                        context: context,
-                        builder: (_) => const ThemeSettingsScreen(),
-                      ),
+                  ),
+                  _buildSettingsCard(
+                    theme,
+                    icon: Icons.color_lens_outlined,
+                    title: 'App Theme',
+                    onTap: () => showDialog(
+                      context: context,
+                      builder: (_) => const ThemeSettingsScreen(),
                     ),
+                  ),
 
-                    const SizedBox(height: 24),
-                    _buildSectionTitle(theme, 'CHAT'),
-                    _buildSettingsCard(
-                      theme,
-                      icon: Icons.delete_outline_rounded,
-                      title: 'Clear Chat History',
-                      onTap: () => _showClearChatDialog(context),
-                    ),
+                  const SizedBox(height: 24),
+                  _buildSectionTitle(theme, 'CHAT'),
+                  _buildSettingsCard(
+                    theme,
+                    icon: Icons.delete_outline_rounded,
+                    title: 'Clear Chat History',
+                    onTap: () => _showClearChatDialog(context),
+                  ),
 
-                    const SizedBox(height: 24),
-                    _buildSectionTitle(theme, 'ABOUT'),
-                    _buildSettingsCard(
-                      theme,
-                      icon: Icons.info_outline_rounded,
-                      title: 'About Prima',
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const AboutScreen()),
+                  const SizedBox(height: 24),
+                  _buildSectionTitle(theme, 'ABOUT'),
+                  _buildSettingsCard(
+                    theme,
+                    icon: Icons.info_outline_rounded,
+                    title: 'About Prima',
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const AboutScreen()),
+                    ),
+                  ),
+                  _buildSettingsCard(
+                    theme,
+                    icon: Icons.code_rounded,
+                    title: 'Development Team',
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const DeveloperScreen(),
                       ),
                     ),
-                    _buildSettingsCard(
-                      theme,
-                      icon: Icons.code_rounded,
-                      title: 'Development Team',
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const DeveloperScreen(),
-                        ),
-                      ),
+                  ),
+                  _buildSettingsCard(
+                    theme,
+                    icon: Icons.lock_outline_rounded,
+                    title: 'Privacy Policy',
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const PrivacyScreen()),
                     ),
-                    _buildSettingsCard(
-                      theme,
-                      icon: Icons.lock_outline_rounded,
-                      title: 'Privacy Policy',
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const PrivacyScreen(),
-                        ),
-                      ),
+                  ),
+                  _buildSettingsCard(
+                    theme,
+                    icon: Icons.description_outlined,
+                    title: 'Terms of Service',
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const TermsScreen()),
                     ),
-                    _buildSettingsCard(
-                      theme,
-                      icon: Icons.description_outlined,
-                      title: 'Terms of Service',
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const TermsScreen()),
-                      ),
-                    ),
+                  ),
 
-                    const SizedBox(height: 40),
-                    Center(
-                      child: Text(
-                        'Prima Bot Version 1.0.0',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: const Color(0xFF9D9D9D),
-                          fontSize: 12,
-                        ),
+                  const SizedBox(height: 40),
+                  Center(
+                    child: Text(
+                      'Prima Bot Version 1.0.4',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: const Color(0xFF9D9D9D),
+                        fontSize: 12,
                       ),
                     ),
-                    const SizedBox(height: 24),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-      );
+      ),
+    );
   }
 
   Widget _buildSectionTitle(ThemeData theme, String title) {

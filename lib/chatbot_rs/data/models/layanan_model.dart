@@ -12,20 +12,27 @@ class LayananModel {
   });
 
   Map<String, dynamic> toMap() {
-    return {
-      'id': id,
+    final m = <String, dynamic>{
       'nama_layanan': namaLayanan,
       'deskripsi': deskripsi,
       'lokasi_gedung': lokasiGedung,
     };
+    if (id != null) m['id'] = id;
+    return m;
   }
 
   factory LayananModel.fromMap(Map<String, dynamic> map) {
+    final rawNama = map['nama_layanan'];
+    final rawDesk = map['deskripsi'];
+    final rawLokasi = map['lokasi_gedung'];
+    if (rawNama == null || rawDesk == null || rawLokasi == null) {
+      throw FormatException('LayananModel missing required fields: $map');
+    }
     return LayananModel(
-      id: map['id'],
-      namaLayanan: map['nama_layanan'],
-      deskripsi: map['deskripsi'],
-      lokasiGedung: map['lokasi_gedung'],
+      id: map['id'] as int?,
+      namaLayanan: rawNama as String,
+      deskripsi: rawDesk as String,
+      lokasiGedung: rawLokasi as String,
     );
   }
 }

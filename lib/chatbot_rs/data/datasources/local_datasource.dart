@@ -11,10 +11,17 @@ class DatabaseHelper {
 
   DatabaseHelper._init();
 
+  Future<Database>? _opening;
   Future<Database> get database async {
     if (_database != null) return _database!;
-    _database = await _initDB();
-    return _database!;
+    if (_opening != null) return await _opening!;
+    _opening = _initDB();
+    try {
+      _database = await _opening!;
+      return _database!;
+    } finally {
+      _opening = null;
+    }
   }
 
   Future<Database> _initDB() async {
@@ -82,7 +89,7 @@ class DatabaseHelper {
     }
   }
 
-  Future _createDB(Database db, int version) async {
+  Future<void> _createDB(Database db, int version) async {
     await db.execute('''
       CREATE TABLE layanan (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -135,7 +142,7 @@ class DatabaseHelper {
     ''');
     await db.execute('''
       CREATE INDEX IF NOT EXISTS idx_chat_sessions_updated_at
-      ON chat_sessions(updated_at DESC)
+      ON chat_sessions(updated_at)
     ''');
   }
 
@@ -436,10 +443,11 @@ class DatabaseHelper {
 
   Future<List<LayananModel>> queryLayanan(String query) async {
     final db = await instance.database;
+    final escaped = query.replaceAll('%', r'\%').replaceAll('_', r'\_');
     final result = await db.query(
       'layanan',
-      where: 'nama_layanan LIKE ? OR deskripsi LIKE ?',
-      whereArgs: ['%\$query%', '%\$query%'],
+      where: 'nama_layanan LIKE ? ESCAPE "\\" OR deskripsi LIKE ? ESCAPE "\\"',
+      whereArgs: ['%$escaped%', '%$escaped%'],
     );
     return result.map((json) => LayananModel.fromMap(json)).toList();
   }
@@ -449,8 +457,9 @@ class DatabaseHelper {
     String? hari,
   ) async {
     final db = await instance.database;
-    String whereClause = 'spesialisasi LIKE ?';
-    List<dynamic> whereArgs = ['%\$spesialisasi%'];
+    final escapedSpesialisasi = spesialisasi.replaceAll('%', r'\%').replaceAll('_', r'\_');
+    String whereClause = 'spesialisasi LIKE ? ESCAPE "\\"';
+    List<dynamic> whereArgs = ['%$escapedSpesialisasi%'];
 
     if (hari != null) {
       whereClause += ' AND hari = ?';
@@ -467,8 +476,10 @@ class DatabaseHelper {
 
   Future<void> clearAll() async {
     final db = await instance.database;
-    await db.delete('layanan');
-    await db.delete('jadwal_dokter');
+    await db.transaction((txn) async {
+      await txn.delete('layanan');
+      await txn.delete('jadwal_dokter');
+    });
   }
 
   /// The bundled hospital data is immutable at runtime. Checking this marker
@@ -504,8 +515,10 @@ class DatabaseHelper {
     });
   }
 
-  Future close() async {
-    final db = await instance.database;
-    db.close();
+  Future<void> close() async {
+    if (_database != null) {
+      await _database!.close();
+      _database = null;
+    }
   }
 }

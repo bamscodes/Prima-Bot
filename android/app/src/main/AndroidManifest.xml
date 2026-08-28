@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Izin Internet: wajib ada agar Edge TTS bisa terhubung ke server Microsoft -->
+    <!-- Internet dipakai oleh layanan jawaban AI; Piper TTS sendiri berjalan offline. -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <!-- Izin akses status jaringan -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>

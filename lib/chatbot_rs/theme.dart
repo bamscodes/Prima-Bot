@@ -26,6 +26,9 @@ class ChatbotTheme {
     return _buildTheme(Brightness.dark);
   }
 
+  static final TextStyle _manrope = GoogleFonts.manrope();
+  static final TextStyle _inter = GoogleFonts.inter();
+
   static ThemeData _buildTheme(Brightness brightness) {
     final bool isDark = brightness == Brightness.dark;
 
@@ -46,14 +49,14 @@ class ChatbotTheme {
         seedColor: isDark ? brandPrimary : lightBrandPrimary,
         brightness: brightness,
         primary: isDark ? brandPrimary : lightBrandPrimary,
-        onPrimary: isDark ? Colors.white : Colors.white,
+        onPrimary: Colors.white,
         primaryContainer: isDark
             ? brandPrimary.withValues(alpha: 0.2)
             : lightBrandPrimary.withValues(alpha: 0.2),
         secondary: isDark ? darkSurface : lightSurface,
         surface: isDark ? darkBackground : lightBackground,
         onSurface: isDark ? textMain : lightTextMain,
-        outlineVariant: isDark ? darkSurface : const Color(0xFFE2E8F0),
+        outlineVariant: isDark ? const Color(0xFF4A4D50) : const Color(0xFFE2E8F0),
       ),
       textSelectionTheme: TextSelectionThemeData(
         selectionColor: isDark
@@ -63,40 +66,40 @@ class ChatbotTheme {
         cursorColor: isDark ? brandPrimary : lightBrandPrimary,
       ),
       textTheme: TextTheme(
-        displayLarge: GoogleFonts.manrope(
+        displayLarge: _manrope.copyWith(
           fontSize: 40,
           fontWeight: FontWeight.bold,
           color: isDark ? textMain : lightTextMain,
         ),
-        displayMedium: GoogleFonts.manrope(
+        displayMedium: _manrope.copyWith(
           fontSize: 32,
           fontWeight: FontWeight.w600,
           color: isDark ? textMain : lightTextMain,
         ),
-        displaySmall: GoogleFonts.manrope(
+        displaySmall: _manrope.copyWith(
           fontSize: 24,
           fontWeight: FontWeight.w600,
           color: isDark ? textMain : lightTextMain,
         ),
-        bodyLarge: GoogleFonts.manrope(
+        bodyLarge: _manrope.copyWith(
           fontSize: 18,
           fontWeight: FontWeight.normal,
           color: isDark ? textMain : lightTextMain,
           height: 1.6,
         ),
-        bodyMedium: GoogleFonts.manrope(
+        bodyMedium: _manrope.copyWith(
           fontSize: 16,
           fontWeight: FontWeight.normal,
           color: isDark ? textMain : lightTextMain,
           height: 1.6,
         ),
-        bodySmall: GoogleFonts.manrope(
+        bodySmall: _manrope.copyWith(
           fontSize: 14,
           fontWeight: FontWeight.normal,
           color: isDark ? textSubtitle : lightTextSubtitle,
           height: 1.5,
         ),
-        labelSmall: GoogleFonts.inter(
+        labelSmall: _inter.copyWith(
           fontSize: 14,
           fontWeight: FontWeight.w500,
           letterSpacing: 0.02,
@@ -107,7 +110,7 @@ class ChatbotTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: isDark ? brandPrimary : lightBrandPrimary,
           foregroundColor: Colors.white,
-          textStyle: GoogleFonts.manrope(
+          textStyle: _manrope.copyWith(
             fontWeight: FontWeight.bold,
             fontSize: 16,
           ),
@@ -122,7 +125,7 @@ class ChatbotTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: isDark ? darkSurface : lightSurface,
-        hintStyle: GoogleFonts.manrope(
+        hintStyle: _manrope.copyWith(
           color: isDark ? textSubtitle : lightTextSubtitle,
         ),
         border: OutlineInputBorder(

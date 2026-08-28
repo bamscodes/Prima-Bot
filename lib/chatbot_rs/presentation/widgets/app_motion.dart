@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 
 /// Transisi ringan yang dipakai konsisten saat berpindah halaman.
@@ -53,18 +54,24 @@ class AppStaggeredFadeSlide extends StatefulWidget {
 class _AppStaggeredFadeSlideState extends State<AppStaggeredFadeSlide>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
+  Timer? _delayTimer;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(vsync: this, duration: widget.duration);
-    Future<void>.delayed(widget.delay, () {
-      if (mounted) _controller.forward();
-    });
+    if (widget.delay == Duration.zero) {
+      _controller.forward();
+    } else {
+      _delayTimer = Timer(widget.delay, () {
+        if (mounted) _controller.forward();
+      });
+    }
   }
 
   @override
   void dispose() {
+    _delayTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }
@@ -115,7 +122,8 @@ class _AppScaleTapState extends State<AppScaleTap> {
   @override
   Widget build(BuildContext context) {
     return Semantics(
-      button: true,
+      button: widget.onTap != null,
+      enabled: widget.onTap != null,
       label: widget.semanticLabel,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,

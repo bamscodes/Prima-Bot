@@ -1,6 +1,8 @@
 // ignore_for_file: use_null_aware_elements
+import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
+import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -146,9 +148,11 @@ Instruksi: Jawab dengan ramah berdasarkan konteks di atas. Jika konteks tidak cu
     return bersih;
   }
 
-  /// Deteksi sapaan sederhana
+  /// Deteksi sapaan sederhana — hindari false positive "hai jadwal..."
   static bool _adalahSapaan(String teks) {
     final String lower = teks.toLowerCase().trim();
+    // Jika mengandung kata jadwal/dokter/poli, bukan sapaan
+    if (RegExp(r'\b(jadwal|dokter|poli|jadwal|spesialis|igd|vct)\b').hasMatch(lower)) return false;
     if (RegExp(r'^(halo|hai|hey|hello|hi|pagi|siang|sore|malam|assalamu alaikum|selamat|permisi)\b').hasMatch(lower)) {
       return true;
     }
@@ -208,7 +212,8 @@ tanpa tanda kutip, tanpa awalan "Judul:", tanpa markdown, dan hanya tulis judul.
 
   static String _buatKunciCache(List<Map<String, String>> pesan) {
     final String gabungan = pesan.map((m) => m['content'] ?? '').join('|');
-    return gabungan.hashCode.toString();
+    final bytes = utf8.encode(gabungan);
+    return sha256.convert(bytes).toString();
   }
 
   static void _simpanCache(String kunci, String nilai) {
@@ -240,14 +245,20 @@ tanpa tanda kutip, tanpa awalan "Judul:", tanpa markdown, dan hanya tulis judul.
               body: jsonEncode({
                 'model': model,
                 'messages': daftarPesan,
-                if (maxTokens case final nilai?) 'max_tokens': nilai,
-                if (temperature case final suhu?) 'temperature': suhu,
+                if (maxTokens != null) 'max_tokens': maxTokens,
+                if (temperature != null) 'temperature': temperature,
               }),
             )
             .timeout(batasWaktu);
 
         if (respons.statusCode == 200) {
-          final Map<String, dynamic> data = jsonDecode(respons.body) as Map<String, dynamic>;
+          Map<String, dynamic> data;
+          try {
+            data = jsonDecode(respons.body) as Map<String, dynamic>;
+          } catch (e) {
+            log('Model $model: json decode gagal: $e');
+            continue;
+          }
           final List<dynamic>? daftarPilihan = data['choices'] as List<dynamic>?;
           if (daftarPilihan == null || daftarPilihan.isEmpty) {
             log('Model $model: choices kosong, coba model berikut');
@@ -275,14 +286,13 @@ tanpa tanda kutip, tanpa awalan "Judul:", tanpa markdown, dan hanya tulis judul.
         } else if (respons.statusCode >= 500) {
           log('Model $model server error ${respons.statusCode}, coba berikut');
         } else {
-          log('Model $model gagal: ${respons.statusCode} - ${respons.body.substring(0, 200)}');
+          final bodySnippet = respons.body.length > 200 ? respons.body.substring(0, 200) : respons.body;
+          log('Model $model gagal: ${respons.statusCode} - $bodySnippet');
         }
+      } on TimeoutException {
+        log('Timeout model $model (${batasWaktu.inSeconds}s), lanjut ke model berikut');
       } catch (error) {
         log('Error model $model: $error (timeout ${batasWaktu.inSeconds}s)');
-        // Jika timeout, langsung coba model berikut tanpa delay panjang
-        if (error.toString().contains('TimeoutException')) {
-          log('Timeout model $model, lanjut ke model berikut');
-        }
       }
       // Jeda kecil antar model untuk hindari rate limit
       await Future.delayed(const Duration(milliseconds: 300));
@@ -296,34 +306,22 @@ tanpa tanda kutip, tanpa awalan "Judul:", tanpa markdown, dan hanya tulis judul.
     final String teksLower = teks.toLowerCase();
 
     final bool isCariJadwal =
-        teksLower.contains('jadwal') ||
-        teksLower.contains('dokter') ||
-        teksLower.contains('poli') ||
-        teksLower.contains('kapan') ||
-        teksLower.contains('praktek') ||
-        teksLower.contains('praktik');
+        RegExp(r'\b(jadwal|dokter|poli|kapan|praktek|praktik)\b').hasMatch(teksLower);
 
     String? entitas;
-    if (teksLower.contains('anak')) {
+    if (RegExp(r'\banak\b').hasMatch(teksLower)) {
       entitas = 'Anak';
-    } else if (teksLower.contains('bedah')) {
+    } else if (RegExp(r'\bbedah\b').hasMatch(teksLower)) {
       entitas = 'Bedah';
-    } else if (teksLower.contains('kandungan') ||
-        teksLower.contains('obsgyn') ||
-        teksLower.contains('hamil') ||
-        teksLower.contains('kebidanan')) {
+    } else if (RegExp(r'\b(kandungan|obsgyn|hamil|kebidanan)\b').hasMatch(teksLower)) {
       entitas = 'Kandungan';
-    } else if (teksLower.contains('penyakit dalam') || teksLower.contains('dalam')) {
-      if (teksLower.contains('penyakit dalam')) {
-        entitas = 'Penyakit Dalam';
-      } else if (teksLower.contains('dalam')) {
-        entitas = 'Penyakit Dalam';
-      }
-    } else if (teksLower.contains('umum')) {
+    } else if (RegExp(r'\bpenyakit dalam\b').hasMatch(teksLower)) {
+      entitas = 'Penyakit Dalam';
+    } else if (RegExp(r'\b(umum)\b').hasMatch(teksLower)) {
       entitas = 'Umum';
-    } else if (teksLower.contains('vct') || teksLower.contains('hiv')) {
+    } else if (RegExp(r'\b(vct|hiv)\b').hasMatch(teksLower)) {
       entitas = 'VCT';
-    } else if (teksLower.contains('gigi')) {
+    } else if (RegExp(r'\bgigi\b').hasMatch(teksLower)) {
       entitas = 'Gigi';
     }
 
