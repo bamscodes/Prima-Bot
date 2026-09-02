@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'chat_screen.dart';
 import '../data/datasources/seeder.dart';
 import '../../services/rag_service.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
 class ChatbotSplashScreen extends StatefulWidget {
   const ChatbotSplashScreen({super.key});
 
@@ -353,12 +353,17 @@ class _ChatbotSplashScreenState extends State<ChatbotSplashScreen>
                                 child: ElevatedButton(
                                   onPressed: _isInitializing
                                       ? null
-                                      : () {
-                                          Navigator.of(context).pushReplacement(
-                                            MaterialPageRoute(
-                                              builder: (context) => const ChatScreen(),
-                                            ),
-                                          );
+                                      : () async {
+                                          final prefs = await SharedPreferences.getInstance();
+                                          await prefs.setBool('is_first_time', false);
+                                          
+                                          if (context.mounted) {
+                                            Navigator.of(context).pushReplacement(
+                                              MaterialPageRoute(
+                                                builder: (context) => const ChatScreen(),
+                                              ),
+                                            );
+                                          }
                                         },
                                   child: _isInitializing
                                       ? const SizedBox(

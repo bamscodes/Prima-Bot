@@ -146,7 +146,7 @@ class _SoundSettingsScreenState extends State<SoundSettingsScreen> {
 
   Future<void> _muatPengaturan() async {
     try {
-      await _layananTts.init();
+      await _layananTts.loadSettingsOnly();
       if (!mounted) return;
       setState(() {
         _kodeBahasa = _layananTts.kodeBahasa;
@@ -239,7 +239,7 @@ class _SoundSettingsScreenState extends State<SoundSettingsScreen> {
         );
       }
       // Coba init ulang
-      await _muatPengaturan();
+      await _layananTts.init();
       return;
     }
     setState(() => _sedangPratinjau = true);
@@ -617,7 +617,7 @@ class _LanguageSettingsScreenState extends State<LanguageSettingsScreen> {
 
   Future<void> _muat() async {
     try {
-      await _layananTts.init();
+      await _layananTts.loadSettingsOnly();
     } catch (e) {
       _error = e.toString();
       if (mounted) {

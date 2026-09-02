@@ -5,8 +5,12 @@ import 'chatbot_rs/screens/splash_screen.dart';
 import 'chatbot_rs/presentation/providers/chat_provider.dart';
 import 'chatbot_rs/presentation/providers/theme_provider.dart';
 
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'chatbot_rs/screens/chat_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'chatbot_rs/data/datasources/seeder.dart';
+import 'services/rag_service.dart';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
@@ -15,19 +19,29 @@ void main() async {
     // .env tidak ada di production / CI — lanjut dengan String.fromEnvironment / default
   }
 
+  final prefs = await SharedPreferences.getInstance();
+  final isFirstTime = prefs.getBool('is_first_time') ?? true;
+
+  if (!isFirstTime) {
+    // Jalankan seeding dan RAG di background tanpa memblokir UI
+    DataSeeder.seedData();
+    LayananRag().inisialisasi();
+  }
+
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ChatProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
-      child: const PrimabotApp(),
+      child: PrimabotApp(isFirstTime: isFirstTime),
     ),
   );
 }
 
 class PrimabotApp extends StatelessWidget {
-  const PrimabotApp({super.key});
+  final bool isFirstTime;
+  const PrimabotApp({super.key, required this.isFirstTime});
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +53,7 @@ class PrimabotApp extends StatelessWidget {
           theme: ChatbotTheme.lightTheme,
           darkTheme: ChatbotTheme.darkTheme,
           themeMode: themeProvider.themeMode,
-          home: const ChatbotSplashScreen(),
+          home: isFirstTime ? const ChatbotSplashScreen() : const ChatScreen(),
         );
       },
     );

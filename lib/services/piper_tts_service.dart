@@ -110,6 +110,12 @@ class PiperTtsService {
     }
   }
 
+  Future<void> loadSettingsOnly() async {
+    if (!_settingsLoaded) {
+      await _loadSettings();
+    }
+  }
+
   Future<void> _loadSettings() async {
     final preferences = await _prefs();
     _languageCode = preferences.getString(_languagePreferenceKey) ?? 'id';
@@ -315,7 +321,10 @@ class PiperTtsService {
 
   Future<void> speak(String text) async {
     final playbackGeneration = ++_playbackGeneration;
-    await stop(invalidatePlayback: false);
+    // Hindari pemanggilan stop() beruntun jika tidak sedang memutar, karena dapat merusak audio stream.
+    if (_isPlaying || _isPaused) {
+      await stop(invalidatePlayback: false);
+    }
     try {
       await init();
     } catch (e) {
@@ -339,17 +348,28 @@ class PiperTtsService {
       _isPlaying = true;
       _isPaused = false;
       _onStart?.call();
+
+      // Trik Stream Kickstart:
+      // Oboe di Android sering mengalami starvation di frame pertama jika disuruh memutar teks baru.
+      // Melakukan pause kilat lalu resume akan memaksa stream untuk memulai ulang aliran datanya
+      // tanpa menghentikan buffer yang sedang digenerate.
+      unawaited((() async {
+        await Future.delayed(const Duration(milliseconds: 150));
+        if (playbackGeneration == _playbackGeneration && _isPlaying && !_isPaused) {
+          try {
+            await engine.pause();
+            await Future.delayed(const Duration(milliseconds: 15));
+            await engine.resume();
+          } catch (_) {}
+        }
+      })());
+
       await engine.speak(
         normalizedText,
         phonemizerStrategy: PhonemizerStrategy.dictionaryWithNeuralFallback,
         phonemeChunkSize: 255, // Max chunk size to avoid starvation without blocking
-        waitForCompletion: false, // PREVENT NATIVE HANG on Xiaomi
+        waitForCompletion: true,
       );
-      
-      // Karena waitForCompletion = false, kita harus mensimulasikan selesainya
-      // pemutaran suara berdasarkan panjang teks (asumsi ~75ms per karakter).
-      final estimatedTime = Duration(milliseconds: normalizedText.length * 85 + 1000);
-      await Future.delayed(estimatedTime);
 
       if (playbackGeneration == _playbackGeneration) {
         _isPlaying = false;
