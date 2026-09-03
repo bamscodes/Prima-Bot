@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'chatbot_rs/theme.dart';
 import 'chatbot_rs/screens/splash_screen.dart';
@@ -58,6 +59,21 @@ class PrimabotApp extends StatelessWidget {
           theme: ChatbotTheme.lightTheme,
           darkTheme: ChatbotTheme.darkTheme,
           themeMode: themeProvider.themeMode,
+          builder: (context, child) {
+            final isDark = Theme.of(context).brightness == Brightness.dark;
+            return AnnotatedRegion<SystemUiOverlayStyle>(
+              value: isDark
+                  ? SystemUiOverlayStyle.light.copyWith(
+                      statusBarColor: ChatbotTheme.darkBackground,
+                      systemNavigationBarColor: ChatbotTheme.darkBackground,
+                    )
+                  : SystemUiOverlayStyle.dark.copyWith(
+                      statusBarColor: ChatbotTheme.lightBackground,
+                      systemNavigationBarColor: ChatbotTheme.lightBackground,
+                    ),
+              child: child!,
+            );
+          },
           locale: localeProvider.locale,
           localizationsDelegates: const [
             AppLocalizations.delegate,

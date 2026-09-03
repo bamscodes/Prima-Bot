@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../presentation/providers/chat_provider.dart';
 import 'settings_detail_screens.dart';
 import '../../l10n/app_localizations.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -100,6 +101,7 @@ class SettingsScreen extends StatelessWidget {
                 vertical: 20.0,
               ),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
                     decoration: BoxDecoration(
@@ -120,10 +122,14 @@ class SettingsScreen extends StatelessWidget {
                         CircleAvatar(
                           radius: 24,
                           backgroundColor: theme.colorScheme.onSurface,
-                          child: Icon(
-                            Icons.people_alt,
-                            color: theme.colorScheme.surface,
-                            size: 28,
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: SvgPicture.asset(
+                              'assets/icons/ai.svg',
+                              colorFilter: ColorFilter.mode(theme.colorScheme.surface, BlendMode.srcIn),
+                              width: 28,
+                              height: 28,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -141,6 +147,7 @@ class SettingsScreen extends StatelessWidget {
                 ],
               ),
             ),
+            const SizedBox(height: 20), // Memberi jarak ekstra antara header dan list menu
 
             Expanded(
               child: ListView(
@@ -209,7 +216,7 @@ class SettingsScreen extends StatelessWidget {
                   _buildSettingsCard(
                     theme,
                     icon: Icons.lock_outline_rounded,
-                    title: 'Privacy Policy',
+                    title: AppLocalizations.of(context)!.privacyPolicyTitle,
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(builder: (_) => const PrivacyScreen()),
@@ -218,7 +225,7 @@ class SettingsScreen extends StatelessWidget {
                   _buildSettingsCard(
                     theme,
                     icon: Icons.description_outlined,
-                    title: 'Terms of Service',
+                    title: AppLocalizations.of(context)!.termsOfServiceTitle,
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(builder: (_) => const TermsScreen()),

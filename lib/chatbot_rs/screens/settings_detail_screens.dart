@@ -27,6 +27,7 @@ class _BaseDetailScreen extends StatelessWidget {
                 vertical: 20.0,
               ),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
                     decoration: BoxDecoration(
@@ -47,10 +48,14 @@ class _BaseDetailScreen extends StatelessWidget {
                         CircleAvatar(
                           radius: 24,
                           backgroundColor: Colors.white,
-                          child: Icon(
-                            Icons.people_alt,
-                            color: const Color(0xFF16181A),
-                            size: 28,
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: SvgPicture.asset(
+                              'assets/icons/ai.svg',
+                              colorFilter: const ColorFilter.mode(Color(0xFF16181A), BlendMode.srcIn),
+                              width: 28,
+                              height: 28,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -68,6 +73,7 @@ class _BaseDetailScreen extends StatelessWidget {
                 ],
               ),
             ),
+            const SizedBox(height: 20),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
