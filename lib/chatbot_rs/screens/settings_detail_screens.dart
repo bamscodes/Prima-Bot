@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../presentation/providers/theme_provider.dart';
+import '../presentation/providers/locale_provider.dart';
 import '../../services/piper_tts_service.dart';
+import '../../l10n/app_localizations.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class _BaseDetailScreen extends StatelessWidget {
   final String title;
@@ -124,11 +127,8 @@ class SoundSettingsScreen extends StatefulWidget {
 class _SoundSettingsScreenState extends State<SoundSettingsScreen> {
   final PiperTtsService _layananTts = PiperTtsService();
 
-  String _kodeBahasa = 'id';
-  String _gayaSuara = 'F1';
   bool _sedangPratinjau = false;
   bool _sedangMemuat = true;
-  bool _sedangMenggantiModel = false;
   String? _pesanErrorModel;
 
   @override
@@ -149,8 +149,6 @@ class _SoundSettingsScreenState extends State<SoundSettingsScreen> {
       await _layananTts.loadSettingsOnly();
       if (!mounted) return;
       setState(() {
-        _kodeBahasa = _layananTts.kodeBahasa;
-        _gayaSuara = _layananTts.gayaSuara;
         _pesanErrorModel = _layananTts.lastError != null ? 'Error: ${_layananTts.lastError}' : null;
       });
     } catch (error) {
@@ -163,75 +161,9 @@ class _SoundSettingsScreenState extends State<SoundSettingsScreen> {
     }
   }
 
-  Future<void> _ubahBahasa(String kode) async {
-    if (_sedangMenggantiModel || _kodeBahasa == kode) return;
-    setState(() {
-      _sedangMenggantiModel = true;
-      _pesanErrorModel = null;
-    });
-    try {
-      await _layananTts.setBahasa(kode);
-      if (!mounted) return;
-      setState(() {
-        _kodeBahasa = _layananTts.kodeBahasa;
-        _gayaSuara = _layananTts.gayaSuara;
-      });
-    } catch (e) {
-      if (mounted) {
-        setState(() => _pesanErrorModel = 'Gagal memuat model $kode: $e');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal memuat model suara: $e')),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _kodeBahasa = _layananTts.kodeBahasa;
-          _gayaSuara = _layananTts.gayaSuara;
-          _sedangMenggantiModel = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _ubahGaya(String gaya) async {
-    // Indonesia tidak punya varian — cegah error diam
-    if (!_layananTts.supportsVoiceStyle) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Bahasa Indonesia hanya satu suara Piper News')),
-        );
-      }
-      return;
-    }
-    if (_sedangMenggantiModel || _gayaSuara == gaya) return;
-    setState(() {
-      _sedangMenggantiModel = true;
-      _pesanErrorModel = null;
-    });
-    try {
-      await _layananTts.setGayaSuara(gaya);
-      if (!mounted) return;
-      setState(() => _gayaSuara = _layananTts.gayaSuara);
-    } catch (e) {
-      if (mounted) {
-        setState(() => _pesanErrorModel = 'Gagal memuat gaya $gaya: $e');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal memuat model suara: $e')),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _gayaSuara = _layananTts.gayaSuara;
-          _sedangMenggantiModel = false;
-        });
-      }
-    }
-  }
 
   Future<void> _pratinjau() async {
-    if (_sedangPratinjau || _sedangMenggantiModel) return;
+    if (_sedangPratinjau) return;
     if (!_layananTts.modelSiap) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -348,76 +280,31 @@ class _SoundSettingsScreenState extends State<SoundSettingsScreen> {
                   ),
                 ),
               if (!_layananTts.modelSiap) const SizedBox(height: 20),
-              // Bahasa
-              Text(
-                'Bahasa',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _opsiBahasa(
-                      theme,
-                      'Indonesia',
-                      'id',
-                      Icons.language,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _opsiBahasa(theme, 'English', 'en', Icons.public),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              if (_kodeBahasa == 'en') ...[
-                Text(
-                  'Jenis Suara',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
+                child: Row(
                   children: [
-                    Expanded(
-                      child: _opsiSuara(theme, 'Laki-laki', 'M1', Icons.man),
+                    Icon(
+                      Icons.record_voice_over_outlined,
+                      color: theme.colorScheme.primary,
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 10),
                     Expanded(
-                      child: _opsiSuara(theme, 'Perempuan', 'F1', Icons.woman),
+                      child: Text(
+                        'Bahasa Indonesia menggunakan satu suara Piper resmi: News TTS.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface,
+                          fontSize: 11,
+                        ),
+                      ),
                     ),
                   ],
                 ),
-              ] else
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.record_voice_over_outlined,
-                        color: theme.colorScheme.primary,
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          'Bahasa Indonesia menggunakan satu suara Piper resmi: News TTS.',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              ),
               const SizedBox(height: 20),
               // Tombol Pratinjau
               SizedBox(
@@ -426,8 +313,7 @@ class _SoundSettingsScreenState extends State<SoundSettingsScreen> {
                 child: ElevatedButton.icon(
                   onPressed:
                       _layananTts.modelSiap &&
-                          !_sedangPratinjau &&
-                          !_sedangMenggantiModel
+                          !_sedangPratinjau
                       ? _pratinjau
                       : null,
                   icon: _sedangPratinjau
@@ -464,11 +350,7 @@ class _SoundSettingsScreenState extends State<SoundSettingsScreen> {
               const SizedBox(height: 8),
               Center(
                 child: Text(
-                  _kodeBahasa == 'id'
-                      ? 'Pratinjau: Halo, saya Prima'
-                      : (_gayaSuara.startsWith('M')
-                            ? 'Preview: Hello, I am Prima male'
-                            : 'Preview: Hello, I am Prima female'),
+                  'Pratinjau: Halo, saya Prima',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: const Color(0xFF9D9D9D),
                     fontSize: 11,
@@ -483,199 +365,17 @@ class _SoundSettingsScreenState extends State<SoundSettingsScreen> {
     );
   }
 
-  Widget _opsiBahasa(
-    ThemeData theme,
-    String label,
-    String kode,
-    IconData ikon,
-  ) {
-    final bool terpilih = _kodeBahasa == kode;
-    return InkWell(
-      onTap: () => _ubahBahasa(kode),
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
-        decoration: BoxDecoration(
-          color: terpilih
-              ? theme.colorScheme.primary.withValues(alpha: 0.12)
-              : theme.colorScheme.secondary,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: terpilih ? theme.colorScheme.primary : Colors.transparent,
-            width: 1.5,
-          ),
-        ),
-        child: Column(
-          children: [
-            Icon(
-              ikon,
-              color: terpilih
-                  ? theme.colorScheme.primary
-                  : const Color(0xFF9D9D9D),
-              size: 28,
-            ),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              style: theme.textTheme.bodySmall?.copyWith(
-                fontWeight: terpilih ? FontWeight.bold : FontWeight.w500,
-                color: terpilih
-                    ? theme.colorScheme.primary
-                    : theme.colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              kode,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: const Color(0xFF9D9D9D),
-                fontSize: 10,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
-  Widget _opsiSuara(ThemeData theme, String label, String gaya, IconData ikon) {
-    final bool terpilih = _gayaSuara == gaya;
-    return InkWell(
-      onTap: () => _ubahGaya(gaya),
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
-        decoration: BoxDecoration(
-          color: terpilih
-              ? theme.colorScheme.primary.withValues(alpha: 0.12)
-              : theme.colorScheme.secondary,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: terpilih ? theme.colorScheme.primary : Colors.transparent,
-            width: 1.5,
-          ),
-        ),
-        child: Column(
-          children: [
-            Icon(
-              ikon,
-              color: terpilih
-                  ? theme.colorScheme.primary
-                  : const Color(0xFF9D9D9D),
-              size: 32,
-            ),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              style: theme.textTheme.bodySmall?.copyWith(
-                fontWeight: terpilih ? FontWeight.bold : FontWeight.w500,
-                color: terpilih
-                    ? theme.colorScheme.primary
-                    : theme.colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              gaya,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: const Color(0xFF9D9D9D),
-                fontSize: 10,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
-class LanguageSettingsScreen extends StatefulWidget {
+class LanguageSettingsScreen extends StatelessWidget {
   const LanguageSettingsScreen({super.key});
-
-  @override
-  State<LanguageSettingsScreen> createState() => _LanguageSettingsScreenState();
-}
-
-class _LanguageSettingsScreenState extends State<LanguageSettingsScreen> {
-  final PiperTtsService _layananTts = PiperTtsService();
-  String _kodeTerpilih = 'id';
-  bool _memuat = true;
-  bool _sedangMengganti = false;
-  String? _error;
-
-  @override
-  void initState() {
-    super.initState();
-    _muat();
-  }
-
-  @override
-  void dispose() {
-    _layananTts.stop();
-    super.dispose();
-  }
-
-  Future<void> _muat() async {
-    try {
-      await _layananTts.loadSettingsOnly();
-    } catch (e) {
-      _error = e.toString();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Model suara belum siap: $e')),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _kodeTerpilih = _layananTts.kodeBahasa;
-          _memuat = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _pilihBahasa(String kode) async {
-    if (_kodeTerpilih == kode || _sedangMengganti) return;
-    setState(() {
-      _sedangMengganti = true;
-      _error = null;
-    });
-    try {
-      await _layananTts.setBahasa(kode);
-    } catch (e) {
-      _error = e.toString();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal memuat model suara: $e')),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _kodeTerpilih = _layananTts.kodeBahasa;
-          _sedangMengganti = false;
-        });
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    if (_memuat) {
-      return Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        backgroundColor: theme.colorScheme.surface,
-        child: const Padding(
-          padding: EdgeInsets.all(24),
-          child: SizedBox(
-            height: 80,
-            child: Center(child: CircularProgressIndicator()),
-          ),
-        ),
-      );
-    }
+    final localeProvider = Provider.of<LocaleProvider>(context);
+
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       backgroundColor: theme.colorScheme.surface,
@@ -690,7 +390,7 @@ class _LanguageSettingsScreenState extends State<LanguageSettingsScreen> {
                 Icon(Icons.translate, color: theme.colorScheme.onSurface),
                 const SizedBox(width: 8),
                 Text(
-                  'Bahasa',
+                  AppLocalizations.of(context)!.language,
                   style: theme.textTheme.titleMedium?.copyWith(
                     color: theme.colorScheme.onSurface,
                     fontWeight: FontWeight.bold,
@@ -700,65 +400,42 @@ class _LanguageSettingsScreenState extends State<LanguageSettingsScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Pilih bahasa untuk TTS dan antarmuka',
+              AppLocalizations.of(context)!.chooseLanguage,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: const Color(0xFF9D9D9D),
                 fontSize: 11,
               ),
             ),
-            if (_error != null) ...[
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.error_outline, size: 16, color: Colors.red),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        _error!,
-                        style: theme.textTheme.bodySmall?.copyWith(color: Colors.red, fontSize: 11),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
             const SizedBox(height: 24),
             _opsiBahasa(
+              context,
               theme,
-              'Indonesia',
+              localeProvider,
+              AppLocalizations.of(context)!.indonesian,
               'id',
               Icons.language,
-              'Bahasa Indonesia',
-            ),
-            const SizedBox(height: 12),
-            _opsiBahasa(
-              theme,
-              'English',
-              'en',
-              Icons.public,
-              'English language',
+              AppLocalizations.of(context)!.indonesianDesc,
             ),
             const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: _layananTts.modelSiap
-                    ? () async => _layananTts.pratinjauSuara()
-                    : null,
-                icon: const Icon(Icons.play_arrow_rounded, size: 18),
-                label: const Text('Pratinjau'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: theme.colorScheme.primary,
-                  side: BorderSide(color: theme.colorScheme.primary),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+            _opsiBahasa(
+              context,
+              theme,
+              localeProvider,
+              AppLocalizations.of(context)!.english,
+              'en',
+              Icons.language,
+              AppLocalizations.of(context)!.englishDesc,
+            ),
+            const SizedBox(height: 24),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  AppLocalizations.of(context)!.cancel,
+                  style: TextStyle(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
@@ -770,37 +447,41 @@ class _LanguageSettingsScreenState extends State<LanguageSettingsScreen> {
   }
 
   Widget _opsiBahasa(
+    BuildContext context,
     ThemeData theme,
+    LocaleProvider provider,
     String label,
     String kode,
     IconData ikon,
     String deskripsi,
   ) {
-    final bool terpilih = _kodeTerpilih == kode;
+    final bool terpilih = provider.locale.languageCode == kode;
+
     return InkWell(
-      onTap: () => _pilihBahasa(kode),
+      onTap: () {
+        provider.setLocale(Locale(kode));
+      },
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: terpilih
-              ? theme.colorScheme.primary.withValues(alpha: 0.1)
+              ? theme.colorScheme.primary.withValues(alpha: 0.12)
               : theme.colorScheme.secondary,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: terpilih ? theme.colorScheme.primary : Colors.transparent,
-            width: 1.2,
+            width: 1.5,
           ),
         ),
         child: Row(
           children: [
             Icon(
               ikon,
-              color: terpilih
-                  ? theme.colorScheme.primary
-                  : const Color(0xFF9D9D9D),
+              color: terpilih ? theme.colorScheme.primary : const Color(0xFF9D9D9D),
+              size: 24,
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -809,14 +490,13 @@ class _LanguageSettingsScreenState extends State<LanguageSettingsScreen> {
                     label,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       fontWeight: terpilih ? FontWeight.bold : FontWeight.w500,
-                      color: terpilih
-                          ? theme.colorScheme.primary
-                          : theme.colorScheme.onSurface,
+                      color: terpilih ? theme.colorScheme.primary : theme.colorScheme.onSurface,
                     ),
                   ),
+                  const SizedBox(height: 2),
                   Text(
                     deskripsi,
-                    style: theme.textTheme.labelSmall?.copyWith(
+                    style: theme.textTheme.bodySmall?.copyWith(
                       color: const Color(0xFF9D9D9D),
                       fontSize: 11,
                     ),
@@ -826,7 +506,7 @@ class _LanguageSettingsScreenState extends State<LanguageSettingsScreen> {
             ),
             if (terpilih)
               Icon(
-                Icons.check_circle,
+                Icons.check_circle_rounded,
                 color: theme.colorScheme.primary,
                 size: 20,
               )
@@ -863,47 +543,112 @@ class DeveloperScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return _BaseDetailScreen(
-      title: 'Development Team',
+      title: l10n.developmentTeam,
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'The people behind Prima Bot.',
-            style: theme.textTheme.bodyMedium,
+          _buildTeamMember(
+            context,
+            l10n.projectSupervisor,
+            'Bambang Sugiarto, S.Kom., M.Kom.\nPetrus Sokibi, S. Kom., M. Kom.\nRidho Taufiq Subagio, M.Kom.',
+            'assets/icons/supervisor.svg',
           ),
-          const SizedBox(height: 24),
-          Text(
-            'PROJECT SUPERVISOR\nBambang Sugiarto, S.Kom., M.Kom.\nPetrus Sokibi, S. Kom., M. Kom.\nRidho Taufiq Subagio, M.Kom.',
-            style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
+          _buildTeamMember(
+            context,
+            l10n.uiUxDesigner,
+            'Kharis Destian Maulana',
+            'assets/icons/designer.svg',
           ),
-          const SizedBox(height: 16),
-          Text(
-            'UI/UX DESIGNER\nKharis Destian Maulana',
-            style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
+          _buildTeamMember(
+            context,
+            l10n.frontendDeveloper,
+            'Nanda Putra Hartono',
+            'assets/icons/frontend.svg',
           ),
-          const SizedBox(height: 16),
-          Text(
-            'FRONTEND DEVELOPER\nNanda Putra Hartono',
-            style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
+          _buildTeamMember(
+            context,
+            l10n.backendDeveloper,
+            'Radhitya Hafif',
+            'assets/icons/backend.svg',
           ),
-          const SizedBox(height: 16),
-          Text(
-            'BACKEND DEVELOPER\nRadhitya Hafif',
-            style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
+          _buildTeamMember(
+            context,
+            l10n.aiDeveloper,
+            'Muhammad Arif Triyana',
+            'assets/icons/ai.svg',
           ),
-          const SizedBox(height: 16),
-          Text(
-            'AI DEVELOPER\nMuhammad Arif Triyana',
-            style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'QA TESTER\nAndra Oktoriza Ramadhan',
-            style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
+          _buildTeamMember(
+            context,
+            l10n.qaTester,
+            'Andra Oktoriza Ramadhan',
+            'assets/icons/qa.svg',
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTeamMember(BuildContext context, String role, String name, String iconPath) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: theme.colorScheme.secondary,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: theme.colorScheme.primary.withValues(alpha: 0.1),
+            width: 1,
+          ),
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: SvgPicture.asset(
+                iconPath,
+                width: 24,
+                height: 24,
+                colorFilter: ColorFilter.mode(
+                  theme.colorScheme.primary,
+                  BlendMode.srcIn,
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    role.toUpperCase(),
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    name,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -915,9 +660,9 @@ class PrivacyScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _BaseDetailScreen(
-      title: 'Privacy Policy',
+      title: AppLocalizations.of(context)!.privacyPolicyTitle,
       content: Text(
-        'Last updated: August 2026\n\n1. Introduction\nPrima Bot is an AI-powered hospital assistant designed to help patients and visitors access information about hospital services, facilities, schedules, registration procedures, and other general hospital information.\n\nWe respect your privacy and are committed to protecting your personal information when you use Prima Bot.',
+        AppLocalizations.of(context)!.privacyPolicyContent,
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.6),
       ),
     );
@@ -930,9 +675,9 @@ class TermsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _BaseDetailScreen(
-      title: 'Terms of Service',
+      title: AppLocalizations.of(context)!.termsOfServiceTitle,
       content: Text(
-        'Last updated: August 2026\n\n1. About Prima Bot\nPrima Bot is an AI-powered hospital assistant designed to help patients and visitors access general information about hospital services, facilities, schedules, registration procedures, and other hospital-related information.',
+        AppLocalizations.of(context)!.termsOfServiceContent,
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.6),
       ),
     );

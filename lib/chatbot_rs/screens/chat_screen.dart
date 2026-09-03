@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
@@ -169,7 +170,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                     color: theme.colorScheme.onSurface,
                   ),
                   title: Text(
-                    'Salin Teks',
+                    AppLocalizations.of(context)!.copyText,
                     style: TextStyle(
                       color: theme.colorScheme.onSurface,
                       fontWeight: FontWeight.w600,
@@ -179,9 +180,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                     Navigator.pop(ctx);
                     Clipboard.setData(ClipboardData(text: text));
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Teks disalin'),
-                        duration: Duration(seconds: 1),
+                      SnackBar(
+                        content: Text(AppLocalizations.of(context)!.textCopied),
+                        duration: const Duration(seconds: 1),
                       ),
                     );
                   },
@@ -192,7 +193,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                     color: theme.colorScheme.onSurface,
                   ),
                   title: Text(
-                    'Edit Pesan',
+                    AppLocalizations.of(context)!.editMessage,
                     style: TextStyle(
                       color: theme.colorScheme.onSurface,
                       fontWeight: FontWeight.w600,
@@ -295,8 +296,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             ),
           ),
           Text(
-            'Prima',
-            style: theme.textTheme.titleMedium?.copyWith(
+            AppLocalizations.of(context)!.appTitle,
+            style: theme.textTheme.titleLarge?.copyWith(
               color: theme.colorScheme.onSurface,
               fontWeight: FontWeight.bold,
             ),
@@ -325,14 +326,14 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
-    if (hour < 11) {
-      return 'Selamat Pagi';
-    } else if (hour < 15) {
-      return 'Selamat Siang';
-    } else if (hour < 18) {
-      return 'Selamat Sore';
+    if (hour >= 5 && hour < 11) {
+      return AppLocalizations.of(context)!.goodMorning;
+    } else if (hour >= 11 && hour < 15) {
+      return AppLocalizations.of(context)!.goodAfternoon;
+    } else if (hour >= 15 && hour < 18) {
+      return AppLocalizations.of(context)!.goodEvening;
     } else {
-      return 'Selamat Malam';
+      return AppLocalizations.of(context)!.goodNight;
     }
   }
 
@@ -354,7 +355,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
               ),
               const SizedBox(height: 8),
               Text(
-                'Gimana Kabarmu Hari Ini?\nAda Yang Bisa Prima Bantu',
+                AppLocalizations.of(context)!.howAreYou,
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: const Color(0xFF9D9D9D),
@@ -380,10 +381,6 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       controller: _scrollController,
       reverse: false,
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-      // Penyangga scroll agar animasi tetap halus saat daftar pesan panjang.
-      // Catatan: tetap memakai cacheExtent karena penggantinya (ScrollCacheExtent)
-      // memakai tipe objek khusus dan belum kompatibel dengan nilai piksel sederhana.
-      // ignore: deprecated_member_use
       cacheExtent: 350,
       padding: const EdgeInsets.only(left: 18, right: 18, top: 16, bottom: 8),
       itemCount: totalCount,
@@ -459,8 +456,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                               vertical: 8,
                             ),
                           ),
-                          child: const Text(
-                            'Batal',
+                          child: Text(
+                            AppLocalizations.of(context)!.cancel,
                             style: TextStyle(fontSize: 13),
                           ),
                         ),
@@ -485,8 +482,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          child: const Text(
-                            'Kirim',
+                          child: Text(
+                            AppLocalizations.of(context)!.send,
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
@@ -621,7 +618,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                         Padding(
                           padding: const EdgeInsets.only(bottom: 8.0),
                           child: Text(
-                            'Prima',
+                            AppLocalizations.of(context)!.prima,
                             style: theme.textTheme.labelSmall?.copyWith(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -662,9 +659,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                       children: [
                         Semantics(
                           button: true,
-                          label: chatProvider.isMessagePlaying(messageIndex) ? 'Jeda suara' : 'Putar suara',
+                          label: chatProvider.isMessagePlaying(messageIndex) ? AppLocalizations.of(context)!.pauseAudio : AppLocalizations.of(context)!.playAudio,
                           child: Tooltip(
-                            message: chatProvider.isMessagePlaying(messageIndex) ? 'Jeda' : 'Putar',
+                            message: chatProvider.isMessagePlaying(messageIndex) ? AppLocalizations.of(context)!.pause : AppLocalizations.of(context)!.play,
                             child: InkWell(
                               borderRadius: BorderRadius.circular(12),
                               onTap: () {
@@ -683,7 +680,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                   color: chatProvider.isMessagePlaying(messageIndex)
                                       ? theme.colorScheme.primary
                                       : theme.colorScheme.onSurface,
-                                  semanticLabel: chatProvider.isMessagePlaying(messageIndex) ? 'Jeda' : 'Putar',
+                                  semanticLabel: chatProvider.isMessagePlaying(messageIndex) ? AppLocalizations.of(context)!.pause : AppLocalizations.of(context)!.play,
                                 ),
                               ),
                             ),
@@ -692,9 +689,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                         const SizedBox(width: 8),
                         Semantics(
                           button: true,
-                          label: 'Regenerasi jawaban',
+                          label: AppLocalizations.of(context)!.regenerate,
                           child: Tooltip(
-                            message: 'Regenerasi',
+                            message: AppLocalizations.of(context)!.regenerate,
                             child: InkWell(
                               borderRadius: BorderRadius.circular(12),
                               onTap: () {
@@ -706,7 +703,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                   Icons.refresh_rounded,
                                   size: 20,
                                   color: theme.colorScheme.onSurface,
-                                  semanticLabel: 'Regenerasi',
+                                  semanticLabel: AppLocalizations.of(context)!.regenerate,
                                 ),
                               ),
                             ),
@@ -715,9 +712,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                         const SizedBox(width: 8),
                         Semantics(
                           button: true,
-                          label: 'Salin teks',
+                          label: AppLocalizations.of(context)!.copyText,
                           child: Tooltip(
-                            message: 'Salin',
+                            message: AppLocalizations.of(context)!.copy,
                             child: InkWell(
                               borderRadius: BorderRadius.circular(12),
                               onTap: () {
@@ -725,9 +722,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                   ClipboardData(text: message.text),
                                 );
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Teks disalin'),
-                                    duration: Duration(seconds: 1),
+                                  SnackBar(
+                                    content: Text(AppLocalizations.of(context)!.textCopied),
+                                    duration: const Duration(seconds: 1),
                                   ),
                                 );
                               },
@@ -737,7 +734,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                   Icons.copy_rounded,
                                   size: 18,
                                   color: theme.colorScheme.onSurface,
-                                  semanticLabel: 'Salin',
+                                  semanticLabel: AppLocalizations.of(context)!.copy,
                                 ),
                               ),
                             ),
@@ -819,7 +816,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                   fontSize: 15,
                 ),
                 decoration: InputDecoration(
-                  hintText: 'Tanya Sesuatu...',
+                  hintText: AppLocalizations.of(context)!.typeMessage,
                   hintStyle: theme.textTheme.bodyMedium?.copyWith(
                     color: const Color(0xFF9D9D9D),
                     fontSize: 15,
@@ -838,7 +835,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             ),
             const SizedBox(width: 6),
             AppScaleTap(
-              semanticLabel: 'Kirim pesan',
+              semanticLabel: AppLocalizations.of(context)!.sendMessage,
               onTap: () => _sendMessage(),
               child: Container(
                 width: 40,
@@ -882,7 +879,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                   Padding(
                     padding: const EdgeInsets.all(24.0),
                     child: Text(
-                      'Prima',
+                      AppLocalizations.of(context)!.appTitle,
                       style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: theme.colorScheme.onSurface,
@@ -906,7 +903,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                         color: theme.colorScheme.onSurface,
                       ),
                       title: Text(
-                        'New Chat',
+                        AppLocalizations.of(context)!.newChat,
                         style: TextStyle(color: theme.colorScheme.onSurface),
                       ),
                       onTap: () {
@@ -933,7 +930,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                         color: theme.colorScheme.onSurface,
                       ),
                       title: Text(
-                        'Search',
+                        AppLocalizations.of(context)!.search,
                         style: TextStyle(color: theme.colorScheme.onSurface),
                       ),
                       onTap: () {
@@ -968,7 +965,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                       bottom: 8.0,
                     ),
                     child: Text(
-                      'Riwayat',
+                      AppLocalizations.of(context)!.history,
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: const Color(0xFF9D9D9D),
                         fontWeight: FontWeight.bold,
@@ -986,7 +983,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                   child: chatProvider.sessions.isEmpty
                       ? Center(
                           child: Text(
-                            'Tidak Ada Chat',
+                            AppLocalizations.of(context)!.noChat,
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: const Color(0xFF9D9D9D),
                             ),
@@ -1057,14 +1054,14 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                       backgroundColor:
                                           theme.colorScheme.secondary,
                                       title: Text(
-                                        'Hapus Chat?',
+                                        AppLocalizations.of(context)!.deleteChat,
                                         style: TextStyle(
                                           color:
                                               theme.colorScheme.onSurface,
                                         ),
                                       ),
                                       content: Text(
-                                        'Chat "${session.title}" akan dihapus permanen.',
+                                        '${AppLocalizations.of(context)!.deleteChatWarning} "${session.title}"?',
                                         style: const TextStyle(
                                           color: Color(0xFF9D9D9D),
                                         ),
@@ -1073,8 +1070,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                         TextButton(
                                           onPressed: () =>
                                               Navigator.pop(ctx),
-                                          child: const Text(
-                                            'Batal',
+                                          child: Text(
+                                            AppLocalizations.of(context)!.cancel,
                                             style: TextStyle(
                                               color: Color(
                                                 0xFFF7F9F9,

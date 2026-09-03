@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../presentation/providers/chat_provider.dart';
 import 'settings_detail_screens.dart';
+import '../../l10n/app_localizations.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -21,7 +22,7 @@ class SettingsScreen extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Clear Chat History?',
+                  AppLocalizations.of(context)!.confirmClearTitle,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: theme.colorScheme.onSurface,
@@ -29,7 +30,7 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'All of your conversations will be permanently deleted.',
+                  AppLocalizations.of(context)!.confirmClearDesc,
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: const Color(0xFF9D9D9D),
@@ -44,9 +45,9 @@ class SettingsScreen extends StatelessWidget {
                       style: TextButton.styleFrom(
                         foregroundColor: theme.colorScheme.onSurface,
                       ),
-                      child: const Text(
-                        'No',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                      child: Text(
+                        AppLocalizations.of(context)!.no,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),
                     ElevatedButton(
@@ -57,7 +58,7 @@ class SettingsScreen extends StatelessWidget {
                         ).clearChat();
                         Navigator.pop(context);
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Chat history cleared')),
+                          SnackBar(content: Text(AppLocalizations.of(context)!.historyCleared)),
                         );
                       },
                       style: ElevatedButton.styleFrom(
@@ -68,9 +69,9 @@ class SettingsScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: const Text(
-                        'Yes',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                      child: Text(
+                        AppLocalizations.of(context)!.yes,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
@@ -127,7 +128,7 @@ class SettingsScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Prima',
+                          AppLocalizations.of(context)!.appTitle,
                           style: theme.textTheme.titleMedium?.copyWith(
                             color: theme.colorScheme.onSurface,
                             fontWeight: FontWeight.bold,
@@ -145,11 +146,11 @@ class SettingsScreen extends StatelessWidget {
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 children: [
-                  _buildSectionTitle(theme, 'GENERAL'),
+                  _buildSectionTitle(theme, AppLocalizations.of(context)!.general),
                   _buildSettingsCard(
                     theme,
                     icon: Icons.volume_up_rounded,
-                    title: 'Sound',
+                    title: AppLocalizations.of(context)!.soundAndAudio,
                     onTap: () => showDialog(
                       context: context,
                       builder: (_) => const SoundSettingsScreen(),
@@ -158,7 +159,7 @@ class SettingsScreen extends StatelessWidget {
                   _buildSettingsCard(
                     theme,
                     icon: Icons.language,
-                    title: 'Language',
+                    title: AppLocalizations.of(context)!.language,
                     onTap: () => showDialog(
                       context: context,
                       builder: (_) => const LanguageSettingsScreen(),
@@ -167,7 +168,7 @@ class SettingsScreen extends StatelessWidget {
                   _buildSettingsCard(
                     theme,
                     icon: Icons.color_lens_outlined,
-                    title: 'App Theme',
+                    title: AppLocalizations.of(context)!.appTheme,
                     onTap: () => showDialog(
                       context: context,
                       builder: (_) => const ThemeSettingsScreen(),
@@ -175,20 +176,20 @@ class SettingsScreen extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 24),
-                  _buildSectionTitle(theme, 'CHAT'),
+                  _buildSectionTitle(theme, AppLocalizations.of(context)!.chatSection),
                   _buildSettingsCard(
                     theme,
                     icon: Icons.delete_outline_rounded,
-                    title: 'Clear Chat History',
+                    title: AppLocalizations.of(context)!.clearHistory,
                     onTap: () => _showClearChatDialog(context),
                   ),
 
                   const SizedBox(height: 24),
-                  _buildSectionTitle(theme, 'ABOUT'),
+                  _buildSectionTitle(theme, AppLocalizations.of(context)!.aboutSection),
                   _buildSettingsCard(
                     theme,
                     icon: Icons.info_outline_rounded,
-                    title: 'About Prima',
+                    title: AppLocalizations.of(context)!.aboutPrima,
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(builder: (_) => const AboutScreen()),
@@ -197,7 +198,7 @@ class SettingsScreen extends StatelessWidget {
                   _buildSettingsCard(
                     theme,
                     icon: Icons.code_rounded,
-                    title: 'Development Team',
+                    title: AppLocalizations.of(context)!.developmentTeam,
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(

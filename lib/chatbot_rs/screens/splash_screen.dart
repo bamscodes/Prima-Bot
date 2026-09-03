@@ -4,6 +4,8 @@ import 'chat_screen.dart';
 import '../data/datasources/seeder.dart';
 import '../../services/rag_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../l10n/app_localizations.dart';
+
 class ChatbotSplashScreen extends StatefulWidget {
   const ChatbotSplashScreen({super.key});
 
@@ -123,7 +125,7 @@ class _ChatbotSplashScreenState extends State<ChatbotSplashScreen>
                               start: 0,
                               end: 0.38,
                               child: Text(
-                                'Meet Prisma',
+                                AppLocalizations.of(context)!.meetPrisma,
                                 style: theme.textTheme.displayLarge?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: theme.colorScheme.onSurface,
@@ -138,7 +140,7 @@ class _ChatbotSplashScreenState extends State<ChatbotSplashScreen>
                               child: Row(
                                 children: [
                                   Text(
-                                    'Your',
+                                    AppLocalizations.of(context)!.your,
                                     style: theme.textTheme.displayLarge?.copyWith(
                                       fontWeight: FontWeight.bold,
                                       color: theme.colorScheme.onSurface,
@@ -166,7 +168,7 @@ class _ChatbotSplashScreenState extends State<ChatbotSplashScreen>
                                         borderRadius: BorderRadius.circular(30),
                                       ),
                                       child: Text(
-                                        'Hospital Guide',
+                                        AppLocalizations.of(context)!.hospitalGuide,
                                         style: theme.textTheme.displaySmall?.copyWith(
                                           color: theme.brightness == Brightness.light
                                               ? Colors.white
@@ -186,7 +188,7 @@ class _ChatbotSplashScreenState extends State<ChatbotSplashScreen>
                               child: Align(
                                 alignment: Alignment.centerRight,
                                 child: Text(
-                                  'Get quick answers about services,\ndoctors, schedules, and\nhospital facilities.',
+                                  AppLocalizations.of(context)!.splashDescription,
                                   textAlign: TextAlign.right,
                                   style: theme.textTheme.bodyMedium?.copyWith(
                                     color: const Color(0xFF9D9D9D),
@@ -228,7 +230,7 @@ class _ChatbotSplashScreenState extends State<ChatbotSplashScreen>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Hospital Information',
+                                  AppLocalizations.of(context)!.hospitalInformation,
                                   style: theme.textTheme.labelSmall?.copyWith(
                                     color: theme.brightness == Brightness.light
                                         ? Colors.white
@@ -237,7 +239,7 @@ class _ChatbotSplashScreenState extends State<ChatbotSplashScreen>
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Fast Answers',
+                                  AppLocalizations.of(context)!.fastAnswers,
                                   style: theme.textTheme.labelSmall?.copyWith(
                                     color: theme.brightness == Brightness.light
                                         ? Colors.white
@@ -246,7 +248,7 @@ class _ChatbotSplashScreenState extends State<ChatbotSplashScreen>
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Easy Access',
+                                  AppLocalizations.of(context)!.easyAccess,
                                   style: theme.textTheme.labelSmall?.copyWith(
                                     color: theme.brightness == Brightness.light
                                         ? Colors.white
@@ -288,7 +290,7 @@ class _ChatbotSplashScreenState extends State<ChatbotSplashScreen>
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Text(
-                                  'Get Started',
+                                  AppLocalizations.of(context)!.getStarted,
                                   style: theme.textTheme.labelSmall?.copyWith(
                                     color: theme.brightness == Brightness.light
                                         ? Colors.white
@@ -297,7 +299,7 @@ class _ChatbotSplashScreenState extends State<ChatbotSplashScreen>
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Explore Prima',
+                                  AppLocalizations.of(context)!.explorePrima,
                                   style: theme.textTheme.labelSmall?.copyWith(
                                     color: theme.brightness == Brightness.light
                                         ? Colors.white
@@ -306,7 +308,7 @@ class _ChatbotSplashScreenState extends State<ChatbotSplashScreen>
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Start Chatting',
+                                  AppLocalizations.of(context)!.startChatting,
                                   style: theme.textTheme.labelSmall?.copyWith(
                                     color: theme.brightness == Brightness.light
                                         ? Colors.white
@@ -315,7 +317,7 @@ class _ChatbotSplashScreenState extends State<ChatbotSplashScreen>
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Let\'s Start Now',
+                                  AppLocalizations.of(context)!.letsStartNow,
                                   style: theme.textTheme.labelSmall?.copyWith(
                                     color: theme.brightness == Brightness.light
                                         ? Colors.white
@@ -340,7 +342,7 @@ class _ChatbotSplashScreenState extends State<ChatbotSplashScreen>
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                'Powered by hospital information',
+                                AppLocalizations.of(context)!.poweredBy,
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: const Color(0xFF9D9D9D),
                                   fontSize: 12,
@@ -374,7 +376,7 @@ class _ChatbotSplashScreenState extends State<ChatbotSplashScreen>
                                             strokeWidth: 2,
                                           ),
                                         )
-                                      : const Text('Let’s Chat Now'),
+                                      : Text(AppLocalizations.of(context)!.letsChatNow),
                                 ),
                               ),
                             ],
