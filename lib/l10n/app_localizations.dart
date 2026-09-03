@@ -554,11 +554,59 @@ abstract class AppLocalizations {
   /// **'Kebijakan Privasi'**
   String get privacyPolicyTitle;
 
-  /// No description provided for @privacyPolicyContent.
+  /// No description provided for @privacyLastUpdated.
   ///
   /// In id, this message translates to:
-  /// **'Terakhir diperbarui: Agustus 2026\n\n1. Pendahuluan\nPrima Bot adalah asisten rumah sakit berbasis AI yang dirancang untuk membantu pasien dan pengunjung mengakses informasi layanan, fasilitas, jadwal, prosedur pendaftaran, dan informasi umum rumah sakit lainnya.\n\n2. Pengumpulan Data\nPrima Bot menyimpan riwayat obrolan Anda secara lokal di perangkat Anda. Kami tidak mengirimkan atau mengumpulkan data pribadi sensitif Anda ke server eksternal.\n\n3. Penggunaan Data\nData obrolan murni digunakan agar bot dapat mengingat konteks percakapan dan meningkatkan kualitas respons AI selama sesi Anda.\n\n4. Keamanan Data\nKami berkomitmen untuk melindungi informasi pribadi Anda. Anda memiliki kendali penuh dan dapat menghapus riwayat obrolan kapan saja melalui fitur \'\'Hapus Riwayat Chat\'\'.'**
-  String get privacyPolicyContent;
+  /// **'Terakhir diperbarui: Agustus 2026'**
+  String get privacyLastUpdated;
+
+  /// No description provided for @privacySection1Title.
+  ///
+  /// In id, this message translates to:
+  /// **'1. Pendahuluan'**
+  String get privacySection1Title;
+
+  /// No description provided for @privacySection1Content.
+  ///
+  /// In id, this message translates to:
+  /// **'Prima Bot adalah asisten rumah sakit berbasis AI yang dirancang untuk membantu pasien dan pengunjung mengakses informasi layanan, fasilitas, jadwal, prosedur pendaftaran, dan informasi umum rumah sakit lainnya.'**
+  String get privacySection1Content;
+
+  /// No description provided for @privacySection2Title.
+  ///
+  /// In id, this message translates to:
+  /// **'2. Pengumpulan Data'**
+  String get privacySection2Title;
+
+  /// No description provided for @privacySection2Content.
+  ///
+  /// In id, this message translates to:
+  /// **'Prima Bot menyimpan riwayat obrolan Anda secara lokal di perangkat Anda. Kami tidak mengirimkan atau mengumpulkan data pribadi sensitif Anda ke server eksternal.'**
+  String get privacySection2Content;
+
+  /// No description provided for @privacySection3Title.
+  ///
+  /// In id, this message translates to:
+  /// **'3. Penggunaan Data'**
+  String get privacySection3Title;
+
+  /// No description provided for @privacySection3Content.
+  ///
+  /// In id, this message translates to:
+  /// **'Data obrolan murni digunakan agar bot dapat mengingat konteks percakapan dan meningkatkan kualitas respons AI selama sesi Anda.'**
+  String get privacySection3Content;
+
+  /// No description provided for @privacySection4Title.
+  ///
+  /// In id, this message translates to:
+  /// **'4. Keamanan Data'**
+  String get privacySection4Title;
+
+  /// No description provided for @privacySection4Content.
+  ///
+  /// In id, this message translates to:
+  /// **'Kami berkomitmen untuk melindungi informasi pribadi Anda. Anda memiliki kendali penuh dan dapat menghapus riwayat obrolan kapan saja melalui fitur \'\'Hapus Riwayat Chat\'\'.'**
+  String get privacySection4Content;
 
   /// No description provided for @termsOfServiceTitle.
   ///
@@ -566,11 +614,59 @@ abstract class AppLocalizations {
   /// **'Syarat & Ketentuan'**
   String get termsOfServiceTitle;
 
-  /// No description provided for @termsOfServiceContent.
+  /// No description provided for @termsLastUpdated.
   ///
   /// In id, this message translates to:
-  /// **'Terakhir diperbarui: Agustus 2026\n\n1. Tentang Prima Bot\nPrima Bot adalah asisten rumah sakit berbasis AI yang dirancang untuk membantu pasien dan pengunjung mengakses informasi umum mengenai layanan, fasilitas, jadwal, prosedur pendaftaran, dan informasi terkait rumah sakit lainnya.\n\n2. Sanggahan Medis (Medical Disclaimer)\nPENTING: Prima Bot hanya memberikan informasi umum rumah sakit dan BUKAN pengganti diagnosis, saran, atau perawatan medis dari dokter profesional. Selalu konsultasikan masalah kesehatan Anda dengan tenaga medis yang berkualifikasi.\n\n3. Batasan Tanggung Jawab\nPihak pengembang dan rumah sakit tidak bertanggung jawab atas tindakan atau keputusan apa pun yang diambil oleh pengguna yang hanya didasarkan pada informasi dari AI.\n\n4. Penggunaan yang Wajar\nPengguna diharapkan menggunakan bot dengan bertanggung jawab. Segala bentuk spam atau eksploitasi terhadap sistem dilarang keras.'**
-  String get termsOfServiceContent;
+  /// **'Terakhir diperbarui: Agustus 2026'**
+  String get termsLastUpdated;
+
+  /// No description provided for @termsSection1Title.
+  ///
+  /// In id, this message translates to:
+  /// **'1. Tentang Prima Bot'**
+  String get termsSection1Title;
+
+  /// No description provided for @termsSection1Content.
+  ///
+  /// In id, this message translates to:
+  /// **'Prima Bot adalah asisten rumah sakit berbasis AI yang dirancang untuk membantu pasien dan pengunjung mengakses informasi umum mengenai layanan, fasilitas, jadwal, prosedur pendaftaran, dan informasi terkait rumah sakit lainnya.'**
+  String get termsSection1Content;
+
+  /// No description provided for @termsSection2Title.
+  ///
+  /// In id, this message translates to:
+  /// **'2. Sanggahan Medis (Medical Disclaimer)'**
+  String get termsSection2Title;
+
+  /// No description provided for @termsSection2Content.
+  ///
+  /// In id, this message translates to:
+  /// **'PENTING: Prima Bot hanya memberikan informasi umum rumah sakit dan BUKAN pengganti diagnosis, saran, atau perawatan medis dari dokter profesional. Selalu konsultasikan masalah kesehatan Anda dengan tenaga medis yang berkualifikasi.'**
+  String get termsSection2Content;
+
+  /// No description provided for @termsSection3Title.
+  ///
+  /// In id, this message translates to:
+  /// **'3. Batasan Tanggung Jawab'**
+  String get termsSection3Title;
+
+  /// No description provided for @termsSection3Content.
+  ///
+  /// In id, this message translates to:
+  /// **'Pihak pengembang dan rumah sakit tidak bertanggung jawab atas tindakan atau keputusan apa pun yang diambil oleh pengguna yang hanya didasarkan pada informasi dari AI.'**
+  String get termsSection3Content;
+
+  /// No description provided for @termsSection4Title.
+  ///
+  /// In id, this message translates to:
+  /// **'4. Penggunaan yang Wajar'**
+  String get termsSection4Title;
+
+  /// No description provided for @termsSection4Content.
+  ///
+  /// In id, this message translates to:
+  /// **'Pengguna diharapkan menggunakan bot dengan bertanggung jawab. Segala bentuk spam atau eksploitasi terhadap sistem dilarang keras.'**
+  String get termsSection4Content;
 
   /// No description provided for @lightTheme.
   ///
@@ -643,6 +739,30 @@ abstract class AppLocalizations {
   /// In id, this message translates to:
   /// **'English language'**
   String get englishDesc;
+
+  /// No description provided for @aboutPrimaDescription.
+  ///
+  /// In id, this message translates to:
+  /// **'Prima Bot adalah asisten rumah sakit berbasis kecerdasan buatan (AI) yang dirancang untuk membantu pasien dan pengunjung mengakses informasi medis dengan mudah, akurat, dan interaktif.'**
+  String get aboutPrimaDescription;
+
+  /// No description provided for @developedFor.
+  ///
+  /// In id, this message translates to:
+  /// **'Dikembangkan Untuk'**
+  String get developedFor;
+
+  /// No description provided for @hospitalName.
+  ///
+  /// In id, this message translates to:
+  /// **'Rumah Sakit Prima Insan Mulia'**
+  String get hospitalName;
+
+  /// No description provided for @copyright.
+  ///
+  /// In id, this message translates to:
+  /// **'© 2026 Prima Bot Team'**
+  String get copyright;
 }
 
 class _AppLocalizationsDelegate

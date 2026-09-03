@@ -239,15 +239,69 @@ class AppLocalizationsEn extends AppLocalizations {
   String get privacyPolicyTitle => 'Privacy Policy';
 
   @override
-  String get privacyPolicyContent =>
-      'Last updated: August 2026\n\n1. Introduction\nPrima Bot is an AI-powered hospital assistant designed to help patients and visitors access information about hospital services, facilities, schedules, registration procedures, and other general hospital information.\n\n2. Data Collection\nPrima Bot stores your chat history locally on your device. We do not transmit or collect your sensitive personal data to external servers.\n\n3. Data Usage\nChat data is used solely to maintain conversation context and improve the AI\'s response quality during your session.\n\n4. Data Security\nWe are committed to protecting your personal information. You have full control and can delete your chat history at any time using the \'Clear Chat History\' feature.';
+  String get privacyLastUpdated => 'Last updated: August 2026';
+
+  @override
+  String get privacySection1Title => '1. Introduction';
+
+  @override
+  String get privacySection1Content =>
+      'Prima Bot is an AI-powered hospital assistant designed to help patients and visitors access information about hospital services, facilities, schedules, registration procedures, and other general hospital information.';
+
+  @override
+  String get privacySection2Title => '2. Data Collection';
+
+  @override
+  String get privacySection2Content =>
+      'Prima Bot stores your chat history locally on your device. We do not transmit or collect your sensitive personal data to external servers.';
+
+  @override
+  String get privacySection3Title => '3. Data Usage';
+
+  @override
+  String get privacySection3Content =>
+      'Chat data is used solely to maintain conversation context and improve the AI\'s response quality during your session.';
+
+  @override
+  String get privacySection4Title => '4. Data Security';
+
+  @override
+  String get privacySection4Content =>
+      'We are committed to protecting your personal information. You have full control and can delete your chat history at any time using the \'Clear Chat History\' feature.';
 
   @override
   String get termsOfServiceTitle => 'Terms of Service';
 
   @override
-  String get termsOfServiceContent =>
-      'Last updated: August 2026\n\n1. About Prima Bot\nPrima Bot is an AI-powered hospital assistant designed to help patients and visitors access general information about hospital services, facilities, schedules, registration procedures, and other hospital-related information.\n\n2. Medical Disclaimer\nIMPORTANT: Prima Bot provides general hospital information and is NOT a substitute for professional medical diagnosis, advice, or treatment. Always consult with a qualified healthcare provider for medical concerns.\n\n3. Limitation of Liability\nThe developers and the hospital are not responsible for any actions taken by users based solely on information provided by the AI.\n\n4. Acceptable Use\nUsers are expected to use the bot responsibly. Spamming or exploiting the system is prohibited.';
+  String get termsLastUpdated => 'Last updated: August 2026';
+
+  @override
+  String get termsSection1Title => '1. About Prima Bot';
+
+  @override
+  String get termsSection1Content =>
+      'Prima Bot is an AI-powered hospital assistant designed to help patients and visitors access general information about hospital services, facilities, schedules, registration procedures, and other hospital-related information.';
+
+  @override
+  String get termsSection2Title => '2. Medical Disclaimer';
+
+  @override
+  String get termsSection2Content =>
+      'IMPORTANT: Prima Bot provides general hospital information and is NOT a substitute for professional medical diagnosis, advice, or treatment. Always consult with a qualified healthcare provider for medical concerns.';
+
+  @override
+  String get termsSection3Title => '3. Limitation of Liability';
+
+  @override
+  String get termsSection3Content =>
+      'The developers and the hospital are not responsible for any actions taken by users based solely on information provided by the AI.';
+
+  @override
+  String get termsSection4Title => '4. Acceptable Use';
+
+  @override
+  String get termsSection4Content =>
+      'Users are expected to use the bot responsibly. Spamming or exploiting the system is prohibited.';
 
   @override
   String get lightTheme => 'Light Theme';
@@ -284,4 +338,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get englishDesc => 'English language';
+
+  @override
+  String get aboutPrimaDescription =>
+      'Prima Bot is an AI-based hospital assistant designed to help patients and visitors access medical information easily, accurately, and interactively.';
+
+  @override
+  String get developedFor => 'Developed For';
+
+  @override
+  String get hospitalName => 'Prima Insan Mulia Hospital';
+
+  @override
+  String get copyright => '© 2026 Prima Bot Team';
 }

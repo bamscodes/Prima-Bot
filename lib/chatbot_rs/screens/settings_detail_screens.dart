@@ -534,11 +534,186 @@ class AboutScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _BaseDetailScreen(
-      title: 'About Prima',
-      content: Text(
-        'Prima Bot adalah asisten rumah sakit berbasis kecerdasan buatan (AI) yang dirancang secara khusus untuk membantu pasien dan pengunjung dalam mengakses berbagai informasi dan layanan medis dengan lebih mudah, akurat, dan interaktif.\n\nDikembangkan untuk:\nRumah Sakit Prima Insan Mulia\nUniversitas Catur Insan Cendekia\n\n© 2026 Prima Bot Team',
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.6),
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    
+    return Scaffold(
+      backgroundColor: theme.colorScheme.surface,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header with Back Button
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20.0,
+                vertical: 20.0,
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.secondary,
+                      shape: BoxShape.circle,
+                    ),
+                    child: IconButton(
+                      icon: Icon(
+                        Icons.arrow_back,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                children: [
+                  // 1. Logo & Version
+                  Center(
+                    child: Column(
+                      children: [
+                        CircleAvatar(
+                          radius: 40,
+                          backgroundColor: Colors.white,
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: SvgPicture.asset(
+                              'assets/icons/ai.svg',
+                              colorFilter: const ColorFilter.mode(Color(0xFF16181A), BlendMode.srcIn),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          l10n.appTitle,
+                          style: theme.textTheme.displaySmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primaryContainer,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Text(
+                            'Version 1.0.4',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+
+                  // 2. Description Card
+                  Container(
+                    padding: const EdgeInsets.all(24.0),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.secondary,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.03),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            SvgPicture.asset(
+                              'assets/icons/ai_chip.svg',
+                              colorFilter: ColorFilter.mode(theme.colorScheme.primary, BlendMode.srcIn),
+                              width: 20,
+                              height: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              l10n.aboutPrima,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                color: theme.colorScheme.onSurface,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          l10n.aboutPrimaDescription,
+                          style: theme.textTheme.bodyMedium?.copyWith(height: 1.6),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // 3. Developed For
+                  Text(
+                    l10n.developedFor.toUpperCase(),
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.secondary,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      leading: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primaryContainer,
+                          shape: BoxShape.circle,
+                        ),
+                        child: SvgPicture.asset(
+                          'assets/icons/hospital.svg',
+                          colorFilter: ColorFilter.mode(theme.colorScheme.primary, BlendMode.srcIn),
+                          width: 24,
+                          height: 24,
+                        ),
+                      ),
+                      title: Text(
+                        l10n.hospitalName,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 48),
+
+                  // 4. Footer Copyright
+                  Center(
+                    child: Text(
+                      l10n.copyright,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: const Color(0xFF9D9D9D),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -660,17 +835,148 @@ class DeveloperScreen extends StatelessWidget {
   }
 }
 
+class _LegalAccordionScreen extends StatelessWidget {
+  final String title;
+  final String lastUpdated;
+  final List<Map<String, dynamic>> sections;
+
+  const _LegalAccordionScreen({
+    required this.title,
+    required this.lastUpdated,
+    required this.sections,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
+    return Scaffold(
+      backgroundColor: theme.colorScheme.surface,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+              child: Row(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.secondary,
+                      shape: BoxShape.circle,
+                    ),
+                    child: IconButton(
+                      icon: Icon(Icons.arrow_back, color: theme.colorScheme.onSurface),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: theme.colorScheme.onSurface,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                children: [
+                  Center(
+                    child: Text(
+                      lastUpdated,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: const Color(0xFF9D9D9D),
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  ...sections.map((sec) => _buildAccordionCard(context, theme, sec)),
+                  const SizedBox(height: 40),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAccordionCard(BuildContext context, ThemeData theme, Map<String, dynamic> section) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.secondary,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Theme(
+        data: theme.copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          childrenPadding: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
+          leading: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primaryContainer,
+              shape: BoxShape.circle,
+            ),
+            child: SvgPicture.asset(
+              section['icon'] as String,
+              colorFilter: ColorFilter.mode(theme.colorScheme.primary, BlendMode.srcIn),
+              width: 20,
+              height: 20,
+            ),
+          ),
+          title: Text(
+            section['title'] as String,
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
+          children: [
+            Text(
+              section['content'] as String,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                height: 1.6,
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class PrivacyScreen extends StatelessWidget {
   const PrivacyScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return _BaseDetailScreen(
-      title: AppLocalizations.of(context)!.privacyPolicyTitle,
-      content: Text(
-        AppLocalizations.of(context)!.privacyPolicyContent,
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.6),
-      ),
+    final l10n = AppLocalizations.of(context)!;
+    return _LegalAccordionScreen(
+      title: l10n.privacyPolicyTitle,
+      lastUpdated: l10n.privacyLastUpdated,
+      sections: [
+        {'icon': 'assets/icons/info.svg', 'title': l10n.privacySection1Title, 'content': l10n.privacySection1Content},
+        {'icon': 'assets/icons/database.svg', 'title': l10n.privacySection2Title, 'content': l10n.privacySection2Content},
+        {'icon': 'assets/icons/analytics.svg', 'title': l10n.privacySection3Title, 'content': l10n.privacySection3Content},
+        {'icon': 'assets/icons/shield.svg', 'title': l10n.privacySection4Title, 'content': l10n.privacySection4Content},
+      ],
     );
   }
 }
@@ -680,12 +986,16 @@ class TermsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _BaseDetailScreen(
-      title: AppLocalizations.of(context)!.termsOfServiceTitle,
-      content: Text(
-        AppLocalizations.of(context)!.termsOfServiceContent,
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.6),
-      ),
+    final l10n = AppLocalizations.of(context)!;
+    return _LegalAccordionScreen(
+      title: l10n.termsOfServiceTitle,
+      lastUpdated: l10n.termsLastUpdated,
+      sections: [
+        {'icon': 'assets/icons/info.svg', 'title': l10n.termsSection1Title, 'content': l10n.termsSection1Content},
+        {'icon': 'assets/icons/warning.svg', 'title': l10n.termsSection2Title, 'content': l10n.termsSection2Content},
+        {'icon': 'assets/icons/gavel.svg', 'title': l10n.termsSection3Title, 'content': l10n.termsSection3Content},
+        {'icon': 'assets/icons/rule.svg', 'title': l10n.termsSection4Title, 'content': l10n.termsSection4Content},
+      ],
     );
   }
 }

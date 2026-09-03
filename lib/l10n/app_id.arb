@@ -84,10 +84,26 @@
   "qaTester": "Penguji QA",
   
   "privacyPolicyTitle": "Kebijakan Privasi",
-  "privacyPolicyContent": "Terakhir diperbarui: Agustus 2026\n\n1. Pendahuluan\nPrima Bot adalah asisten rumah sakit berbasis AI yang dirancang untuk membantu pasien dan pengunjung mengakses informasi layanan, fasilitas, jadwal, prosedur pendaftaran, dan informasi umum rumah sakit lainnya.\n\n2. Pengumpulan Data\nPrima Bot menyimpan riwayat obrolan Anda secara lokal di perangkat Anda. Kami tidak mengirimkan atau mengumpulkan data pribadi sensitif Anda ke server eksternal.\n\n3. Penggunaan Data\nData obrolan murni digunakan agar bot dapat mengingat konteks percakapan dan meningkatkan kualitas respons AI selama sesi Anda.\n\n4. Keamanan Data\nKami berkomitmen untuk melindungi informasi pribadi Anda. Anda memiliki kendali penuh dan dapat menghapus riwayat obrolan kapan saja melalui fitur ''Hapus Riwayat Chat''.",
+  "privacyLastUpdated": "Terakhir diperbarui: Agustus 2026",
+  "privacySection1Title": "1. Pendahuluan",
+  "privacySection1Content": "Prima Bot adalah asisten rumah sakit berbasis AI yang dirancang untuk membantu pasien dan pengunjung mengakses informasi layanan, fasilitas, jadwal, prosedur pendaftaran, dan informasi umum rumah sakit lainnya.",
+  "privacySection2Title": "2. Pengumpulan Data",
+  "privacySection2Content": "Prima Bot menyimpan riwayat obrolan Anda secara lokal di perangkat Anda. Kami tidak mengirimkan atau mengumpulkan data pribadi sensitif Anda ke server eksternal.",
+  "privacySection3Title": "3. Penggunaan Data",
+  "privacySection3Content": "Data obrolan murni digunakan agar bot dapat mengingat konteks percakapan dan meningkatkan kualitas respons AI selama sesi Anda.",
+  "privacySection4Title": "4. Keamanan Data",
+  "privacySection4Content": "Kami berkomitmen untuk melindungi informasi pribadi Anda. Anda memiliki kendali penuh dan dapat menghapus riwayat obrolan kapan saja melalui fitur ''Hapus Riwayat Chat''.",
 
   "termsOfServiceTitle": "Syarat & Ketentuan",
-  "termsOfServiceContent": "Terakhir diperbarui: Agustus 2026\n\n1. Tentang Prima Bot\nPrima Bot adalah asisten rumah sakit berbasis AI yang dirancang untuk membantu pasien dan pengunjung mengakses informasi umum mengenai layanan, fasilitas, jadwal, prosedur pendaftaran, dan informasi terkait rumah sakit lainnya.\n\n2. Sanggahan Medis (Medical Disclaimer)\nPENTING: Prima Bot hanya memberikan informasi umum rumah sakit dan BUKAN pengganti diagnosis, saran, atau perawatan medis dari dokter profesional. Selalu konsultasikan masalah kesehatan Anda dengan tenaga medis yang berkualifikasi.\n\n3. Batasan Tanggung Jawab\nPihak pengembang dan rumah sakit tidak bertanggung jawab atas tindakan atau keputusan apa pun yang diambil oleh pengguna yang hanya didasarkan pada informasi dari AI.\n\n4. Penggunaan yang Wajar\nPengguna diharapkan menggunakan bot dengan bertanggung jawab. Segala bentuk spam atau eksploitasi terhadap sistem dilarang keras.",
+  "termsLastUpdated": "Terakhir diperbarui: Agustus 2026",
+  "termsSection1Title": "1. Tentang Prima Bot",
+  "termsSection1Content": "Prima Bot adalah asisten rumah sakit berbasis AI yang dirancang untuk membantu pasien dan pengunjung mengakses informasi umum mengenai layanan, fasilitas, jadwal, prosedur pendaftaran, dan informasi terkait rumah sakit lainnya.",
+  "termsSection2Title": "2. Sanggahan Medis (Medical Disclaimer)",
+  "termsSection2Content": "PENTING: Prima Bot hanya memberikan informasi umum rumah sakit dan BUKAN pengganti diagnosis, saran, atau perawatan medis dari dokter profesional. Selalu konsultasikan masalah kesehatan Anda dengan tenaga medis yang berkualifikasi.",
+  "termsSection3Title": "3. Batasan Tanggung Jawab",
+  "termsSection3Content": "Pihak pengembang dan rumah sakit tidak bertanggung jawab atas tindakan atau keputusan apa pun yang diambil oleh pengguna yang hanya didasarkan pada informasi dari AI.",
+  "termsSection4Title": "4. Penggunaan yang Wajar",
+  "termsSection4Content": "Pengguna diharapkan menggunakan bot dengan bertanggung jawab. Segala bentuk spam atau eksploitasi terhadap sistem dilarang keras.",
 
   
   "lightTheme": "Tema Terang",
@@ -103,5 +119,10 @@
   "indonesian": "Indonesia",
   "indonesianDesc": "Bahasa Indonesia",
   "english": "English",
-  "englishDesc": "English language"
+  "englishDesc": "English language",
+  
+  "aboutPrimaDescription": "Prima Bot adalah asisten rumah sakit berbasis kecerdasan buatan (AI) yang dirancang untuk membantu pasien dan pengunjung mengakses informasi medis dengan mudah, akurat, dan interaktif.",
+  "developedFor": "Dikembangkan Untuk",
+  "hospitalName": "Rumah Sakit Prima Insan Mulia",
+  "copyright": "© 2026 Prima Bot Team"
 }
