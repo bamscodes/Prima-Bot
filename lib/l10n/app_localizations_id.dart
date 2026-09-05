@@ -169,25 +169,25 @@ class AppLocalizationsId extends AppLocalizations {
   String get appTheme => 'Tema Aplikasi';
 
   @override
-  String get appThemeDesc => 'Ubah tema terang atau gelap';
+  String get appThemeDesc => 'Pilih mode terang atau gelap';
 
   @override
   String get soundAndAudio => 'Suara';
 
   @override
-  String get soundAndAudioDesc => 'Atur kecepatan, nada, & suara';
+  String get soundAndAudioDesc => 'Pengaturan model suara TTS';
 
   @override
   String get language => 'Bahasa';
 
   @override
-  String get languageDesc => 'Ganti bahasa aplikasi';
+  String get languageDesc => 'Ubah bahasa antarmuka';
 
   @override
   String get clearHistory => 'Hapus Riwayat Chat';
 
   @override
-  String get clearHistoryDesc => 'Hapus semua percakapan AI';
+  String get clearHistoryDesc => 'Hapus seluruh riwayat percakapan';
 
   @override
   String get historyCleared => 'Riwayat obrolan dihapus';
@@ -351,4 +351,31 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get copyright => '© 2026 Prima Bot Team';
+
+  @override
+  String get searchChat => 'Cari Obrolan';
+
+  @override
+  String get searchChatDesc => 'Ketik di kolom pencarian untuk mencari obrolan';
+
+  @override
+  String get noChatFound => 'Tidak ada obrolan ditemukan.';
+
+  @override
+  String get searchHint => 'Cari...';
+
+  @override
+  String get delete => 'Hapus';
+
+  @override
+  String get aboutPrimaDesc => 'Informasi tentang asisten AI ini';
+
+  @override
+  String get developmentTeamDesc => 'Kreator di balik aplikasi Prima';
+
+  @override
+  String get privacyPolicyDesc => 'Kebijakan privasi dan data pengguna';
+
+  @override
+  String get termsOfServiceDesc => 'Syarat dan ketentuan layanan';
 }

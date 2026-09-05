@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../presentation/providers/chat_provider.dart';
+import '../../l10n/app_localizations.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -104,7 +105,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                   color: theme.colorScheme.onSurface,
                                 ),
                                 decoration: InputDecoration(
-                                  hintText: 'Cari',
+                                  hintText: AppLocalizations.of(context)!.searchHint,
                                   hintStyle: const TextStyle(
                                     color: Color(0xFF9D9D9D),
                                   ),
@@ -120,23 +121,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                 ),
                               ),
                             ),
-                            Container(
-                              margin: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: theme.colorScheme.primary,
-                                shape: BoxShape.circle,
-                              ),
-                              child: IconButton(
-                                icon: const Icon(
-                                  Icons.send_rounded,
-                                  color: Colors.white,
-                                  size: 20,
-                                ),
-                                onPressed: () {
-                                  FocusScope.of(context).unfocus();
-                                },
-                              ),
-                            ),
+                            // Tombol send dihapus karena pencarian otomatis
                           ],
                         ),
                       ),
@@ -153,13 +138,21 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Widget _buildBody(
       ThemeData theme, List<ChatSession> filteredSessions, ChatProvider provider) {
+    final l10n = AppLocalizations.of(context)!;
+
     if (_searchController.text.isEmpty) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            Icon(
+              Icons.search_rounded,
+              size: 80,
+              color: theme.colorScheme.primary.withValues(alpha: 0.2),
+            ),
+            const SizedBox(height: 16),
             Text(
-              'Cari Obrolan',
+              l10n.searchChat,
               style: theme.textTheme.displaySmall?.copyWith(
                 color: theme.colorScheme.onSurface,
                 fontWeight: FontWeight.bold,
@@ -167,7 +160,7 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Ketik Dikolom Pencarian Untuk Cari\nObrolan',
+              l10n.searchChatDesc,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: const Color(0xFF9D9D9D),
@@ -181,11 +174,22 @@ class _SearchScreenState extends State<SearchScreen> {
 
     if (filteredSessions.isEmpty) {
       return Center(
-        child: Text(
-          'Tidak ada obrolan ditemukan.',
-          style: theme.textTheme.bodyLarge?.copyWith(
-            color: const Color(0xFF9D9D9D),
-          ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.search_off_rounded,
+              size: 60,
+              color: const Color(0xFF9D9D9D).withValues(alpha: 0.5),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              l10n.noChatFound,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: const Color(0xFF9D9D9D),
+              ),
+            ),
+          ],
         ),
       );
     }

@@ -42,6 +42,22 @@ class ChatSession {
     required this.isTitlePending,
   });
 
+  ChatSession copyWith({
+    String? id,
+    String? title,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    bool? isTitlePending,
+  }) {
+    return ChatSession(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      isTitlePending: isTitlePending ?? this.isTitlePending,
+    );
+  }
+
   factory ChatSession.fromMap(Map<String, dynamic> map) {
     return ChatSession(
       id: map['id'] as String,
@@ -116,6 +132,22 @@ class ChatProvider extends ChangeNotifier {
 
   void _safeNotify() {
     if (!_disposed) notifyListeners();
+  }
+
+  /// Rename a specific session
+  Future<void> renameSession(String sessionId, String newTitle) async {
+    if (newTitle.trim().isEmpty) return;
+    
+    await DatabaseHelper.instance.updateSessionTitle(sessionId, newTitle.trim(), true);
+    
+    final index = _sessions.indexWhere((s) => s.id == sessionId);
+    if (index != -1) {
+      _sessions[index] = _sessions[index].copyWith(
+        title: newTitle.trim(),
+        isTitlePending: false,
+      );
+      notifyListeners();
+    }
   }
 
   /// Initialize: load session list for drawer, but ALWAYS start on a fresh draft ("Hai Hai" landing page)

@@ -169,25 +169,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTheme => 'App Theme';
 
   @override
-  String get appThemeDesc => 'Change light or dark theme';
+  String get appThemeDesc => 'Choose light or dark mode';
 
   @override
   String get soundAndAudio => 'Sound';
 
   @override
-  String get soundAndAudioDesc => 'Adjust rate, pitch, & voice';
+  String get soundAndAudioDesc => 'TTS voice model settings';
 
   @override
   String get language => 'Language';
 
   @override
-  String get languageDesc => 'Change application language';
+  String get languageDesc => 'Change interface language';
 
   @override
   String get clearHistory => 'Clear Chat History';
 
   @override
-  String get clearHistoryDesc => 'Delete all AI conversations';
+  String get clearHistoryDesc => 'Delete all conversation history';
 
   @override
   String get historyCleared => 'Chat history cleared';
@@ -351,4 +351,31 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get copyright => '© 2026 Prima Bot Team';
+
+  @override
+  String get searchChat => 'Search Chat';
+
+  @override
+  String get searchChatDesc => 'Type in the search bar to find a chat';
+
+  @override
+  String get noChatFound => 'No chat found.';
+
+  @override
+  String get searchHint => 'Search...';
+
+  @override
+  String get delete => 'Delete';
+
+  @override
+  String get aboutPrimaDesc => 'Information about this AI assistant';
+
+  @override
+  String get developmentTeamDesc => 'Creators behind the Prima app';
+
+  @override
+  String get privacyPolicyDesc => 'User data and privacy policy';
+
+  @override
+  String get termsOfServiceDesc => 'Terms and conditions of service';
 }

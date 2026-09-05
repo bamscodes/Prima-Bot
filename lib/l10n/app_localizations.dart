@@ -419,7 +419,7 @@ abstract class AppLocalizations {
   /// No description provided for @appThemeDesc.
   ///
   /// In id, this message translates to:
-  /// **'Ubah tema terang atau gelap'**
+  /// **'Pilih mode terang atau gelap'**
   String get appThemeDesc;
 
   /// No description provided for @soundAndAudio.
@@ -431,7 +431,7 @@ abstract class AppLocalizations {
   /// No description provided for @soundAndAudioDesc.
   ///
   /// In id, this message translates to:
-  /// **'Atur kecepatan, nada, & suara'**
+  /// **'Pengaturan model suara TTS'**
   String get soundAndAudioDesc;
 
   /// No description provided for @language.
@@ -443,7 +443,7 @@ abstract class AppLocalizations {
   /// No description provided for @languageDesc.
   ///
   /// In id, this message translates to:
-  /// **'Ganti bahasa aplikasi'**
+  /// **'Ubah bahasa antarmuka'**
   String get languageDesc;
 
   /// No description provided for @clearHistory.
@@ -455,7 +455,7 @@ abstract class AppLocalizations {
   /// No description provided for @clearHistoryDesc.
   ///
   /// In id, this message translates to:
-  /// **'Hapus semua percakapan AI'**
+  /// **'Hapus seluruh riwayat percakapan'**
   String get clearHistoryDesc;
 
   /// No description provided for @historyCleared.
@@ -763,6 +763,60 @@ abstract class AppLocalizations {
   /// In id, this message translates to:
   /// **'© 2026 Prima Bot Team'**
   String get copyright;
+
+  /// No description provided for @searchChat.
+  ///
+  /// In id, this message translates to:
+  /// **'Cari Obrolan'**
+  String get searchChat;
+
+  /// No description provided for @searchChatDesc.
+  ///
+  /// In id, this message translates to:
+  /// **'Ketik di kolom pencarian untuk mencari obrolan'**
+  String get searchChatDesc;
+
+  /// No description provided for @noChatFound.
+  ///
+  /// In id, this message translates to:
+  /// **'Tidak ada obrolan ditemukan.'**
+  String get noChatFound;
+
+  /// No description provided for @searchHint.
+  ///
+  /// In id, this message translates to:
+  /// **'Cari...'**
+  String get searchHint;
+
+  /// No description provided for @delete.
+  ///
+  /// In id, this message translates to:
+  /// **'Hapus'**
+  String get delete;
+
+  /// No description provided for @aboutPrimaDesc.
+  ///
+  /// In id, this message translates to:
+  /// **'Informasi tentang asisten AI ini'**
+  String get aboutPrimaDesc;
+
+  /// No description provided for @developmentTeamDesc.
+  ///
+  /// In id, this message translates to:
+  /// **'Kreator di balik aplikasi Prima'**
+  String get developmentTeamDesc;
+
+  /// No description provided for @privacyPolicyDesc.
+  ///
+  /// In id, this message translates to:
+  /// **'Kebijakan privasi dan data pengguna'**
+  String get privacyPolicyDesc;
+
+  /// No description provided for @termsOfServiceDesc.
+  ///
+  /// In id, this message translates to:
+  /// **'Syarat dan ketentuan layanan'**
+  String get termsOfServiceDesc;
 }
 
 class _AppLocalizationsDelegate

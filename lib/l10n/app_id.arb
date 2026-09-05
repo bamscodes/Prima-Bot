@@ -124,5 +124,20 @@
   "aboutPrimaDescription": "Prima Bot adalah asisten rumah sakit berbasis kecerdasan buatan (AI) yang dirancang untuk membantu pasien dan pengunjung mengakses informasi medis dengan mudah, akurat, dan interaktif.",
   "developedFor": "Dikembangkan Untuk",
   "hospitalName": "Rumah Sakit Prima Insan Mulia",
-  "copyright": "© 2026 Prima Bot Team"
+  "copyright": "© 2026 Prima Bot Team",
+  
+  "searchChat": "Cari Obrolan",
+  "searchChatDesc": "Ketik di kolom pencarian untuk mencari obrolan",
+  "noChatFound": "Tidak ada obrolan ditemukan.",
+  "searchHint": "Cari...",
+  "delete": "Hapus",
+
+  "soundAndAudioDesc": "Pengaturan model suara TTS",
+  "languageDesc": "Ubah bahasa antarmuka",
+  "appThemeDesc": "Pilih mode terang atau gelap",
+  "clearHistoryDesc": "Hapus seluruh riwayat percakapan",
+  "aboutPrimaDesc": "Informasi tentang asisten AI ini",
+  "developmentTeamDesc": "Kreator di balik aplikasi Prima",
+  "privacyPolicyDesc": "Kebijakan privasi dan data pengguna",
+  "termsOfServiceDesc": "Syarat dan ketentuan layanan"
 }

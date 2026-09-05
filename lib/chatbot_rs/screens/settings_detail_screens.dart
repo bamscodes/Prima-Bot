@@ -46,15 +46,15 @@ class _BaseDetailScreen extends StatelessWidget {
                     child: Column(
                       children: [
                         CircleAvatar(
-                          radius: 24,
+                          radius: 40,
                           backgroundColor: Colors.white,
                           child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: SvgPicture.asset(
-                              'assets/icons/ai.svg',
-                              colorFilter: const ColorFilter.mode(Color(0xFF16181A), BlendMode.srcIn),
-                              width: 28,
-                              height: 28,
+                            padding: const EdgeInsets.all(12.0),
+                            child: Image.asset(
+                              'assets/images/logo.png',
+                              width: 60,
+                              height: 60,
+                              fit: BoxFit.contain,
                             ),
                           ),
                         ),
@@ -580,9 +580,9 @@ class AboutScreen extends StatelessWidget {
                           backgroundColor: Colors.white,
                           child: Padding(
                             padding: const EdgeInsets.all(12.0),
-                            child: SvgPicture.asset(
-                              'assets/icons/ai.svg',
-                              colorFilter: const ColorFilter.mode(Color(0xFF16181A), BlendMode.srcIn),
+                            child: Image.asset(
+                              'assets/images/logo.png',
+                              fit: BoxFit.contain,
                             ),
                           ),
                         ),

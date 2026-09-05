@@ -120,15 +120,15 @@ class SettingsScreen extends StatelessWidget {
                     child: Column(
                       children: [
                         CircleAvatar(
-                          radius: 24,
-                          backgroundColor: theme.colorScheme.onSurface,
+                          radius: 40,
+                          backgroundColor: Colors.white,
                           child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: SvgPicture.asset(
-                              'assets/icons/ai.svg',
-                              colorFilter: ColorFilter.mode(theme.colorScheme.surface, BlendMode.srcIn),
-                              width: 28,
-                              height: 28,
+                            padding: const EdgeInsets.all(12.0),
+                            child: Image.asset(
+                              'assets/images/logo.png',
+                              width: 60,
+                              height: 60,
+                              fit: BoxFit.contain,
                             ),
                           ),
                         ),
@@ -158,6 +158,7 @@ class SettingsScreen extends StatelessWidget {
                     theme,
                     icon: Icons.volume_up_rounded,
                     title: AppLocalizations.of(context)!.soundAndAudio,
+                    subtitle: AppLocalizations.of(context)!.soundAndAudioDesc,
                     onTap: () => showDialog(
                       context: context,
                       builder: (_) => const SoundSettingsScreen(),
@@ -167,6 +168,7 @@ class SettingsScreen extends StatelessWidget {
                     theme,
                     icon: Icons.language,
                     title: AppLocalizations.of(context)!.language,
+                    subtitle: AppLocalizations.of(context)!.languageDesc,
                     onTap: () => showDialog(
                       context: context,
                       builder: (_) => const LanguageSettingsScreen(),
@@ -176,6 +178,7 @@ class SettingsScreen extends StatelessWidget {
                     theme,
                     icon: Icons.color_lens_outlined,
                     title: AppLocalizations.of(context)!.appTheme,
+                    subtitle: AppLocalizations.of(context)!.appThemeDesc,
                     onTap: () => showDialog(
                       context: context,
                       builder: (_) => const ThemeSettingsScreen(),
@@ -188,6 +191,7 @@ class SettingsScreen extends StatelessWidget {
                     theme,
                     icon: Icons.delete_outline_rounded,
                     title: AppLocalizations.of(context)!.clearHistory,
+                    subtitle: AppLocalizations.of(context)!.clearHistoryDesc,
                     onTap: () => _showClearChatDialog(context),
                   ),
 
@@ -197,6 +201,7 @@ class SettingsScreen extends StatelessWidget {
                     theme,
                     icon: Icons.info_outline_rounded,
                     title: AppLocalizations.of(context)!.aboutPrima,
+                    subtitle: AppLocalizations.of(context)!.aboutPrimaDesc,
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(builder: (_) => const AboutScreen()),
@@ -206,6 +211,7 @@ class SettingsScreen extends StatelessWidget {
                     theme,
                     icon: Icons.code_rounded,
                     title: AppLocalizations.of(context)!.developmentTeam,
+                    subtitle: AppLocalizations.of(context)!.developmentTeamDesc,
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -217,6 +223,7 @@ class SettingsScreen extends StatelessWidget {
                     theme,
                     icon: Icons.lock_outline_rounded,
                     title: AppLocalizations.of(context)!.privacyPolicyTitle,
+                    subtitle: AppLocalizations.of(context)!.privacyPolicyDesc,
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(builder: (_) => const PrivacyScreen()),
@@ -226,6 +233,7 @@ class SettingsScreen extends StatelessWidget {
                     theme,
                     icon: Icons.description_outlined,
                     title: AppLocalizations.of(context)!.termsOfServiceTitle,
+                    subtitle: AppLocalizations.of(context)!.termsOfServiceDesc,
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(builder: (_) => const TermsScreen()),
@@ -270,6 +278,7 @@ class SettingsScreen extends StatelessWidget {
     ThemeData theme, {
     required IconData icon,
     required String title,
+    required String subtitle,
     required VoidCallback onTap,
   }) {
     return Container(
@@ -290,14 +299,33 @@ class SettingsScreen extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(icon, color: theme.colorScheme.onSurface, size: 20),
+                Icon(icon, color: theme.colorScheme.onSurface, size: 22),
                 const SizedBox(width: 16),
-                Text(
-                  title,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface,
-                    fontWeight: FontWeight.w500,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurface,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: const Color(0xFF9D9D9D),
+                        ),
+                      ),
+                    ],
                   ),
+                ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: const Color(0xFF9D9D9D).withValues(alpha: 0.5),
+                  size: 20,
                 ),
               ],
             ),

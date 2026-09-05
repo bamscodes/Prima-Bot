@@ -124,5 +124,20 @@
   "aboutPrimaDescription": "Prima Bot is an AI-based hospital assistant designed to help patients and visitors access medical information easily, accurately, and interactively.",
   "developedFor": "Developed For",
   "hospitalName": "Prima Insan Mulia Hospital",
-  "copyright": "© 2026 Prima Bot Team"
+  "copyright": "© 2026 Prima Bot Team",
+  
+  "searchChat": "Search Chat",
+  "searchChatDesc": "Type in the search bar to find a chat",
+  "noChatFound": "No chat found.",
+  "searchHint": "Search...",
+  "delete": "Delete",
+
+  "soundAndAudioDesc": "TTS voice model settings",
+  "languageDesc": "Change interface language",
+  "appThemeDesc": "Choose light or dark mode",
+  "clearHistoryDesc": "Delete all conversation history",
+  "aboutPrimaDesc": "Information about this AI assistant",
+  "developmentTeamDesc": "Creators behind the Prima app",
+  "privacyPolicyDesc": "User data and privacy policy",
+  "termsOfServiceDesc": "Terms and conditions of service"
 }
