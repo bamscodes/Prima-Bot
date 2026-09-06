@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../presentation/providers/chat_provider.dart';
 import 'settings_detail_screens.dart';
 import '../../l10n/app_localizations.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -59,7 +58,11 @@ class SettingsScreen extends StatelessWidget {
                         ).clearChat();
                         Navigator.pop(context);
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(AppLocalizations.of(context)!.historyCleared)),
+                          SnackBar(
+                            content: Text(
+                              AppLocalizations.of(context)!.historyCleared,
+                            ),
+                          ),
                         );
                       },
                       style: ElevatedButton.styleFrom(
@@ -147,13 +150,18 @@ class SettingsScreen extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 20), // Memberi jarak ekstra antara header dan list menu
+            const SizedBox(
+              height: 20,
+            ), // Memberi jarak ekstra antara header dan list menu
 
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 children: [
-                  _buildSectionTitle(theme, AppLocalizations.of(context)!.general),
+                  _buildSectionTitle(
+                    theme,
+                    AppLocalizations.of(context)!.general,
+                  ),
                   _buildSettingsCard(
                     theme,
                     icon: Icons.volume_up_rounded,
@@ -186,7 +194,10 @@ class SettingsScreen extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 24),
-                  _buildSectionTitle(theme, AppLocalizations.of(context)!.chatSection),
+                  _buildSectionTitle(
+                    theme,
+                    AppLocalizations.of(context)!.chatSection,
+                  ),
                   _buildSettingsCard(
                     theme,
                     icon: Icons.delete_outline_rounded,
@@ -196,7 +207,10 @@ class SettingsScreen extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 24),
-                  _buildSectionTitle(theme, AppLocalizations.of(context)!.aboutSection),
+                  _buildSectionTitle(
+                    theme,
+                    AppLocalizations.of(context)!.aboutSection,
+                  ),
                   _buildSettingsCard(
                     theme,
                     icon: Icons.info_outline_rounded,

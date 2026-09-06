@@ -59,6 +59,12 @@ dev_dependencies:
   flutter_native_splash: ^2.4.1
   flutter_lints: ^6.0.0
 
+dependency_overrides:
+  android_libcpp_shared:
+    path: third_party/android_libcpp_shared
+  dart_piper_tts:
+    path: third_party/dart_piper_tts
+
 flutter_launcher_icons:
   android: "ic_launcher"
   ios: true

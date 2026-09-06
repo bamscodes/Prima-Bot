@@ -5,6 +5,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import '../../../services/piper_tts_service.dart';
+import '../../../services/hospital_ai.dart' show JawabanBot;
 import '../../data/datasources/local_datasource.dart';
 import '../../domain/usecases/get_bot_response.dart';
 import '../../domain/usecases/generate_conversation_title.dart';
@@ -756,70 +757,12 @@ class ChatProvider extends ChangeNotifier {
       }
       return;
     }
-    // Normalisasi alias untuk jadwal dokter
-    final String lowerNormalized = lowerText == 'jadwal dokter'
-        ? 'jadwal poliklinik'
-        : lowerText;
-    if (lowerNormalized == 'informasi kontak') {
-      await Future.delayed(const Duration(milliseconds: 600));
-      final displayResponse = '''📞 **Layanan 24 Jam RS Prima Insan Mulia:**
-- **Informasi & Pendaftaran:** 0815 1100 0600
-- **IGD (Gawat Darurat):** 0856 4507 7831
-- **Humas / HC:** 0856 4507 7830
-- **Call Center:** 0283 847 3333
-- **Email:** primainsan2021@gmail.com''';
-      const ttsResponse =
-          'Layanan 24 jam Rumah Sakit Prima Insan Mulia. '
-          'Informasi dan Pendaftaran: kosong delapan satu lima, satu satu kosong kosong, kosong enam kosong kosong. '
-          'I G D Gawat Darurat: kosong delapan lima enam, empat lima kosong tujuh, tujuh delapan tiga satu. '
-          'Humas atau H C: kosong delapan lima enam, empat lima kosong tujuh, tujuh delapan tiga kosong. '
-          'Call Center: kosong dua delapan tiga, delapan empat tujuh tiga tiga tiga.';
-      await saveResponse(displayResponse, ttsText: ttsResponse);
-      if (_sessionId == requestSessionId) {
-        _suggestions = ['Lokasi RS', 'Jadwal Dokter', 'Kembali'];
-      }
-      return;
-    } else if (lowerText == 'lokasi rs') {
-      await Future.delayed(const Duration(milliseconds: 600));
-      const displayResponse =
-          '📍 **Lokasi RS Prima Insan Mulia:**\n'
-          '[Jln. Raya Losari Lor, Kec. Losari, Kab. Brebes, Jawa Tengah, Indonesia]'
-          '(https://www.google.com/maps/search/?api=1&query=RS+Prima+Insan+Mulia+Losari+Brebes)';
-      const ttsResponse =
-          'Lokasi Rumah Sakit Prima Insan Mulia: '
-          'Jalan Raya Losari Lor, Kecamatan Losari, Kabupaten Brebes, Jawa Tengah, Indonesia.';
-      await saveResponse(displayResponse, ttsText: ttsResponse);
-      if (_sessionId == requestSessionId) {
-        _suggestions = ['Jadwal Poliklinik', 'Informasi Kontak', 'Kembali'];
-      }
-      return;
-    } else if (lowerNormalized == 'jadwal poliklinik') {
-      await Future.delayed(const Duration(milliseconds: 600));
-      final response =
-          '''Berikut adalah layanan Poliklinik yang tersedia di RS Prima Insan Mulia:
-1. **Spesialis Anak**
-2. **Spesialis Bedah**
-3. **Spesialis Kandungan (Obsgyn)**
-4. **Spesialis Penyakit Dalam**
-5. **Poli Umum**
-6. **Poli VCT**
 
-Silakan pilih pintasan di bawah ini atau ketik poli mana yang jadwalnya ingin Anda ketahui.''';
-      await saveResponse(response);
-      if (_sessionId == requestSessionId) {
-        _suggestions = [
-          'Jadwal Poli Anak',
-          'Jadwal Poli Bedah',
-          'Jadwal Kandungan',
-          'Jadwal Penyakit Dalam',
-          'Poli Umum',
-          'Poli VCT',
-        ];
-      }
-      return;
-    }
-
-    // AI Response
+    // Semua pertanyaan (termasuk tombol cepat) dijawab oleh OTAK LOKAL
+    // [HospitalAI] agar konsisten & tergrounding pada data rumah sakit.
+    // Dengan cara ini tombol cepat "Lokasi RS" dan chat "dimana alamatnya"
+    // menghasilkan jawaban yang SAMA persis (termasuk tautan Maps), karena
+    // keduanya melewati satu sumber kebenaran yang sama.
     final history = messagesForRequest
         .where((message) => message.text.isNotEmpty)
         .take(messagesForRequest.length - 1)
@@ -833,11 +776,14 @@ Silakan pilih pintasan di bawah ini atau ketik poli mana yang jadwalnya ingin An
         .map((m) => {'role': m.isBot ? 'assistant' : 'user', 'content': m.text})
         .toList();
 
-    final response = await _getBotResponse.execute(text, aiHistory);
-    await saveResponse(response);
+    final JawabanBot jawaban =
+        await _getBotResponse.execute(text, aiHistory);
+    await saveResponse(jawaban.tampilan, ttsText: jawaban.tts);
 
     if (_sessionId == requestSessionId) {
-      _suggestions = ['Jadwal Poliklinik', 'Informasi Kontak', 'Lokasi RS'];
+      _suggestions = jawaban.saran.isNotEmpty
+          ? jawaban.saran
+          : ['Jadwal Poliklinik', 'Informasi Kontak', 'Lokasi RS'];
     }
   }
 

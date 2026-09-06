@@ -457,7 +457,9 @@ class DatabaseHelper {
     String? hari,
   ) async {
     final db = await instance.database;
-    final escapedSpesialisasi = spesialisasi.replaceAll('%', r'\%').replaceAll('_', r'\_');
+    final escapedSpesialisasi = spesialisasi
+        .replaceAll('%', r'\%')
+        .replaceAll('_', r'\_');
     String whereClause = 'spesialisasi LIKE ? ESCAPE "\\"';
     List<dynamic> whereArgs = ['%$escapedSpesialisasi%'];
 
@@ -472,6 +474,23 @@ class DatabaseHelper {
       whereArgs: whereArgs,
     );
     return result.map((json) => JadwalModel.fromMap(json)).toList();
+  }
+
+  Future<List<JadwalModel>> getAllJadwal({String? hari}) async {
+    final db = await instance.database;
+    final result = await db.query(
+      'jadwal_dokter',
+      where: hari == null ? null : 'hari = ?',
+      whereArgs: hari == null ? null : [hari],
+      orderBy: 'id_layanan ASC, nama_dokter ASC, hari ASC, jam_mulai ASC',
+    );
+    return result.map((json) => JadwalModel.fromMap(json)).toList();
+  }
+
+  Future<List<LayananModel>> getAllLayanan() async {
+    final db = await instance.database;
+    final result = await db.query('layanan', orderBy: 'id ASC');
+    return result.map((json) => LayananModel.fromMap(json)).toList();
   }
 
   Future<void> clearAll() async {

@@ -14,23 +14,20 @@ void main() {
       );
     });
 
-    test('keeps distinct bundled English voice models', () {
-      final female = PiperVoiceCatalog.modelNameFor(
+    test('falls back to the bundled Indonesian model for unsupported languages', () {
+      final englishFemale = PiperVoiceCatalog.modelNameFor(
         languageCode: 'en',
         voiceStyle: 'F1',
       );
-      final male = PiperVoiceCatalog.modelNameFor(
+      final englishMale = PiperVoiceCatalog.modelNameFor(
         languageCode: 'en',
         voiceStyle: 'M1',
       );
 
-      expect(female, 'en_US-amy-medium');
-      expect(male, 'en_US-lessac-medium');
-      expect(female, isNot(male));
-      expect(
-        PiperVoiceCatalog.assetRevisions.keys,
-        containsAll([female, male]),
-      );
+      expect(englishFemale, 'id_ID-news_tts-medium');
+      expect(englishMale, 'id_ID-news_tts-medium');
+      expect(PiperVoiceCatalog.supportsVoiceStyle('en'), isFalse);
+      expect(PiperVoiceCatalog.assetRevisions.keys, contains(englishFemale));
     });
   });
 }

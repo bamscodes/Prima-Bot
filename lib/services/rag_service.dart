@@ -113,7 +113,17 @@ class LayananRag {
     'vct': ['vct', 'hiv', 'konseling', 'voluntary'],
     'gigi': ['gigi', 'dentist'],
     'lokasi': ['lokasi', 'alamat', 'tempat', 'dimana', 'maps', 'gedung'],
-    'kontak': ['kontak', 'telepon', 'telp', 'hp', 'wa', 'whatsapp', 'nomor', 'hubungi', 'call'],
+    'kontak': [
+      'kontak',
+      'telepon',
+      'telp',
+      'hp',
+      'wa',
+      'whatsapp',
+      'nomor',
+      'hubungi',
+      'call',
+    ],
     'biaya': ['biaya', 'tarif', 'harga', 'bayar', 'bpjs', 'asuransi'],
   };
 
@@ -147,12 +157,16 @@ class LayananRag {
 
     // 1. Muat data jadwal dan layanan dari JSON
     try {
-      final String jsonString = await rootBundle.loadString('assets/data_rs.json');
-      final Map<String, dynamic> dataJson = json.decode(jsonString) as Map<String, dynamic>;
+      final String jsonString = await rootBundle.loadString(
+        'assets/data_rs.json',
+      );
+      final Map<String, dynamic> dataJson =
+          json.decode(jsonString) as Map<String, dynamic>;
 
       final List<dynamic> daftarLayanan = dataJson['layanan'] as List<dynamic>;
       for (int i = 0; i < daftarLayanan.length; i++) {
-        final Map<String, dynamic> item = daftarLayanan[i] as Map<String, dynamic>;
+        final Map<String, dynamic> item =
+            daftarLayanan[i] as Map<String, dynamic>;
         final String namaLayanan = item['nama_layanan'] as String;
         final String deskripsi = item['deskripsi'] as String;
         final String lokasi = item['lokasi_gedung'] as String;
@@ -176,9 +190,11 @@ class LayananRag {
         );
       }
 
-      final List<dynamic> daftarJadwal = dataJson['jadwal_dokter'] as List<dynamic>;
+      final List<dynamic> daftarJadwal =
+          dataJson['jadwal_dokter'] as List<dynamic>;
       for (int i = 0; i < daftarJadwal.length; i++) {
-        final Map<String, dynamic> item = daftarJadwal[i] as Map<String, dynamic>;
+        final Map<String, dynamic> item =
+            daftarJadwal[i] as Map<String, dynamic>;
         final String namaDokter = item['nama_dokter'] as String;
         final String spesialisasi = item['spesialisasi'] as String;
         final String hari = item['hari'] as String;
@@ -324,7 +340,9 @@ class LayananRag {
       final String kunci = entri.key;
       final List<String> daftarSinonim = entri.value;
       // Jika query mengandung kata kunci, tambahkan semua sinonimnya
-      bool mengandungKunci = daftarSinonim.any((s) => queryLower.contains(s)) || queryLower.contains(kunci);
+      bool mengandungKunci =
+          daftarSinonim.any((s) => queryLower.contains(s)) ||
+          queryLower.contains(kunci);
       if (mengandungKunci) {
         for (final sinonim in daftarSinonim) {
           hasil.addAll(_tokenisasi(sinonim));
@@ -389,7 +407,11 @@ class LayananRag {
 
   /// Mencari dokumen yang paling relevan dengan query.
   /// Mengembalikan daftar hasil yang sudah diurutkan berdasarkan skor tertinggi.
-  List<HasilPencarianRag> cari(String query, {int batasHasil = 5, double ambangBatas = 0.05}) {
+  List<HasilPencarianRag> cari(
+    String query, {
+    int batasHasil = 5,
+    double ambangBatas = 0.05,
+  }) {
     if (!_sudahDiindeks || _koleksiDokumen.isEmpty) return [];
     if (query.trim().isEmpty) return [];
 
@@ -410,7 +432,8 @@ class LayananRag {
       final String term = entri.key;
       final int frekuensi = entri.value;
       final double tf = frekuensi / panjangQuery;
-      final double idf = _nilaiIdf[term] ?? matematika.log(1 + (_koleksiDokumen.length / 1));
+      final double idf =
+          _nilaiIdf[term] ?? matematika.log(1 + (_koleksiDokumen.length / 1));
       vektorQuery[term] = tf * idf;
     }
 
@@ -425,9 +448,12 @@ class LayananRag {
     // Hitung cosine similarity untuk setiap dokumen
     final List<HasilPencarianRag> hasil = [];
     for (final dokumen in _koleksiDokumen) {
-      final Map<String, double>? vektorDokumen = _vektorTfidfDokumen[dokumen.id];
+      final Map<String, double>? vektorDokumen =
+          _vektorTfidfDokumen[dokumen.id];
       final double? normaDokumen = _normaVektorDokumen[dokumen.id];
-      if (vektorDokumen == null || normaDokumen == null || normaDokumen == 0) continue;
+      if (vektorDokumen == null || normaDokumen == null || normaDokumen == 0) {
+        continue;
+      }
 
       double dotProduct = 0;
       for (final entri in vektorQuery.entries) {
@@ -487,11 +513,30 @@ class LayananRag {
 
     for (final dokumen in _koleksiDokumen) {
       double skorFallback = 0;
-      if (dokumen.kategori == 'kontak' && _mengandungKataKunci(queryLower, ['kontak', 'telepon', 'nomor', 'hp', 'wa'])) {
+      if (dokumen.kategori == 'kontak' &&
+          _mengandungKataKunci(queryLower, [
+            'kontak',
+            'telepon',
+            'nomor',
+            'hp',
+            'wa',
+          ])) {
         skorFallback = 0.15;
-      } else if (dokumen.kategori == 'lokasi' && _mengandungKataKunci(queryLower, ['lokasi', 'alamat', 'maps', 'gedung'])) {
+      } else if (dokumen.kategori == 'lokasi' &&
+          _mengandungKataKunci(queryLower, [
+            'lokasi',
+            'alamat',
+            'maps',
+            'gedung',
+          ])) {
         skorFallback = 0.15;
-      } else if (dokumen.kategori == 'jadwal' && _mengandungKataKunci(queryLower, ['jadwal', 'dokter', 'poli', 'spesialis'])) {
+      } else if (dokumen.kategori == 'jadwal' &&
+          _mengandungKataKunci(queryLower, [
+            'jadwal',
+            'dokter',
+            'poli',
+            'spesialis',
+          ])) {
         skorFallback = 0.12;
       }
       if (skorFallback > 0) {
@@ -517,7 +562,9 @@ class LayananRag {
     final StringBuffer buffer = StringBuffer();
     for (int i = 0; i < hasilPencarian.length; i++) {
       final hasil = hasilPencarian[i];
-      buffer.writeln('[Sumber ${i + 1} - ${hasil.dokumen.kategori.toUpperCase()} | skor: ${hasil.skor.toStringAsFixed(2)}]');
+      buffer.writeln(
+        '[Sumber ${i + 1} - ${hasil.dokumen.kategori.toUpperCase()} | skor: ${hasil.skor.toStringAsFixed(2)}]',
+      );
       buffer.writeln(hasil.dokumen.konten);
       buffer.writeln();
     }
@@ -538,7 +585,10 @@ class LayananRag {
       if (namaDokter != null) {
         dokterValid.add(namaDokter.toLowerCase());
         // Tambahkan juga versi tanpa gelar
-        final String tanpaGelar = namaDokter.replaceAll(RegExp(r'dr\.\s*', caseSensitive: false), '').trim().toLowerCase();
+        final String tanpaGelar = namaDokter
+            .replaceAll(RegExp(r'dr\.\s*', caseSensitive: false), '')
+            .trim()
+            .toLowerCase();
         dokterValid.add(tanpaGelar);
       }
     }
@@ -547,19 +597,30 @@ class LayananRag {
     if (dokterValid.isEmpty) return null;
 
     // Cari pola "dr. Nama" di jawaban
-    final RegExp polaDokter = RegExp(r'dr\.\s*([A-Za-z\s,\.]+)', caseSensitive: false);
+    final RegExp polaDokter = RegExp(
+      r'dr\.\s*([A-Za-z\s,\.]+)',
+      caseSensitive: false,
+    );
     final Iterable<RegExpMatch> temuan = polaDokter.allMatches(jawabanLlm);
 
     for (final match in temuan) {
       final String namaDitemukan = match.group(0)!.toLowerCase().trim();
-      bool ditemukanDiKonteks = dokterValid.any((valid) => namaDitemukan.contains(valid) || valid.contains(namaDitemukan.replaceAll(RegExp(r'dr\.\s*'), '')));
+      bool ditemukanDiKonteks = dokterValid.any(
+        (valid) =>
+            namaDitemukan.contains(valid) ||
+            valid.contains(namaDitemukan.replaceAll(RegExp(r'dr\.\s*'), '')),
+      );
 
       // Jika nama dokter tidak ada di konteks, beri peringatan tapi jangan blokir total
       // Skor rendah menunjukkan kemungkinan halusinasi
       if (!ditemukanDiKonteks) {
         // Cek apakah jawaban mengandung detail jadwal spesifik yang tidak ada di konteks
         // Jika ya, kemungkinan halusinasi tinggi
-        final bool menyebutJadwalSpesifik = RegExp(r'(senin|selasa|rabu|kamis|jumat|sabtu|minggu)', caseSensitive: false).hasMatch(namaDitemukan) ||
+        final bool menyebutJadwalSpesifik =
+            RegExp(
+              r'(senin|selasa|rabu|kamis|jumat|sabtu|minggu)',
+              caseSensitive: false,
+            ).hasMatch(namaDitemukan) ||
             RegExp(r'\d{1,2}[:\.]\d{2}').hasMatch(jawabanLlm);
         if (menyebutJadwalSpesifik) {
           return 'Peringatan: jawaban mengandung jadwal dokter yang tidak ada di basis data lokal. Harap verifikasi ke pendaftaran.';
@@ -575,38 +636,181 @@ class LayananRag {
   String jawabanEkstraktif(String query, List<HasilPencarianRag> hasil) {
     if (hasil.isEmpty) {
       return 'Maaf, informasi yang Anda cari belum tersedia di sistem kami. '
-          'Silakan hubungi Informasi dan Pendaftaran di 0815 1100 0600 atau Call Center 0283 847 3333 untuk bantuan lebih lanjut.';
+          'Saya bisa bantu cek jadwal dokter, pendaftaran, kontak, atau lokasi RS Prima Insan Mulia. '
+          'Untuk bantuan langsung, hubungi Informasi dan Pendaftaran 0815 1100 0600 atau Call Center 0283 847 3333.';
     }
 
-    // Jika pertanyaan tentang jadwal, format sebagai daftar
     final String queryLower = query.toLowerCase();
-    final bool isJadwal = queryLower.contains('jadwal') || queryLower.contains('dokter') || queryLower.contains('poli');
+    final bool isJadwal =
+        queryLower.contains('jadwal') ||
+        queryLower.contains('dokter') ||
+        queryLower.contains('dr.') ||
+        queryLower.contains('dr ') ||
+        queryLower.contains('poli') ||
+        queryLower.contains('praktek') ||
+        queryLower.contains('praktik');
+
+    if (_mengandungKataKunci(queryLower, [
+      'pendaftaran',
+      'daftar',
+      'registrasi',
+      'booking',
+      'antrian',
+      'antrean',
+    ])) {
+      return _jawabanPendaftaran();
+    }
+
+    if (_mengandungKataKunci(queryLower, [
+      'biaya',
+      'tarif',
+      'harga',
+      'bpjs',
+      'asuransi',
+    ])) {
+      return _jawabanBiaya();
+    }
+
+    if (_mengandungKataKunci(queryLower, [
+      'kontak',
+      'telepon',
+      'telpon',
+      'nomor',
+      'nomer',
+      'whatsapp',
+      'wa',
+      'call center',
+      'hp',
+    ])) {
+      return _jawabanKontak();
+    }
+
+    if (_mengandungKataKunci(queryLower, [
+      'lokasi',
+      'alamat',
+      'maps',
+      'gedung',
+      'dimana',
+      'di mana',
+    ])) {
+      return _jawabanLokasi();
+    }
 
     if (isJadwal) {
-      final List<HasilPencarianRag> jadwalHasil = hasil.where((h) => h.dokumen.kategori == 'jadwal').toList();
+      final List<HasilPencarianRag> jadwalHasil = hasil
+          .where((h) => h.dokumen.kategori == 'jadwal')
+          .toList();
       if (jadwalHasil.isNotEmpty) {
-        final StringBuffer buffer = StringBuffer();
-        buffer.writeln('Berikut informasi jadwal yang tersedia berdasarkan data rumah sakit:');
+        final Map<String, _RingkasanJadwalRag> ringkasan = {};
+        for (final item in jadwalHasil) {
+          final metadata = item.dokumen.metadata;
+          final namaDokter = metadata['nama_dokter'] as String?;
+          final spesialisasi = metadata['spesialisasi'] as String?;
+          final hari = metadata['hari'] as String?;
+          final jamMulai = metadata['jam_mulai'] as String?;
+          final jamSelesai = metadata['jam_selesai'] as String?;
+          if (namaDokter == null ||
+              spesialisasi == null ||
+              hari == null ||
+              jamMulai == null ||
+              jamSelesai == null) {
+            continue;
+          }
+
+          final key = '$namaDokter|$spesialisasi';
+          final dokter = ringkasan.putIfAbsent(
+            key,
+            () => _RingkasanJadwalRag(
+              namaDokter: namaDokter,
+              spesialisasi: spesialisasi,
+            ),
+          );
+          dokter.jadwal.add('$hari $jamMulai-$jamSelesai');
+        }
+
+        if (ringkasan.isEmpty) return _jawabanTidakTersedia();
+
+        final buffer = StringBuffer();
+        buffer.writeln(
+          'Berikut informasi jadwal yang tersedia berdasarkan data rumah sakit:',
+        );
         buffer.writeln();
-        for (int i = 0; i < jadwalHasil.length; i++) {
-          buffer.writeln('${i + 1}. ${jadwalHasil[i].dokumen.konten}');
+        var nomor = 1;
+        for (final dokter in ringkasan.values) {
+          buffer.writeln(
+            '$nomor. **${dokter.namaDokter}** - ${dokter.spesialisasi}',
+          );
+          buffer.writeln('   Jadwal: ${dokter.jadwal.join(', ')}');
+          nomor++;
         }
         buffer.writeln();
-        buffer.writeln('Untuk informasi lebih detail, hubungi Pendaftaran 0815 1100 0600.');
-        return buffer.toString();
+        buffer.writeln(
+          'Untuk informasi lebih detail, hubungi Pendaftaran 0815 1100 0600.',
+        );
+        return buffer.toString().trim();
       }
     }
 
-    // Fallback umum: gabungkan konten dokumen teratas
+    final layananHasil = hasil
+        .where((h) => h.dokumen.kategori == 'layanan')
+        .toList();
+    if (layananHasil.isNotEmpty) {
+      final buffer = StringBuffer();
+      buffer.writeln('Layanan yang sesuai dengan pertanyaan Anda:');
+      buffer.writeln();
+      for (int i = 0; i < layananHasil.length && i < 4; i++) {
+        final metadata = layananHasil[i].dokumen.metadata;
+        final nama = metadata['nama_layanan'] as String?;
+        final deskripsi = metadata['deskripsi'] as String?;
+        final lokasi = metadata['lokasi_gedung'] as String?;
+        if (nama == null || deskripsi == null || lokasi == null) continue;
+        buffer.writeln('${i + 1}. **$nama** - $deskripsi. Lokasi: $lokasi.');
+      }
+      buffer.writeln();
+      buffer.writeln('Untuk pendaftaran, hubungi 0815 1100 0600.');
+      return buffer.toString().trim();
+    }
+
     final StringBuffer buffer = StringBuffer();
     buffer.writeln('Berdasarkan informasi rumah sakit:');
     buffer.writeln();
-    for (int i = 0; i < hasil.length && i < 3; i++) {
-      buffer.writeln('- ${hasil[i].dokumen.konten}');
-      buffer.writeln();
-    }
-    buffer.writeln('Jika membutuhkan informasi lebih lanjut, silakan hubungi Call Center 0283 847 3333.');
+    buffer.writeln(
+      '- RS Prima Insan Mulia memiliki layanan poliklinik Anak, Bedah, Kandungan, Penyakit Dalam, Poli Umum, dan VCT.',
+    );
+    buffer.writeln('- IGD tersedia 24 jam untuk kondisi gawat darurat.');
+    buffer.writeln(
+      'Jika membutuhkan informasi lebih lanjut, silakan hubungi Call Center 0283 847 3333.',
+    );
     return buffer.toString().trim();
+  }
+
+  String _jawabanPendaftaran() {
+    return 'Pendaftaran di RS Prima Insan Mulia dapat dilakukan melalui Informasi dan Pendaftaran 0815 1100 0600, atau datang langsung ke Gedung Utama.\n\n'
+        'Sebaiknya pasien datang sekitar 30 menit sebelum jadwal praktik dokter. Jangan lupa membawa kartu identitas serta kartu BPJS atau asuransi bila ada.';
+  }
+
+  String _jawabanBiaya() {
+    return 'RS Prima Insan Mulia melayani pasien umum, BPJS Kesehatan, dan asuransi rekanan.\n\n'
+        'Untuk rincian tarif tindakan medis atau konfirmasi kuota BPJS, silakan hubungi Pendaftaran 0815 1100 0600 atau Call Center 0283 847 3333.';
+  }
+
+  String _jawabanKontak() {
+    return 'Kontak resmi RS Prima Insan Mulia:\n\n'
+        '1. Informasi dan Pendaftaran: 0815 1100 0600\n'
+        '2. IGD/Gawat Darurat: 0856 4507 7831\n'
+        '3. Humas/HC: 0856 4507 7830\n'
+        '4. Call Center: 0283 847 3333\n'
+        '5. Email: primainsan2021@gmail.com';
+  }
+
+  String _jawabanLokasi() {
+    return 'RS Prima Insan Mulia berlokasi di Jln. Raya Losari Lor, Kecamatan Losari, Kabupaten Brebes, Jawa Tengah, Indonesia.\n\n'
+        'Untuk navigasi peta, silakan buka tautan berikut: [Buka di Google Maps](https://www.google.com/maps/search/?api=1&query=RS+Prima+Insan+Mulia+Losari+Brebes)';
+  }
+
+  String _jawabanTidakTersedia() {
+    return 'Maaf, informasi tersebut belum tersedia di sistem lokal Prima.\n\n'
+        'Saya bisa bantu cek jadwal dokter, pendaftaran, kontak, atau lokasi RS. Untuk kepastian, hubungi Pendaftaran 0815 1100 0600.';
   }
 
   /// Membersihkan dan mereset indeks (untuk testing)
@@ -618,4 +822,12 @@ class LayananRag {
     _sudahDiindeks = false;
     _initFuture = null;
   }
+}
+
+class _RingkasanJadwalRag {
+  final String namaDokter;
+  final String spesialisasi;
+  final List<String> jadwal = [];
+
+  _RingkasanJadwalRag({required this.namaDokter, required this.spesialisasi});
 }

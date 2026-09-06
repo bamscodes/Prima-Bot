@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import '../../l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
@@ -10,8 +11,8 @@ import '../presentation/providers/chat_provider.dart';
 import '../presentation/widgets/app_motion.dart';
 import 'search_screen.dart';
 import 'settings_screen.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
 
@@ -29,14 +30,14 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   ChatProvider? _chatProviderRef;
   int? _editingMessageIndex;
   DateTime? _lastTypewriterScrollTime;
-  bool _isComposing = false;
   static bool _hasShownDrawerSwipeHint = false;
 
   Future<void> _loadDrawerSwipeHintPref() async {
     final prefs = await SharedPreferences.getInstance();
     if (mounted) {
       setState(() {
-        _hasShownDrawerSwipeHint = prefs.getBool('hasShownDrawerSwipeHint') ?? false;
+        _hasShownDrawerSwipeHint =
+            prefs.getBool('hasShownDrawerSwipeHint') ?? false;
       });
     }
   }
@@ -110,7 +111,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   void _onChatUpdated() {
     if (!mounted) return;
 
-    final chatProvider = _chatProviderRef ?? Provider.of<ChatProvider>(context, listen: false);
+    final chatProvider =
+        _chatProviderRef ?? Provider.of<ChatProvider>(context, listen: false);
     final currentCount = chatProvider.messages.length;
     final currentIsLoading = chatProvider.isLoading;
 
@@ -375,7 +377,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       controller: _scrollController,
       reverse: false,
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-      cacheExtent: 350,
+      scrollCacheExtent: const ScrollCacheExtent.pixels(350),
       padding: const EdgeInsets.only(left: 18, right: 18, top: 16, bottom: 8),
       itemCount: totalCount,
       itemBuilder: (context, index) {
@@ -653,9 +655,13 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                       children: [
                         Semantics(
                           button: true,
-                          label: chatProvider.isMessagePlaying(messageIndex) ? AppLocalizations.of(context)!.pauseAudio : AppLocalizations.of(context)!.playAudio,
+                          label: chatProvider.isMessagePlaying(messageIndex)
+                              ? AppLocalizations.of(context)!.pauseAudio
+                              : AppLocalizations.of(context)!.playAudio,
                           child: Tooltip(
-                            message: chatProvider.isMessagePlaying(messageIndex) ? AppLocalizations.of(context)!.pause : AppLocalizations.of(context)!.play,
+                            message: chatProvider.isMessagePlaying(messageIndex)
+                                ? AppLocalizations.of(context)!.pause
+                                : AppLocalizations.of(context)!.play,
                             child: InkWell(
                               borderRadius: BorderRadius.circular(12),
                               onTap: () {
@@ -671,10 +677,18 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                       ? Icons.pause_rounded
                                       : Icons.play_arrow_rounded,
                                   size: 20,
-                                  color: chatProvider.isMessagePlaying(messageIndex)
+                                  color:
+                                      chatProvider.isMessagePlaying(
+                                        messageIndex,
+                                      )
                                       ? theme.colorScheme.primary
                                       : theme.colorScheme.onSurface,
-                                  semanticLabel: chatProvider.isMessagePlaying(messageIndex) ? AppLocalizations.of(context)!.pause : AppLocalizations.of(context)!.play,
+                                  semanticLabel:
+                                      chatProvider.isMessagePlaying(
+                                        messageIndex,
+                                      )
+                                      ? AppLocalizations.of(context)!.pause
+                                      : AppLocalizations.of(context)!.play,
                                 ),
                               ),
                             ),
@@ -697,7 +711,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                   Icons.refresh_rounded,
                                   size: 20,
                                   color: theme.colorScheme.onSurface,
-                                  semanticLabel: AppLocalizations.of(context)!.regenerate,
+                                  semanticLabel: AppLocalizations.of(
+                                    context,
+                                  )!.regenerate,
                                 ),
                               ),
                             ),
@@ -717,7 +733,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                 );
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text(AppLocalizations.of(context)!.textCopied),
+                                    content: Text(
+                                      AppLocalizations.of(context)!.textCopied,
+                                    ),
                                     duration: const Duration(seconds: 1),
                                   ),
                                 );
@@ -728,7 +746,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                   Icons.copy_rounded,
                                   size: 18,
                                   color: theme.colorScheme.onSurface,
-                                  semanticLabel: AppLocalizations.of(context)!.copy,
+                                  semanticLabel: AppLocalizations.of(
+                                    context,
+                                  )!.copy,
                                 ),
                               ),
                             ),
@@ -746,28 +766,43 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     );
   }
 
-  void _showContextMenu(BuildContext context, ChatSession session, ChatProvider chatProvider) {
+  void _showContextMenu(
+    BuildContext context,
+    ChatSession session,
+    ChatProvider chatProvider,
+  ) {
     final theme = Theme.of(context);
-    
+
     showModalBottomSheet(
       context: context,
       backgroundColor: theme.colorScheme.surface,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
       builder: (ctx) {
         return SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: Icon(Icons.edit_outlined, color: theme.colorScheme.onSurface),
-                title: Text('Ganti Nama', style: TextStyle(color: theme.colorScheme.onSurface)),
+                leading: Icon(
+                  Icons.edit_outlined,
+                  color: theme.colorScheme.onSurface,
+                ),
+                title: Text(
+                  'Ganti Nama',
+                  style: TextStyle(color: theme.colorScheme.onSurface),
+                ),
                 onTap: () {
                   Navigator.pop(ctx);
                   _showRenameDialog(context, session, chatProvider);
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.delete_outline_rounded, color: Colors.red),
+                leading: const Icon(
+                  Icons.delete_outline_rounded,
+                  color: Colors.red,
+                ),
                 title: const Text('Hapus', style: TextStyle(color: Colors.red)),
                 onTap: () {
                   Navigator.pop(ctx);
@@ -780,37 +815,53 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       },
     );
   }
-  
-  void _showRenameDialog(BuildContext context, ChatSession session, ChatProvider chatProvider) {
+
+  void _showRenameDialog(
+    BuildContext context,
+    ChatSession session,
+    ChatProvider chatProvider,
+  ) {
     final theme = Theme.of(context);
     final controller = TextEditingController(text: session.title);
-    
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: theme.colorScheme.secondary,
-        title: Text('Ganti Nama Obrolan', style: TextStyle(color: theme.colorScheme.onSurface)),
+        title: Text(
+          'Ganti Nama Obrolan',
+          style: TextStyle(color: theme.colorScheme.onSurface),
+        ),
         content: TextField(
           controller: controller,
           style: TextStyle(color: theme.colorScheme.onSurface),
           decoration: InputDecoration(
             hintText: 'Nama obrolan',
             hintStyle: const TextStyle(color: Color(0xFF9D9D9D)),
-            enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: theme.colorScheme.outlineVariant)),
-            focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: theme.colorScheme.primary)),
+            enabledBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: theme.colorScheme.outlineVariant),
+            ),
+            focusedBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: theme.colorScheme.primary),
+            ),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text(AppLocalizations.of(context)!.cancel, style: const TextStyle(color: Color(0xFF9D9D9D))),
+            child: Text(
+              AppLocalizations.of(context)!.cancel,
+              style: const TextStyle(color: Color(0xFF9D9D9D)),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx);
               chatProvider.renameSession(session.id, controller.text);
             },
-            style: ElevatedButton.styleFrom(backgroundColor: theme.colorScheme.primary),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: theme.colorScheme.primary,
+            ),
             child: const Text('Simpan', style: TextStyle(color: Colors.white)),
           ),
         ],
@@ -832,7 +883,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           return Padding(
             padding: const EdgeInsets.only(right: 8, top: 4, bottom: 4),
             child: ActionChip(
-              avatar: Icon(Icons.lightbulb_outline_rounded, size: 16, color: theme.colorScheme.primary),
+              avatar: Icon(
+                Icons.lightbulb_outline_rounded,
+                size: 16,
+                color: theme.colorScheme.primary,
+              ),
               label: Text(suggestion),
               onPressed: () {
                 FocusScope.of(context).unfocus();
@@ -915,12 +970,16 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: isComposing ? theme.colorScheme.primary : theme.colorScheme.onSurface.withValues(alpha: 0.1),
+                      color: isComposing
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.onSurface.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
                       Icons.send_rounded,
-                      color: isComposing ? Colors.white : theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                      color: isComposing
+                          ? Colors.white
+                          : theme.colorScheme.onSurface.withValues(alpha: 0.3),
                       size: 20,
                     ),
                   ),
@@ -953,7 +1012,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.only(left: 24.0, right: 24.0, top: 32.0, bottom: 24.0),
+                    padding: const EdgeInsets.only(
+                      left: 24.0,
+                      right: 24.0,
+                      top: 32.0,
+                      bottom: 24.0,
+                    ),
                     child: Row(
                       children: [
                         ClipOval(
@@ -1001,8 +1065,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       focusColor: Colors.transparent,
-                      hoverColor: theme.colorScheme.secondary.withValues(alpha: 0.5),
-                      splashColor: theme.colorScheme.secondary.withValues(alpha: 0.7),
+                      hoverColor: theme.colorScheme.secondary.withValues(
+                        alpha: 0.5,
+                      ),
+                      splashColor: theme.colorScheme.secondary.withValues(
+                        alpha: 0.7,
+                      ),
                       leading: Icon(
                         Icons.chat_bubble_outline_rounded,
                         color: theme.colorScheme.onSurface,
@@ -1028,8 +1096,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       focusColor: Colors.transparent,
-                      hoverColor: theme.colorScheme.secondary.withValues(alpha: 0.5),
-                      splashColor: theme.colorScheme.secondary.withValues(alpha: 0.7),
+                      hoverColor: theme.colorScheme.secondary.withValues(
+                        alpha: 0.5,
+                      ),
+                      splashColor: theme.colorScheme.secondary.withValues(
+                        alpha: 0.7,
+                      ),
                       leading: Icon(
                         Icons.search_rounded,
                         color: theme.colorScheme.onSurface,
@@ -1095,114 +1167,146 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                           ),
                         )
                       : ListView.builder(
-                        physics: const ClampingScrollPhysics(),
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        itemCount: chatProvider.sessions.length,
-                        itemBuilder: (context, index) {
-                          final session = chatProvider.sessions[index];
-                          final isActive =
-                              session.id == chatProvider.sessionId;
-                          final timeAgo = _formatTimeAgo(session.updatedAt);
+                          physics: const ClampingScrollPhysics(),
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          itemCount: chatProvider.sessions.length,
+                          itemBuilder: (context, index) {
+                            final session = chatProvider.sessions[index];
+                            final isActive =
+                                session.id == chatProvider.sessionId;
+                            final timeAgo = _formatTimeAgo(session.updatedAt);
 
-                          final dismissible = Dismissible(
-                            key: ValueKey(session.id),
-                            direction: DismissDirection.endToStart,
-                            background: Container(
-                              margin: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 2.0),
-                              decoration: BoxDecoration(
-                                color: Colors.red.shade400,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              alignment: Alignment.centerRight,
-                              padding: const EdgeInsets.only(right: 20),
-                              child: const Icon(Icons.delete_outline_rounded, color: Colors.white),
-                            ),
-                            onDismissed: (_) {
-                              chatProvider.deleteSessionById(session.id);
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12.0,
-                                vertical: 2.0,
-                              ),
-                              child: Material(
-                                color: theme.colorScheme.surface,
-                                borderRadius: BorderRadius.circular(12),
-                                child: ListTile(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  focusColor: Colors.transparent,
-                                  hoverColor: theme.colorScheme.secondary.withValues(alpha: 0.5),
-                                  splashColor: theme.colorScheme.secondary.withValues(alpha: 0.7),
-                                selected: isActive,
-                                selectedColor: theme.colorScheme.onSurface,
-                                selectedTileColor: theme.colorScheme.secondary,
-                                leading: Icon(
-                                  Icons.chat_outlined,
-                                  color: isActive
-                                      ? theme.colorScheme.primary
-                                      : const Color(0xFF9D9D9D),
-                                  size: 20,
+                            final dismissible = Dismissible(
+                              key: ValueKey(session.id),
+                              direction: DismissDirection.endToStart,
+                              background: Container(
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 12.0,
+                                  vertical: 2.0,
                                 ),
-                                title: session.isTitlePending
-                                    ? const HistoryTitleSkeleton()
-                                    : Text(
-                                        session.title,
-                                        style: theme.textTheme.bodyMedium?.copyWith(
-                                          color: theme.colorScheme.onSurface,
-                                          fontWeight: isActive
-                                              ? FontWeight.bold
-                                              : FontWeight.normal,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                subtitle: Text(
-                                  timeAgo,
-                                  style: theme.textTheme.labelSmall?.copyWith(
-                                    color: const Color(0xFF9D9D9D),
-                                    fontSize: 10,
-                                  ),
+                                decoration: BoxDecoration(
+                                  color: Colors.red.shade400,
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                                onTap: () {
-                                  FocusScope.of(context).unfocus();
-                                  Navigator.pop(context);
-                                  chatProvider.switchSession(session.id);
-                                },
-                                onLongPress: () {
-                                  _showContextMenu(context, session, chatProvider);
-                                },
+                                alignment: Alignment.centerRight,
+                                padding: const EdgeInsets.only(right: 20),
+                                child: const Icon(
+                                  Icons.delete_outline_rounded,
+                                  color: Colors.white,
+                                ),
                               ),
-                              ),
-                            ),
-                          );
-                          
-                          if (index == 0 && !_hasShownDrawerSwipeHint) {
-                            WidgetsBinding.instance.addPostFrameCallback((_) async {
-                              _hasShownDrawerSwipeHint = true;
-                              final prefs = await SharedPreferences.getInstance();
-                              await prefs.setBool('hasShownDrawerSwipeHint', true);
-                            });
-                            return Stack(
-                              children: [
-                                Positioned.fill(
-                                  child: Container(
-                                    margin: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 2.0),
-                                    decoration: BoxDecoration(color: Colors.red.shade400, borderRadius: BorderRadius.circular(12)),
-                                    alignment: Alignment.centerRight,
-                                    padding: const EdgeInsets.only(right: 20),
-                                    child: const Icon(Icons.delete_outline_rounded, color: Colors.white),
+                              onDismissed: (_) {
+                                chatProvider.deleteSessionById(session.id);
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12.0,
+                                  vertical: 2.0,
+                                ),
+                                child: Material(
+                                  color: theme.colorScheme.surface,
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: ListTile(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    focusColor: Colors.transparent,
+                                    hoverColor: theme.colorScheme.secondary
+                                        .withValues(alpha: 0.5),
+                                    splashColor: theme.colorScheme.secondary
+                                        .withValues(alpha: 0.7),
+                                    selected: isActive,
+                                    selectedColor: theme.colorScheme.onSurface,
+                                    selectedTileColor:
+                                        theme.colorScheme.secondary,
+                                    leading: Icon(
+                                      Icons.chat_outlined,
+                                      color: isActive
+                                          ? theme.colorScheme.primary
+                                          : const Color(0xFF9D9D9D),
+                                      size: 20,
+                                    ),
+                                    title: session.isTitlePending
+                                        ? const HistoryTitleSkeleton()
+                                        : Text(
+                                            session.title,
+                                            style: theme.textTheme.bodyMedium
+                                                ?.copyWith(
+                                                  color: theme
+                                                      .colorScheme
+                                                      .onSurface,
+                                                  fontWeight: isActive
+                                                      ? FontWeight.bold
+                                                      : FontWeight.normal,
+                                                ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                    subtitle: Text(
+                                      timeAgo,
+                                      style: theme.textTheme.labelSmall
+                                          ?.copyWith(
+                                            color: const Color(0xFF9D9D9D),
+                                            fontSize: 10,
+                                          ),
+                                    ),
+                                    onTap: () {
+                                      FocusScope.of(context).unfocus();
+                                      Navigator.pop(context);
+                                      chatProvider.switchSession(session.id);
+                                    },
+                                    onLongPress: () {
+                                      _showContextMenu(
+                                        context,
+                                        session,
+                                        chatProvider,
+                                      );
+                                    },
                                   ),
                                 ),
-                                _AnimatedSwipeHint(child: dismissible),
-                              ],
+                              ),
                             );
-                          }
-                          
-                          return dismissible;
-                        },
-                      ),
+
+                            if (index == 0 && !_hasShownDrawerSwipeHint) {
+                              WidgetsBinding.instance.addPostFrameCallback((
+                                _,
+                              ) async {
+                                _hasShownDrawerSwipeHint = true;
+                                final prefs =
+                                    await SharedPreferences.getInstance();
+                                await prefs.setBool(
+                                  'hasShownDrawerSwipeHint',
+                                  true,
+                                );
+                              });
+                              return Stack(
+                                children: [
+                                  Positioned.fill(
+                                    child: Container(
+                                      margin: const EdgeInsets.symmetric(
+                                        horizontal: 12.0,
+                                        vertical: 2.0,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.red.shade400,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      alignment: Alignment.centerRight,
+                                      padding: const EdgeInsets.only(right: 20),
+                                      child: const Icon(
+                                        Icons.delete_outline_rounded,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                  _AnimatedSwipeHint(child: dismissible),
+                                ],
+                              );
+                            }
+
+                            return dismissible;
+                          },
+                        ),
                 ),
               ),
             ),
@@ -1372,7 +1476,9 @@ class _FloatingAiEmptyStateState extends State<_FloatingAiEmptyState>
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: widget.theme.colorScheme.primary.withValues(alpha: 0.15),
+                        color: widget.theme.colorScheme.primary.withValues(
+                          alpha: 0.15,
+                        ),
                         blurRadius: 30,
                         spreadRadius: 5,
                       ),
@@ -1851,18 +1957,40 @@ class _AnimatedSwipeHint extends StatefulWidget {
   State<_AnimatedSwipeHint> createState() => _AnimatedSwipeHintState();
 }
 
-class _AnimatedSwipeHintState extends State<_AnimatedSwipeHint> with SingleTickerProviderStateMixin {
+class _AnimatedSwipeHintState extends State<_AnimatedSwipeHint>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<Offset> _animation;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1800));
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
+    );
     _animation = TweenSequence<Offset>([
-      TweenSequenceItem(tween: Tween<Offset>(begin: Offset.zero, end: const Offset(-0.25, 0)).chain(CurveTween(curve: Curves.easeOutCubic)), weight: 35),
-      TweenSequenceItem(tween: Tween<Offset>(begin: const Offset(-0.25, 0), end: const Offset(-0.25, 0)), weight: 30),
-      TweenSequenceItem(tween: Tween<Offset>(begin: const Offset(-0.25, 0), end: Offset.zero).chain(CurveTween(curve: Curves.easeInCubic)), weight: 35),
+      TweenSequenceItem(
+        tween: Tween<Offset>(
+          begin: Offset.zero,
+          end: const Offset(-0.25, 0),
+        ).chain(CurveTween(curve: Curves.easeOutCubic)),
+        weight: 35,
+      ),
+      TweenSequenceItem(
+        tween: Tween<Offset>(
+          begin: const Offset(-0.25, 0),
+          end: const Offset(-0.25, 0),
+        ),
+        weight: 30,
+      ),
+      TweenSequenceItem(
+        tween: Tween<Offset>(
+          begin: const Offset(-0.25, 0),
+          end: Offset.zero,
+        ).chain(CurveTween(curve: Curves.easeInCubic)),
+        weight: 35,
+      ),
     ]).animate(_controller);
 
     Future.delayed(const Duration(milliseconds: 800), () {
@@ -1878,9 +2006,6 @@ class _AnimatedSwipeHintState extends State<_AnimatedSwipeHint> with SingleTicke
 
   @override
   Widget build(BuildContext context) {
-    return SlideTransition(
-      position: _animation,
-      child: widget.child,
-    );
+    return SlideTransition(position: _animation, child: widget.child);
   }
 }

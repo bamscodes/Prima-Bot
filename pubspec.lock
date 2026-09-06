@@ -2,12 +2,11 @@
 # See https://dart.dev/tools/pub/glossary#lockfile
 packages:
   android_libcpp_shared:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
-      name: android_libcpp_shared
-      sha256: f0fa67e595a220615c3329e4eb58d372f155ae6058caf22a70c8e4f7036b12f4
-      url: "https://pub.dev"
-    source: hosted
+      path: "third_party/android_libcpp_shared"
+      relative: true
+    source: path
     version: "0.1.1"
   ansicolor:
     dependency: transitive
@@ -122,12 +121,11 @@ packages:
     source: hosted
     version: "1.0.9"
   dart_piper_tts:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
-      name: dart_piper_tts
-      sha256: a212607f13ba93736433304a280e748b8de2a67d0763af6ce66fb5d3fe095f1d
-      url: "https://pub.dev"
-    source: hosted
+      path: "third_party/dart_piper_tts"
+      relative: true
+    source: path
     version: "0.2.6"
   fake_async:
     dependency: transitive

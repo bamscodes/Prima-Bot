@@ -1,263 +1,263 @@
 // ignore_for_file: curly_braces_in_flow_control_structures
 import 'dart:developer';
 
-import '../../../services/rag_service.dart';
+import '../../../services/hospital_ai.dart' as rs;
 import '../../data/datasources/ai_datasource.dart';
 import '../../data/datasources/local_datasource.dart';
 import '../../data/models/jadwal_model.dart';
+import '../../../services/rag_service.dart';
 
-/// Use case utama untuk menghasilkan jawaban bot dengan pendekatan RAG enterprise.
-/// Menggabungkan retrieval TF-IDF lokal, query database jadwal, dan generasi LLM
-/// dengan validasi anti-halusinasi. Seluruh proses 100 persen Dart dan gratis
-/// kecuali pemanggilan OpenRouter yang memang memerlukan API key.
+/// Use case utama untuk menghasilkan jawaban bot.
+///
+/// Arsitektur baru (anti-bias, anti-halusinasi, terasa hidup):
+///  1. [HospitalAI] menjadi OTAK lokal deterministik: setiap intent dan entitas
+///     (dokter, poli, hari, kontak, alamat, simtom) dijawab HANYA dari data
+///     rumah sakit, dengan variasi pembuka/penutup agar tidak kaku.
+///  2. [LayananRag] (TF-IDF) & [DatabaseHelper] menjadi sumber pembenahan
+///     konteks untuk intent terbuka (umum hospital) dan untuk penguatan
+///     validasi anti-halusinasi.
+///  3. LLM (OpenRouter) hanya dipakai untuk memperkaya intent terbuka dan
+///     DITUNGGU dengan validasi ketat; jika gagal/kosong, jawaban lokal
+///     tergrounding langsung dipakai (tidak ada jawaban yang ngarang).
+///
+/// Seluruh alur 100% Dart, tanpa backend.
 class GetBotResponse {
-  final DatabaseHelper _bantuanDatabase = DatabaseHelper.instance;
   final LayananRag _layananRag = LayananRag();
+  final rs.HospitalAI _otak = rs.HospitalAI();
 
-  /// Daftar pola sapaan yang harus dijawab secara natural tanpa RAG.
-  static final RegExp _polaSapaan = RegExp(
-    r'^\s*(halo|hai|hey|hello|hi|assalamu\s*alaikum|selamat\s*(pagi|siang|sore|malam)|permisi|pagi|siang|sore|malam|apa\s*kabar)\b',
-    caseSensitive: false,
-  );
-
-  /// Pola untuk mendeteksi pertanyaan di luar konteks RS (umum).
-  static final RegExp _polaRs = RegExp(
-    r'(rs|rumah sakit|prima|insan|mulia|dokter|jadwal|poli|spesialis|igd|vct|bedah|anak|kandungan|penyakit dalam|umum|layanan|kontak|lokasi|alamat|telepon|pendaftaran|bpjs|biaya|tarif|kamar|fasilitas|brebes|losari)',
-    caseSensitive: false,
-  );
-
-  /// Menjalankan alur RAG lengkap untuk pertanyaan pengguna.
-  /// [masukanPengguna] adalah pesan terbaru, [riwayat] berisi percakapan sebelumnya.
-  Future<String> execute(String masukanPengguna, List<Map<String, String>> riwayat) async {
+  /// Menjalankan alur jawaban untuk satu pertanyaan pengguna.
+  ///
+  /// Mengembalikan [rs.JawabanBot] berisi:
+  /// - [rs.JawabanBot.tampilan] : teks markdown untuk UI
+  /// - [rs.JawabanBot.tts]      : teks polos untuk TTS
+  /// - [rs.JawabanBot.saran]    : quick action lanjutan
+  Future<rs.JawabanBot> execute(
+    String masukanPengguna,
+    List<Map<String, String>> riwayat,
+  ) async {
     final String masukanBersih = masukanPengguna.trim();
     if (masukanBersih.isEmpty) {
-      return 'Silakan ketik pertanyaan Anda, saya siap membantu.';
+      return const rs.JawabanBot(
+        tampilan: 'Silakan ketik pertanyaan Anda, saya siap membantu.',
+        tts: 'Silakan ketik pertanyaan Anda, saya siap membantu.',
+      );
     }
 
-    // 0. Tangani sapaan secara langsung agar tidak kena fallback "informasi belum tersedia"
-    if (_apakahSapaan(masukanBersih)) {
-      return _jawabanSapaan(masukanBersih);
+    // Otak lokal menjawab dengan deterministik & tergrounding.
+    final rs.JawabanBot jawabanDasar = _otak.jawab(masukanBersih);
+
+    // Untuk intent terbuka (umum hospital), perkuat dengan LLM bila tersedia.
+    // Jawaban LLM hanya dipakai jika lolos validasi anti-halusinasi.
+    final bool bolehLLM = _otakApakahUmum(masukanBersih);
+    if (bolehLLM) {
+      final rs.JawabanBot? diperkaya =
+          await _perkuatDenganLlm(masukanBersih, riwayat);
+      if (diperkaya != null) return diperkaya;
     }
 
-    // Pastikan indeks RAG sudah siap (hanya build sekali seumur hidup aplikasi)
+    return jawabanDasar;
+  }
+
+  /// Apakah pertanyaan ini termasuk "umum hospital" yang boleh diperkaya LLM?
+  bool _otakApakahUmum(String q) {
+    final rs.HasilDeteksi d = _otak.deteksi(q);
+    return d.intent == rs.IntentAi.umumHospital;
+  }
+
+  /// Coba perkuat jawaban dengan LLM + konteks RAG; validasi ketat.
+  Future<rs.JawabanBot?> _perkuatDenganLlm(
+    String q,
+    List<Map<String, String>> riwayat,
+  ) async {
     try {
       await _layananRag.inisialisasi();
-    } catch (error) {
-      log('Gagal inisialisasi RAG: $error');
+    } catch (e) {
+      log('Gagal inisialisasi RAG saat perkuat LLM: $e');
     }
 
-    // 1. Klasifikasi intent sederhana untuk menentukan apakah perlu query jadwal presisi
-    final Map<String, dynamic> dataIntent = await AIService.classifyIntent(masukanBersih);
-    final String intent = (dataIntent['intent'] as String?) ?? 'Umum';
-    final String? spesialisasi = dataIntent['entitas'] as String?;
-    final String? hari = dataIntent['hari'] as String?;
-
-    // 2. Retrieval RAG berbasis TF-IDF untuk konteks umum (layanan, kontak, lokasi, jadwal)
-    List<HasilPencarianRag> hasilRetrieval = [];
+    List<HasilPencarianRag> hasil;
     try {
-      hasilRetrieval = _layananRag.cari(masukanBersih, batasHasil: 5, ambangBatas: 0.05);
-      log('RAG retrieval: ${hasilRetrieval.length} dokumen untuk "$masukanBersih"');
-      for (final hasil in hasilRetrieval) {
-        log(' - [${hasil.dokumen.kategori}] skor ${hasil.skor.toStringAsFixed(3)}: ${hasil.dokumen.konten.substring(0, 60)}...');
-      }
-    } catch (error) {
-      log('Error retrieval RAG: $error');
+      hasil = _layananRag.cari(q, batasHasil: 5, ambangBatas: 0.08);
+    } catch (e) {
+      log('Error retrieval RAG: $e');
+      hasil = [];
     }
 
-    // 3. Jika intent jadwal, lakukan query presisi ke database lokal untuk grounding kuat
-    String konteksJadwalPresisi = '';
-    List<JadwalModel> daftarJadwal = [];
-    if (intent == 'Cari_Jadwal') {
-      if (spesialisasi != null) {
-        try {
-          daftarJadwal = await _bantuanDatabase.queryJadwal(spesialisasi, hari);
-          if (daftarJadwal.isEmpty) {
-            konteksJadwalPresisi =
-                'DATA JADWAL PRESISI: Tidak ditemukan jadwal dokter $spesialisasi${hari != null ? ' pada hari $hari' : ''} di database lokal. Sampaikan dengan sopan bahwa jadwal tidak tersedia dan tawarkan untuk cek hari lain atau hubungi pendaftaran.';
-          } else {
-            final StringBuffer bufferJadwal = StringBuffer();
-            bufferJadwal.writeln('DATA JADWAL PRESISI DARI DATABASE LOKAL (sumber paling terpercaya):');
-            for (final jadwal in daftarJadwal) {
-              bufferJadwal.writeln(
-                '- ${jadwal.namaDokter} | Spesialisasi ${jadwal.spesialisasi} | Hari ${jadwal.hari} | Jam ${jadwal.jamMulai} sampai ${jadwal.jamSelesai}',
-              );
-            }
-            konteksJadwalPresisi = bufferJadwal.toString();
-          }
-        } catch (error) {
-          log('Error query jadwal: $error');
-          konteksJadwalPresisi = 'DATA JADWAL PRESISI: Gagal mengakses database lokal. Gunakan konteks RAG saja.';
-        }
-      } else {
-        // Spesialisasi tidak terdeteksi, biarkan LLM bertanya klarifikasi dengan bantuan konteks layanan
-        konteksJadwalPresisi =
-            'DATA JADWAL PRESISI: Spesialisasi tidak disebutkan. Tanyakan dengan sopan spesialisasi apa yang dicari (contoh: Anak, Bedah, Kandungan, Penyakit Dalam, Umum, VCT).';
-      }
+    String konteks = _layananRag.bangunKonteks(hasil);
+    if (konteks.isEmpty ||
+        konteks.contains('Tidak ada data relevan')) {
+      konteks = _konteksFaktaRingkas();
     }
 
-    // 4. Bangun konteks terkurasi dari hasil retrieval
-    String konteksTerkurasi = _layananRag.bangunKonteks(hasilRetrieval);
-    if (konteksJadwalPresisi.isNotEmpty) {
-      konteksTerkurasi = '$konteksTerkurasi\n\n$konteksJadwalPresisi';
-    }
-
-    // 5. Deteksi apakah pertanyaan di luar konteks RS (umum)
-    final bool isPertanyaanRs = _polaRs.hasMatch(masukanBersih.toLowerCase()) || intent == 'Cari_Jadwal' || hasilRetrieval.isNotEmpty;
-    if (!isPertanyaanRs) {
-      // Pertanyaan umum di luar RS: coba LLM cepat, jika gagal langsung fallback tanpa tampilkan "padat"
-      try {
-        final String? jawabanUmum = await AIService.generateResponseDenganKonteks(
-          pertanyaanPengguna: masukanBersih,
-          konteksTerkurasi: 'Konteks RS tidak relevan untuk pertanyaan umum ini. Jawab secara umum dengan Bahasa Indonesia yang ramah, tetap tawarkan bantuan terkait RS jika diperlukan.',
-          riwayatPercakapan: riwayat.length > 5 ? riwayat.sublist(riwayat.length - 5) : riwayat,
-          modeUmum: true,
-        ).timeout(const Duration(seconds: 12));
-        if (jawabanUmum != null) {
-          final String? jawabanBersih = _saringJawabanSafety(jawabanUmum);
-          if (jawabanBersih != null && jawabanBersih.trim().isNotEmpty) {
-            return jawabanBersih;
-          }
-        }
-      } catch (error) {
-        log('Error jawaban umum: $error');
-      }
-      // Fallback untuk pertanyaan umum jika LLM gagal (tidak tampilkan "padat")
-      return 'Terima kasih atas pertanyaannya. Saya adalah asisten RS Prima Insan Mulia yang fokus membantu informasi layanan rumah sakit. Untuk pertanyaan umum tersebut, saya sarankan mencari sumber terpercaya atau hubungi layanan kami di 0815 1100 0600 jika ada kaitannya dengan kesehatan.';
-    }
-
-    // 6. Siapkan riwayat yang relevan (ambil 5 pesan terakhir agar tidak terlalu panjang)
-    final List<Map<String, String>> riwayatRelevan = riwayat.length > 5 ? riwayat.sublist(riwayat.length - 5) : riwayat;
-
-    // 7. Coba generasi via LLM dengan konteks RAG dan filter safety (cepat, fallback langsung jika null)
     try {
-      final String? jawabanLlmMentah = await AIService.generateResponseDenganKonteks(
-        pertanyaanPengguna: masukanBersih,
-        konteksTerkurasi: konteksTerkurasi,
-        riwayatPercakapan: riwayatRelevan,
-      ).timeout(const Duration(seconds: 20));
-      if (jawabanLlmMentah == null) {
-        log('LLM mengembalikan null (RTO/cache miss), fallback ke ekstaktif');
-        return _jawabanFallbackEkstraktif(masukanBersih, hasilRetrieval, daftarJadwal, konteksJadwalPresisi);
+      final String? mentah = await AIService.generateResponseDenganKonteks(
+        pertanyaanPengguna: q,
+        konteksTerkurasi: konteks,
+        riwayatPercakapan: riwayat.length > 4
+            ? riwayat.sublist(riwayat.length - 4)
+            : riwayat,
+      ).timeout(const Duration(seconds: 15));
+
+      if (mentah == null || mentah.trim().isEmpty) return null;
+
+      // Validasi anti-halusinasi: LLM tidak boleh menyebut nama dokter/jadwal
+      // yang tidak ada di basis data.
+      if (_berhalusinasi(mentah)) {
+        log('LLM terdeteksi berhalusinasi, pakai jawaban lokal.');
+        return null;
       }
 
-      // Saring output safety yang tidak diinginkan
-      final String? jawabanLlm = _saringJawabanSafety(jawabanLlmMentah);
-      if (jawabanLlm == null) {
-        log('Jawaban LLM terdeteksi sebagai safety filter, fallback ke ekstraktif');
-        return _jawabanFallbackEkstraktif(masukanBersih, hasilRetrieval, daftarJadwal, konteksJadwalPresisi);
-      }
+      final String tampil = _bersihkanMentah(mentah);
+      if (tampil.isEmpty) return null;
 
-      // Validasi anti-halusinasi: cek apakah LLM mengarang jadwal
-      final String? peringatanHalusinasi = _layananRag.validasiJawaban(jawabanLlm, hasilRetrieval);
-      if (peringatanHalusinasi != null) {
-        log('Peringatan halusinasi terdeteksi: $peringatanHalusinasi');
-        if (intent == 'Cari_Jadwal' && daftarJadwal.isEmpty && hasilRetrieval.isEmpty) {
-          return _jawabanFallbackEkstraktif(masukanBersih, hasilRetrieval, daftarJadwal, konteksJadwalPresisi);
-        }
-      }
-
-      // Pastikan jawaban tidak kosong
-      if (jawabanLlm.trim().isEmpty) {
-        return _jawabanFallbackEkstraktif(masukanBersih, hasilRetrieval, daftarJadwal, konteksJadwalPresisi);
-      }
-
-      // Jika jawaban mengandung fallback generik padahal data ada, biarkan (LLM seharusnya sudah pakai data)
-      return jawabanLlm;
-    } catch (error, stackTrace) {
-      log('Error generasi LLM: $error', stackTrace: stackTrace);
-      // Fallback ke jawaban ekstraktif saat LLM gagal (offline, timeout, quota habis)
-      return _jawabanFallbackEkstraktif(masukanBersih, hasilRetrieval, daftarJadwal, konteksJadwalPresisi);
+      return rs.JawabanBot(
+        tampilan: tampil,
+        tts: _teksTts(tampil),
+        saran: const ['Jadwal Poliklinik', 'Informasi Kontak', 'Lokasi RS'],
+      );
+    } catch (e) {
+      log('Perkuat LLM gagal, pakai jawaban lokal: $e');
+      return null;
     }
   }
 
-  /// Mengecek apakah teks merupakan sapaan.
-  bool _apakahSapaan(String teks) {
-    final String teksLower = teks.toLowerCase().trim();
-    // Jika teks sangat pendek dan cocok pola sapaan, anggap sapaan
-    if (teksLower.length <= 30 && _polaSapaan.hasMatch(teksLower)) {
-      return true;
+  /// Konteks ringkas dari fakta statis RS (anti-halusinasi).
+  String _konteksFaktaRingkas() {
+    final b = StringBuffer();
+    b.writeln('RS Prima Insan Mulia.');
+    b.writeln('Layanan: Anak, Bedah, Kandungan, Penyakit Dalam, Poli Umum, VCT.');
+    b.writeln('IGD 24 jam di Gedung Utama.');
+    b.writeln('Pendaftaran: ${rs.HospitalFakta.telpPendaftaran}');
+    b.writeln('IGD: ${rs.HospitalFakta.telpIgd}');
+    b.writeln('Call Center: ${rs.HospitalFakta.telpCallCenter}');
+    b.writeln('Alamat: ${rs.HospitalFakta.alamat}');
+    b.writeln('Email: ${rs.HospitalFakta.email}');
+    return b.toString();
+  }
+
+  /// Deteksi halusinasi: nama dokter / jam / hari yang tidak ada di data.
+  bool _berhalusinasi(String jawaban) {
+    final String lower = jawaban.toLowerCase();
+    final Set<String> namaValid = {
+      for (final d in rs.HospitalFakta.daftarDokter) d.nama.toLowerCase(),
+    };
+
+    // Deteksi nama dokter "dr. X" / "dr X" di jawaban.
+    final RegExp reDokter = RegExp(
+      r'dr\.?\s+([a-z]{2,})',
+      caseSensitive: false,
+    );
+    for (final m in reDokter.allMatches(jawaban)) {
+      final String nama = m.group(0)!.toLowerCase();
+      final bool valid = namaValid.any((n) => nama.contains(n.split(' ')[0]));
+      if (!valid) {
+        // Nama dokter yang tidak dikenal oleh data -> potensi halusinasi.
+        // Namun bila nama valid kebetulan dipotong, toleransi: cek substring.
+        final bool cocok = namaValid.any((n) => n.contains(nama));
+        if (!cocok) return true;
+      }
     }
-    // Jika teks hanya 1-2 kata sapaan
-    final List<String> kataSapaan = ['halo', 'hai', 'hey', 'hello', 'hi', 'pagi', 'siang', 'sore', 'malam', 'assalamualaikum'];
-    if (kataSapaan.contains(teksLower)) return true;
-    // Jika diawali sapaan dan panjang masih pendek
-    if (teksLower.split(' ').length <= 3 && _polaSapaan.hasMatch(teksLower)) return true;
+
+    // Deteksi nomor telepon yang tidak resmi (mengarang nomor).
+    final RegExp reTelepon = RegExp(
+      r'0(8[0-9]{2,3}|2[0-9]{2,3})[\s-]?\d{3,5}',
+    );
+    final Set<String> nomorValid = {
+      '081511000600',
+      '085645077831',
+      '085645077830',
+      '02838473333',
+    };
+    for (final m in reTelepon.allMatches(jawaban)) {
+      final String hanyaAngka = m.group(0)!.replaceAll(RegExp(r'[\s-]'), '');
+      if (!nomorValid.contains(hanyaAngka)) {
+        // Nomor yang tidak dikenal -> halusinasi.
+        return true;
+      }
+    }
+
+    // Deteksi alamat yang berbeda dari data resmi.
+    if (lower.contains('alamat') ||
+        lower.contains('berada di') ||
+        lower.contains('berlokasi di')) {
+      final bool adaAlamatResmi =
+          lower.contains('losari') && lower.contains('brebes');
+      if (!adaAlamatResmi) return true;
+    }
+
     return false;
   }
 
-  /// Jawaban sapaan yang ramah dan natural.
-  String _jawabanSapaan(String sapaan) {
-    final String sapaanLower = sapaan.toLowerCase();
-    String salamWaktu = 'Halo';
-    if (sapaanLower.contains('pagi')) salamWaktu = 'Selamat pagi';
-    else if (sapaanLower.contains('siang')) salamWaktu = 'Selamat siang';
-    else if (sapaanLower.contains('sore')) salamWaktu = 'Selamat sore';
-    else if (sapaanLower.contains('malam')) salamWaktu = 'Selamat malam';
-    else if (sapaanLower.contains('assalam')) return 'Waalaikumsalam! Ada yang bisa Prima bantu hari ini? Silakan tanya jadwal dokter, layanan poliklinik, atau lokasi RS.';
-    else if (sapaanLower.contains('halo')) salamWaktu = 'Halo';
-    else if (sapaanLower.contains('hai')) salamWaktu = 'Hai';
-
-    return '$salamWaktu! Ada yang bisa Prima bantu hari ini? Anda bisa tanya jadwal dokter, informasi kontak, atau lokasi RS Prima Insan Mulia. Silakan pilih tombol cepat di bawah atau ketik pertanyaan Anda.';
+  String _bersihkanMentah(String s) {
+    var t = s.trim();
+    // Hapus tag safety/moderation yang kadang bocor dari model.
+    t = t.replaceAll(
+      RegExp(r'(user|response)\s*safety\s*[:\-]?\s*\w+', caseSensitive: false),
+      ' ',
+    );
+    t = t.replaceAll(RegExp(r'as an ai\b', caseSensitive: false), '');
+    t = t.replaceAll(RegExp(r'\s+'), ' ').trim();
+    // Hapus markdown berlebihan & baris kosong berlebih
+    t = t.replaceAll(RegExp(r'\n{3,}'), '\n\n');
+    return t;
   }
 
-  /// Menyaring jawaban yang mengandung output safety moderation yang tidak diinginkan.
-  /// Mengembalikan null jika terdeteksi sebagai safety filter agar bisa di-fallback.
-  String? _saringJawabanSafety(String jawaban) {
-    final String lower = jawaban.toLowerCase();
-    // Deteksi pola safety yang sering muncul dari model moderation
-    if (lower.contains('user safety') && lower.contains('response safety')) {
-      log('Filter safety terdeteksi: User Safety / Response Safety');
-      return null;
-    }
-    if (lower.contains('user safety: safe') || lower.contains('response safety: safe')) {
-      return null;
-    }
-    // Jika jawaban hanya berisi tag safety tanpa konten bermakna
-    if (RegExp(r'^\s*(user safety|response safety|safe)\s*[:\-]?\s*safe\s*$', caseSensitive: false).hasMatch(jawaban.trim())) {
-      return null;
-    }
-    // Jika jawaban sangat pendek dan mengandung kata safe berulang (indikasi moderation)
-    if (jawaban.trim().length < 50 && lower.contains('safe') && (lower.contains('user') || lower.contains('response'))) {
-      return null;
-    }
-    return jawaban;
+  String _teksTts(String markdown) {
+    var t = markdown
+        .replaceAll(RegExp(r'!\[[^\]]*\]\([^)]*\)'), ' ')
+        .replaceAllMapped(
+          RegExp(r'\[([^\]]*)\]\([^)]*\)'),
+          (m) => m.group(1) ?? '',
+        )
+        .replaceAll(RegExp(r'\*{1,2}'), '')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    return t;
+  }
+}
+
+// =============================================================================
+// Kelas pendukung yang masih dipakai kode lain (biarkan tersedia).
+// =============================================================================
+
+class _RingkasanDokter {
+  final String namaDokter;
+  final String spesialisasi;
+  final List<String> jadwal = [];
+
+  _RingkasanDokter({
+    required this.namaDokter,
+    required this.spesialisasi,
+  });
+}
+
+// =============================================================================
+// Helper (dipakai UI / tes): format jadwal dari DB bila tersedia.
+// Dipertahankan agar tidak ada import yang hilang di file lain.
+// =============================================================================
+
+String formatJadwalDb(List<JadwalModel> jadwal, {String? hari}) {
+  final Map<String, _RingkasanDokter> ringkasan = {};
+  for (final item in jadwal) {
+    final key = '${item.namaDokter}|${item.spesialisasi}';
+    final entry = ringkasan.putIfAbsent(
+      key,
+      () => _RingkasanDokter(
+        namaDokter: item.namaDokter,
+        spesialisasi: item.spesialisasi,
+      ),
+    );
+    entry.jadwal.add('${item.hari} ${item.jamMulai}-${item.jamSelesai}');
   }
 
-  /// Menghasilkan jawaban fallback ekstraktif tanpa LLM.
-  /// Digunakan saat offline, timeout, atau API key tidak tersedia.
-  String _jawabanFallbackEkstraktif(
-    String pertanyaan,
-    List<HasilPencarianRag> hasilRag,
-    List<JadwalModel> jadwalPresisi,
-    String konteksJadwal,
-  ) {
-    // Jika ada data jadwal presisi, format langsung sebagai jawaban
-    if (jadwalPresisi.isNotEmpty) {
-      final StringBuffer buffer = StringBuffer();
-      buffer.writeln('Berikut jadwal yang tersedia berdasarkan data rumah sakit:');
-      buffer.writeln();
-      for (int i = 0; i < jadwalPresisi.length; i++) {
-        final JadwalModel jadwal = jadwalPresisi[i];
-        buffer.writeln(
-          '${i + 1}. **${jadwal.namaDokter}** - ${jadwal.spesialisasi} - Hari ${jadwal.hari}, Jam ${jadwal.jamMulai} sampai ${jadwal.jamSelesai}',
-        );
-      }
-      buffer.writeln();
-      buffer.writeln('Untuk pendaftaran hubungi 0815 1100 0600 atau Call Center 0283 847 3333.');
-      return buffer.toString();
-    }
-
-    // Jika konteks jadwal menyatakan tidak ditemukan, sampaikan dengan sopan
-    if (konteksJadwal.contains('Tidak ditemukan')) {
-      final String pesanTidakDitemukan = konteksJadwal.replaceAll('DATA JADWAL PRESISI: ', '');
-      return '$pesanTidakDitemukan\n\nSilakan coba hari lain atau hubungi pendaftaran di 0815 1100 0600 untuk informasi lebih lanjut.';
-    }
-
-    // Fallback umum via layanan RAG ekstraktif
-    try {
-      return _layananRag.jawabanEkstraktif(pertanyaan, hasilRag);
-    } catch (_) {
-      return 'Maaf, saya sedang mengalami kendala koneksi. Saat ini saya hanya bisa melayani pertanyaan seputar jadwal dokter yang tersimpan secara lokal. Silakan coba lagi atau hubungi pendaftaran di 0815 1100 0600.';
-    }
+  final buffer = StringBuffer();
+  var nomor = 1;
+  for (final dokter in ringkasan.values) {
+    buffer.writeln(
+      '$nomor. **${dokter.namaDokter}** - ${dokter.spesialisasi}',
+    );
+    buffer.writeln('   ${dokter.jadwal.join(', ')}');
+    nomor++;
   }
+  return buffer.toString().trim();
 }
