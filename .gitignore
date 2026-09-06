@@ -46,3 +46,4 @@ app.*.map.json
 .env
 aturan/
 **/target/
+custom_voice/
