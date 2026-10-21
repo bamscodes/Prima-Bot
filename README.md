@@ -38,3 +38,5 @@ Syarat lingkungan build:
 
 Catatan: build pertama kali mengompilasi crate Rust (ort, dsb.) sehingga bisa
 memakan waktu 15-30 menit; build berikutnya memakai cache sehingga jauh lebih cepat.
+
+<!-- Contributor: hafifradhitya -->
