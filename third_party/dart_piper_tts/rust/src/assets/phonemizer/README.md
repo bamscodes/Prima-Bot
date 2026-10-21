@@ -1,0 +1,2 @@
+- This model is obtained from https://huggingface.co/OpenVoiceOS/g2p-mbyt5-12l-ipa-childes-espeak-onnx
+- Quantized to int8 using command `uv run --with onnx --with onnxruntime python -c "import onnxruntime.quantization as q; q.quantize_dynamic('model.onnx', 'model_quantized.onnx', weight_type=q.QuantType.QUInt8)"`, reducing from original size of 46M to 12M with no significant impact on phonemes output based on personal manual testing

@@ -1,227 +1,856 @@
+import 'dart:async';
+import 'dart:collection';
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_tts/flutter_tts.dart';
 import 'package:uuid/uuid.dart';
+import '../../../services/piper_tts_service.dart';
+import '../../../services/hospital_ai.dart' show JawabanBot;
 import '../../data/datasources/local_datasource.dart';
 import '../../domain/usecases/get_bot_response.dart';
+import '../../domain/usecases/generate_conversation_title.dart';
+import '../../domain/utils/conversation_title_formatter.dart';
 
 class ChatMessage {
-  final String text;
+  final String text; // Teks untuk ditampilkan di UI (bisa berisi markdown/link)
+  final String?
+  ttsText; // Teks khusus untuk TTS (tanpa markdown, plain text). Jika null, gunakan text.
   final bool isBot;
   final DateTime time;
+  bool isAnimated; // Menyimpan status apakah animasi typewriter telah selesai
 
   ChatMessage({
     required this.text,
+    this.ttsText,
     required this.isBot,
     required this.time,
+    this.isAnimated = true,
   });
+}
+
+class ChatSession {
+  final String id;
+  final String title;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final bool isTitlePending;
+
+  ChatSession({
+    required this.id,
+    required this.title,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.isTitlePending,
+  });
+
+  ChatSession copyWith({
+    String? id,
+    String? title,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    bool? isTitlePending,
+  }) {
+    return ChatSession(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      isTitlePending: isTitlePending ?? this.isTitlePending,
+    );
+  }
+
+  factory ChatSession.fromMap(Map<String, dynamic> map) {
+    return ChatSession(
+      id: map['id'] as String,
+      title: map['title'] as String,
+      createdAt: DateTime.tryParse(map['created_at'] as String? ?? '') ?? DateTime.now(),
+      updatedAt: DateTime.tryParse(map['updated_at'] as String? ?? '') ?? DateTime.now(),
+      isTitlePending: (map['title_generated'] as int? ?? 1) == 0,
+    );
+  }
 }
 
 class ChatProvider extends ChangeNotifier {
   final List<ChatMessage> _messages = [];
   final GetBotResponse _getBotResponse = GetBotResponse();
-  final String _sessionId = "user_anonymous_001"; // In real app, store this in secure storage
-  final FlutterTts _flutterTts = FlutterTts();
-  
-  bool _isLoading = false;
-  int? _speakingMessageIndex;
-  List<String> _suggestions = ['Jadwal Poliklinik', 'Informasi Kontak', 'Lokasi RS'];
+  final GenerateConversationTitle _generateConversationTitle =
+      GenerateConversationTitle();
+  final PiperTtsService _tts = PiperTtsService();
+  final Uuid _uuid = const Uuid();
 
-  List<ChatMessage> get messages => _messages;
+  String _sessionId = '';
+  bool _isSessionPersisted = false;
+  bool _isLoading = false;
+  String? _loadingSessionId;
+  int? _activeRequestToken;
+  int _requestTokenSequence = 0;
+  int? _speakingMessageIndex;
+  bool _isTtsPaused = false;
+  Timer? _ttsDeleteTimer;
+  List<String> _suggestions = [
+    'Jadwal Poliklinik',
+    'Informasi Kontak',
+    'Lokasi RS',
+  ];
+  List<ChatSession> _sessions = [];
+
+  List<ChatMessage> get messages => UnmodifiableListView(_messages);
+  List<String> get suggestions => UnmodifiableListView(_suggestions);
+  List<ChatSession> get sessions => UnmodifiableListView(_sessions);
   bool get isLoading => _isLoading;
   bool get isSpeaking => _speakingMessageIndex != null;
+  bool get isTtsPaused => _isTtsPaused;
   int? get speakingMessageIndex => _speakingMessageIndex;
+  bool isMessagePlaying(int index) =>
+      _speakingMessageIndex == index && !_isTtsPaused;
+  bool isMessagePaused(int index) =>
+      _speakingMessageIndex == index && _isTtsPaused;
   String get sessionId => _sessionId;
-  List<String> get suggestions => _suggestions;
+
+  void markMessageAnimated(int index) {
+    if (index >= 0 && index < _messages.length) {
+      _messages[index].isAnimated = true;
+    }
+  }
+
+  bool _disposed = false;
 
   ChatProvider() {
     _initTts();
-    _loadHistory();
+    _initSessions();
   }
 
-  Future<void> _loadHistory() async {
+  @override
+  void dispose() {
+    _disposed = true;
+    _ttsDeleteTimer?.cancel();
+    // Clear TTS handlers agar tidak retain ChangeNotifier setelah dispose
+    _tts.clearHandlers();
+    // Jangan await di dispose — fire and forget stop
+    unawaited(_tts.stop());
+    super.dispose();
+  }
+
+  void _safeNotify() {
+    if (!_disposed) notifyListeners();
+  }
+
+  /// Rename a specific session
+  Future<void> renameSession(String sessionId, String newTitle) async {
+    if (newTitle.trim().isEmpty) return;
+    
+    await DatabaseHelper.instance.updateSessionTitle(sessionId, newTitle.trim(), true);
+    
+    final index = _sessions.indexWhere((s) => s.id == sessionId);
+    if (index != -1) {
+      _sessions[index] = _sessions[index].copyWith(
+        title: newTitle.trim(),
+        isTitlePending: false,
+      );
+      notifyListeners();
+    }
+  }
+
+  /// Initialize: load session list for drawer, but ALWAYS start on a fresh draft ("Hai Hai" landing page)
+  Future<void> _initSessions() async {
     try {
-      final history = await DatabaseHelper.instance.getChatHistory(_sessionId);
-      if (history.isEmpty) {
-        // Initial greeting if no history
-        final initialMessage = 'Halo! Selamat datang di **RS Prima Insan Mulia**. Ada yang bisa saya bantu hari ini?\n\nAnda bisa menanyakan jadwal dokter atau informasi layanan kami.';
-        _messages.add(ChatMessage(
-          text: initialMessage,
-          isBot: true,
-          time: DateTime.now(),
-        ));
-        await DatabaseHelper.instance.insertChat(_sessionId, initialMessage, true);
+      await DatabaseHelper.instance.deleteSessionsWithoutUserMessages();
+      await DatabaseHelper.instance.sanitizeSessionTitles(
+        ConversationTitleFormatter.format,
+      );
+      await loadSessions();
+      // Selalu mulai di sesi baru / halaman awal ("Hai Hai") saat pertama kali masuk
+      await startNewChat();
+    } catch (e) {
+      log('Failed to init sessions: $e');
+      await startNewChat();
+    }
+  }
+
+  /// Load all sessions from database
+  Future<void> deleteAllSessions() async {
+    await _tts.stop();
+    _sessions.clear();
+    _messages.clear();
+    await DatabaseHelper.instance.deleteAllSessions();
+    await loadSessions();
+    await startNewChat();
+  }
+
+  Future<void> loadSessions() async {
+    try {
+      final sessionMaps = await DatabaseHelper.instance.getAllSessions();
+      _sessions = sessionMaps.map((m) => ChatSession.fromMap(m)).toList();
+      _safeNotify();
+    } catch (e) {
+      log('Failed to load sessions: $e');
+    }
+  }
+
+  /// Start an in-memory draft that is persisted after the first message.
+  Future<void> startNewChat() async {
+    _clearLoadingForSession(_sessionId);
+    await stopSpeaking();
+
+    _sessionId = _uuid.v4();
+    _isSessionPersisted = false;
+    _messages.clear();
+    _suggestions = [];
+    _safeNotify();
+  }
+
+  /// Switch to an existing session
+  Future<void> switchSession(String sessionId) async {
+    if (_sessionId == sessionId) return;
+
+    // Stop any TTS and detach loading state from the previous session.
+    _clearLoadingForSession(_sessionId);
+    await stopSpeaking();
+
+    _sessionId = sessionId;
+    _isSessionPersisted = true;
+    _messages.clear();
+    _suggestions = ['Jadwal Poliklinik', 'Informasi Kontak', 'Lokasi RS'];
+
+    await _loadHistory(sessionId);
+  }
+
+  /// Delete a specific session
+  Future<void> deleteSessionById(String sessionId) async {
+    await _tts.stop();
+    _clearLoadingForSession(sessionId);
+    await DatabaseHelper.instance.deleteSession(sessionId);
+
+    // If we deleted the current session, switch to another or create new
+    if (_sessionId == sessionId) {
+      await loadSessions();
+      if (_sessions.isNotEmpty) {
+        await switchSession(_sessions.first.id);
       } else {
-        for (var item in history) {
-          _messages.add(ChatMessage(
-            text: item['text'],
+        await startNewChat();
+      }
+    } else {
+      await loadSessions();
+    }
+  }
+
+  Future<void> _loadHistory(String sessionId) async {
+    final loadedMessages = <ChatMessage>[];
+
+    try {
+      final history = await DatabaseHelper.instance.getChatHistory(sessionId);
+      for (final item in history) {
+        loadedMessages.add(
+          ChatMessage(
+            text: item['text'] as String,
+            ttsText: item['tts_text'] as String?,
             isBot: item['is_bot'] == 1,
-            time: DateTime.parse(item['timestamp']),
-          ));
-        }
+            time: DateTime.tryParse(item['timestamp'] as String? ?? '') ?? DateTime.now(),
+          ),
+        );
       }
     } catch (e) {
-      print('Failed to load history: $e');
-      // Fallback greeting if DB fails
-      _messages.add(ChatMessage(
-        text: 'Halo! Selamat datang di **RS Prima Insan Mulia**. (Koneksi database sedang disiapkan)',
-        isBot: true,
-        time: DateTime.now(),
-      ));
+      log('Failed to load history for session $sessionId: $e');
     }
-    notifyListeners();
+
+    if (_sessionId != sessionId) return;
+
+    _messages
+      ..clear()
+      ..addAll(loadedMessages);
+    _safeNotify();
   }
 
-  void _initTts() async {
-    await _flutterTts.setLanguage("id-ID");
-    await _flutterTts.setPitch(1.0);
-    await _flutterTts.setSpeechRate(0.5);
+  void _initTts() {
+    // Inisialisasi tidak boleh menghasilkan unhandled async error saat model
+    // belum bisa disalin/di-load. UI tetap dapat menampilkan status error dari
+    // service melalui callback yang sudah dipasang di bawah.
+    unawaited(_initTtsAsync());
+  }
 
-    _flutterTts.setStartHandler(() {
-      // _speakingMessageIndex is set in speak() to avoid race conditions
-      notifyListeners();
+  Future<void> _initTtsAsync() async {
+    // Pasang callback handler SEBELUM init agar tidak terlewat
+    _tts.setStartHandler(() {
+      debugPrint('[TTS Provider] Suara mulai diputar');
+      _isTtsPaused = false;
+      _safeNotify();
     });
 
-    _flutterTts.setCompletionHandler(() {
+    _tts.setPauseHandler(() {
+      debugPrint('[TTS Provider] Suara dijeda (paused)');
+      _isTtsPaused = true;
+      _safeNotify();
+    });
+
+    _tts.setCompletionHandler(() {
+      debugPrint('[TTS Provider] Suara selesai diputar');
       _speakingMessageIndex = null;
-      notifyListeners();
+      _isTtsPaused = false;
+      _safeNotify();
     });
 
-    _flutterTts.setCancelHandler(() {
+    _tts.setErrorHandler((msg) {
+      debugPrint('[TTS Provider] Error saat memutar suara: $msg');
       _speakingMessageIndex = null;
-      notifyListeners();
+      _isTtsPaused = false;
+      _safeNotify();
     });
 
-    _flutterTts.setErrorHandler((msg) {
+    // Inisialisasi setelah handler terpasang
+    try {
+      await _tts.init();
+      debugPrint('[TTS Provider] TTS service siap digunakan');
+    } catch (error, stackTrace) {
+      log(
+        '[TTS Provider] Gagal menyiapkan Piper TTS',
+        error: error,
+        stackTrace: stackTrace,
+      );
       _speakingMessageIndex = null;
-      notifyListeners();
-    });
+      _isTtsPaused = false;
+      _safeNotify();
+    }
+  }
+
+  /// Toggle antara Play, Pause, dan Resume untuk pesan ke-[index]
+  Future<void> togglePlayPause(int index, String text) async {
+    debugPrint(
+      '[TTS Provider] togglePlayPause for index $index. Speaking index: $_speakingMessageIndex, isPaused: $_isTtsPaused',
+    );
+
+    if (_speakingMessageIndex == index) {
+      if (!_isTtsPaused) {
+        // Sedang play -> Pause
+        await pauseSpeaking();
+      } else {
+        // Sedang pause -> Resume dari posisi terakhir
+        await resumeSpeaking();
+      }
+    } else {
+      // Memutar pesan baru atau pesan yang berbeda -> Putar dari awal
+      await speak(text, index);
+    }
   }
 
   Future<void> speak(String text, int index) async {
-    if (_speakingMessageIndex != null) {
-      await _flutterTts.stop();
-      // Memberi jeda sedikit agar CancelHandler dari suara lama tereksekusi duluan
-      // sehingga tidak menimpa state _speakingMessageIndex yang baru.
-      await Future.delayed(const Duration(milliseconds: 50));
-    }
-
+    if (index < 0 || index >= _messages.length) return;
+    _ttsDeleteTimer?.cancel();
     _speakingMessageIndex = index;
-    notifyListeners();
-    
-    // Clean markdown before speaking
-    final cleanText = text
-        .replaceAll(RegExp(r'\*\*'), '') // Remove bold
-        .replaceAll(RegExp(r'\*'), '')  // Remove italic/bullets
-        .replaceAll(RegExp(r'#+ '), '')  // Remove headers
-        .replaceAll(RegExp(r'\[(.*?)\]\(.*?\)') , r'$1'); // Remove links but keep text
-    
-    await _flutterTts.speak(cleanText);
+    _isTtsPaused = false;
+    _safeNotify();
+
+    // Gunakan ttsText jika tersedia (teks bersih tanpa markdown/link),
+    // jika tidak ada, kirim teks asli dan biarkan IndonesianTextProcessor yang membersihkan
+    final message = _messages[index];
+    final textToSpeak = message.ttsText ?? text;
+
+    debugPrint('[TTS Provider] Memulai bicara untuk pesan ke-$index');
+
+    try {
+      await _tts.speak(textToSpeak);
+    } catch (e) {
+      debugPrint('[TTS Provider] Exception dari speak(): $e');
+      _speakingMessageIndex = null;
+      _isTtsPaused = false;
+      _safeNotify();
+    }
+  }
+
+  /// Jeda pemutaran suara
+  Future<void> pauseSpeaking() async {
+    if (_speakingMessageIndex != null && !_isTtsPaused) {
+      await _tts.pause();
+      _isTtsPaused = true;
+      _safeNotify();
+
+      _ttsDeleteTimer?.cancel();
+      _ttsDeleteTimer = Timer(const Duration(seconds: 15), () {
+        unawaited(stopSpeaking()); // Reset setelah 15 detik pause agar next play mengulang dari awal
+      });
+    }
+  }
+
+  /// Lanjutkan pemutaran suara dari posisi terakhir
+  Future<void> resumeSpeaking() async {
+    if (_speakingMessageIndex != null && _isTtsPaused) {
+      _ttsDeleteTimer?.cancel();
+      await _tts.resume();
+      _isTtsPaused = false;
+      _safeNotify();
+    }
   }
 
   Future<void> stopSpeaking() async {
-    await _flutterTts.stop();
+    _ttsDeleteTimer?.cancel();
+    await _tts.stop();
     _speakingMessageIndex = null;
-    notifyListeners();
+    _isTtsPaused = false;
+    _safeNotify();
+  }
+
+  void _clearLoadingForSession(String sessionId) {
+    if (_loadingSessionId != sessionId) return;
+    _loadingSessionId = null;
+    _activeRequestToken = null;
+    _isLoading = false;
+  }
+
+  Future<void> _saveAssistantMessage(
+    String sessionId,
+    String text, {
+    String? ttsText,
+  }) async {
+    final wasSaved = await DatabaseHelper.instance.insertChatIfSessionExists(
+      sessionId,
+      text,
+      true,
+      ttsText: ttsText,
+    );
+    if (!wasSaved) return;
+
+    if (_sessionId == sessionId) {
+      _messages.add(
+        ChatMessage(
+          text: text,
+          ttsText: ttsText,
+          isBot: true,
+          time: DateTime.now(),
+          isAnimated: false,
+        ),
+      );
+    }
+  }
+
+  /// Menangani aksi tombol Kembali tanpa mengirim pesan chat.
+  /// Mengembalikan daftar saran ke menu utama.
+  Future<void> navigasiKembali() async {
+    await stopSpeaking();
+    _suggestions = ['Jadwal Poliklinik', 'Informasi Kontak', 'Lokasi RS'];
+    _safeNotify();
   }
 
   Future<void> sendMessage(String text) async {
-    if (text.trim().isEmpty) return;
+    if (text.trim().isEmpty || _isLoading || _sessionId.isEmpty) return;
 
-    // Add and Save user message
-    final userMsg = ChatMessage(
-      text: text,
-      isBot: false,
-      time: DateTime.now(),
+    // Tangani tombol Kembali secara khusus: jangan kirim sebagai chat, hanya navigasi
+    final String teksLower = text.toLowerCase().trim();
+    if (teksLower == 'kembali') {
+      await navigasiKembali();
+      return;
+    }
+
+    final requestSessionId = _sessionId;
+    final requestToken = ++_requestTokenSequence;
+    final isDraftSession = !_isSessionPersisted;
+    final fallbackTitle = _generateConversationTitle.fallback(
+      userMessage: text,
     );
-    _messages.add(userMsg);
-    await DatabaseHelper.instance.insertChat(_sessionId, text, false);
-    
+    var requestSessionPersisted = !isDraftSession;
+    ChatMessage? optimisticUserMessage;
+
     _isLoading = true;
-    _suggestions = []; 
-    notifyListeners();
+    _loadingSessionId = requestSessionId;
+    _activeRequestToken = requestToken;
+    _suggestions = [];
+    _safeNotify();
 
     try {
-      // Check for exact Quick Action matches
-      final String lowerText = text.toLowerCase().trim();
-      if (lowerText == 'informasi kontak') {
-        await Future.delayed(const Duration(milliseconds: 600)); // Simulate typing
-        final response = '''📞 **Layanan 24 Jam RS Prima Insan Mulia:**
-- **Informasi & Pendaftaran:** 0815 1100 0600
-- **IGD (Gawat Darurat):** 0856 4507 7831
-- **Humas / HC:** 0856 4507 7830
-- **Call Center:** (0283) 847 3333
-- **Email:** primainsan2021@gmail.com''';
-        _messages.add(ChatMessage(text: response, isBot: true, time: DateTime.now()));
-        await DatabaseHelper.instance.insertChat(_sessionId, response, true);
-        _suggestions = ['Lokasi RS', 'Jadwal Dokter', 'Kembali'];
-        return;
-      } else if (lowerText == 'lokasi rs') {
-        await Future.delayed(const Duration(milliseconds: 600));
-        final response = '📍 **Lokasi RS Prima Insan Mulia:**\n[Jln. Raya Losari Lor, Kec. Losari, Kab. Brebes, Jawa Tengah, Indonesia](https://www.google.com/maps/search/?api=1&query=RS+Prima+Insan+Mulia+Losari+Brebes)';
-        _messages.add(ChatMessage(text: response, isBot: true, time: DateTime.now()));
-        await DatabaseHelper.instance.insertChat(_sessionId, response, true);
-        _suggestions = ['Jadwal Poliklinik', 'Informasi Kontak', 'Kembali'];
-        return;
-      } else if (lowerText == 'jadwal poliklinik') {
-        await Future.delayed(const Duration(milliseconds: 600));
-        final response = '''Berikut adalah layanan Poliklinik yang tersedia di RS Prima Insan Mulia:
-1. **Spesialis Anak**
-2. **Spesialis Bedah**
-3. **Spesialis Kandungan (Obsgyn)**
-4. **Spesialis Penyakit Dalam**
-5. **Poli Umum**
-6. **Poli VCT**
+      // Add and save the user message before requesting a response.
+      if (isDraftSession) _messages.clear();
+      final userMsg = ChatMessage(
+        text: text,
+        isBot: false,
+        time: DateTime.now(),
+        isAnimated: false,
+      );
+      optimisticUserMessage = userMsg;
+      _messages.add(userMsg);
+      final messagesForRequest = List<ChatMessage>.of(_messages);
 
-Silakan pilih pintasan di bawah ini atau ketik poli mana yang jadwalnya ingin Anda ketahui.''';
-        _messages.add(ChatMessage(text: response, isBot: true, time: DateTime.now()));
-        await DatabaseHelper.instance.insertChat(_sessionId, response, true);
-        _suggestions = ['Jadwal Poli Anak', 'Jadwal Poli Bedah', 'Jadwal Kandungan', 'Jadwal Penyakit Dalam', 'Poli Umum', 'Poli VCT'];
+      if (isDraftSession) {
+        // Buat judul langsung secara lokal dari pesan pertama user
+        await DatabaseHelper.instance.insertSessionWithFirstMessage(
+          requestSessionId,
+          fallbackTitle,
+          text,
+        );
+        requestSessionPersisted = true;
+        if (_sessionId == requestSessionId) {
+          _isSessionPersisted = true;
+        }
+        await loadSessions();
+      } else {
+        final wasSaved = await DatabaseHelper.instance
+            .insertChatIfSessionExists(requestSessionId, text, false);
+        if (!wasSaved) {
+          throw StateError('Chat session was deleted before sending');
+        }
+      }
+
+      await _generateAndSaveBotResponse(
+        requestSessionId,
+        text,
+        messagesForRequest,
+        isDraftSession,
+      );
+    } catch (e) {
+      log('Failed to send message in session $requestSessionId: $e');
+      const errorResponse =
+          'Maaf, terjadi kesalahan sistem. Silakan coba lagi nanti.';
+
+      if (isDraftSession && requestSessionPersisted) {
+        unawaited(
+          _resolveConversationTitleFallback(
+            sessionId: requestSessionId,
+            expectedFallbackTitle: fallbackTitle,
+          ),
+        );
+      }
+
+      if (requestSessionPersisted) {
+        try {
+          await _saveAssistantMessage(requestSessionId, errorResponse);
+        } catch (persistenceError) {
+          log(
+            'Failed to save error response for session $requestSessionId: '
+            '$persistenceError',
+          );
+          if (_sessionId == requestSessionId) {
+            _messages.add(
+              ChatMessage(
+                text: errorResponse,
+                isBot: true,
+                time: DateTime.now(),
+                isAnimated: false,
+              ),
+            );
+          }
+        }
+      } else {
+        if (_sessionId == requestSessionId) {
+          if (optimisticUserMessage != null) {
+            _messages.remove(optimisticUserMessage);
+          }
+          _messages.add(
+            ChatMessage(
+              text: errorResponse,
+              isBot: true,
+              time: DateTime.now(),
+              isAnimated: false,
+            ),
+          );
+        }
+      }
+    } finally {
+      if (_activeRequestToken == requestToken) {
+        _loadingSessionId = null;
+        _activeRequestToken = null;
+        _isLoading = false;
+        _safeNotify();
+      }
+    }
+  }
+
+  /// Edit prompt user pada [index], hapus respons AI lama setelahnya, dan generate respons baru.
+  Future<void> editMessageAndRegenerate(int index, String newText) async {
+    if (newText.trim().isEmpty || _isLoading || _sessionId.isEmpty) return;
+    if (index < 0 || index >= _messages.length || _messages[index].isBot) {
+      return;
+    }
+
+    final requestSessionId = _sessionId;
+    final requestToken = ++_requestTokenSequence;
+
+    await stopSpeaking();
+
+    // 1. Update pesan user pada index tersebut
+    final updatedUserMsg = ChatMessage(
+      text: newText.trim(),
+      isBot: false,
+      time: DateTime.now(),
+      isAnimated: false,
+    );
+
+    // 2. Hapus respons lama AI dan pesan sesudahnya
+    _messages.removeRange(index, _messages.length);
+    _messages.add(updatedUserMsg);
+
+    // 3. Jika ini pesan pertama user, perbarui judul sesi
+    final isFirstUserMessage = !_messages.take(index).any((m) => !m.isBot);
+    if (isFirstUserMessage) {
+      final newTitle = _generateConversationTitle.fallback(
+        userMessage: newText.trim(),
+      );
+      await DatabaseHelper.instance.updateSessionTitle(
+        _sessionId,
+        newTitle,
+        false,
+      );
+      await loadSessions();
+    }
+
+    // 4. Update database dengan riwayat yang telah dipotong
+    await DatabaseHelper.instance.replaceChatHistory(
+      _sessionId,
+      _messages
+          .map(
+            (m) => {
+              'text': m.text,
+              'tts_text': m.ttsText,
+              'is_bot': m.isBot ? 1 : 0,
+              'timestamp': m.time.toIso8601String(),
+            },
+          )
+          .toList(),
+    );
+
+    // 5. Generate respons AI baru
+    _isLoading = true;
+    _loadingSessionId = requestSessionId;
+    _activeRequestToken = requestToken;
+    _suggestions = [];
+    _safeNotify();
+
+    try {
+      final messagesForRequest = List<ChatMessage>.of(_messages);
+      await _generateAndSaveBotResponse(
+        requestSessionId,
+        newText.trim(),
+        messagesForRequest,
+        isFirstUserMessage,
+      );
+    } catch (e) {
+      log('Failed to generate response after edit: $e');
+      const errorResponse =
+          'Maaf, terjadi kesalahan sistem. Silakan coba lagi nanti.';
+      await _saveAssistantMessage(requestSessionId, errorResponse);
+      if (isFirstUserMessage) {
+        unawaited(
+          _resolveConversationTitleFallback(
+            sessionId: requestSessionId,
+            expectedFallbackTitle: _generateConversationTitle.fallback(
+              userMessage: newText.trim(),
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (_activeRequestToken == requestToken) {
+        _loadingSessionId = null;
+        _activeRequestToken = null;
+        _isLoading = false;
+        _safeNotify();
+      }
+    }
+  }
+
+  /// Regenerate respons AI pada [assistantIndex].
+  Future<void> regenerateResponse(int assistantIndex) async {
+    if (_isLoading || _sessionId.isEmpty) return;
+    if (assistantIndex < 0 ||
+        assistantIndex >= _messages.length ||
+        !_messages[assistantIndex].isBot) {
+      return;
+    }
+
+    // Cari prompt user sebelum respons bot ini
+    final userIndex = assistantIndex - 1;
+    if (userIndex < 0 || _messages[userIndex].isBot) return;
+
+    final userPrompt = _messages[userIndex].text;
+    final requestSessionId = _sessionId;
+    final requestToken = ++_requestTokenSequence;
+
+    await stopSpeaking();
+
+    // Hapus respons AI lama dan pesan setelahnya
+    _messages.removeRange(assistantIndex, _messages.length);
+    final isFirstUserResponse = !_messages
+        .take(userIndex)
+        .any((message) => !message.isBot);
+
+    // Simpan history yang dipotong ke DB
+    await DatabaseHelper.instance.replaceChatHistory(
+      _sessionId,
+      _messages
+          .map(
+            (m) => {
+              'text': m.text,
+              'tts_text': m.ttsText,
+              'is_bot': m.isBot ? 1 : 0,
+              'timestamp': m.time.toIso8601String(),
+            },
+          )
+          .toList(),
+    );
+
+    _isLoading = true;
+    _loadingSessionId = requestSessionId;
+    _activeRequestToken = requestToken;
+    _suggestions = [];
+    _safeNotify();
+
+    try {
+      final messagesForRequest = List<ChatMessage>.of(_messages);
+      await _generateAndSaveBotResponse(
+        requestSessionId,
+        userPrompt,
+        messagesForRequest,
+        isFirstUserResponse,
+      );
+    } catch (e) {
+      log('Failed to regenerate response: $e');
+      const errorResponse =
+          'Maaf, terjadi kesalahan sistem. Silakan coba lagi nanti.';
+      await _saveAssistantMessage(requestSessionId, errorResponse);
+      if (isFirstUserResponse) {
+        unawaited(
+          _resolveConversationTitleFallback(
+            sessionId: requestSessionId,
+            expectedFallbackTitle: _generateConversationTitle.fallback(
+              userMessage: userPrompt,
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (_activeRequestToken == requestToken) {
+        _loadingSessionId = null;
+        _activeRequestToken = null;
+        _isLoading = false;
+        _safeNotify();
+      }
+    }
+  }
+
+  /// Helper untuk memproses respons bot (Quick actions atau AI LLM)
+  Future<void> _generateAndSaveBotResponse(
+    String requestSessionId,
+    String text,
+    List<ChatMessage> messagesForRequest,
+    bool generateTitle,
+  ) async {
+    final fallbackTitle = _generateConversationTitle.fallback(
+      userMessage: text,
+    );
+
+    Future<void> saveResponse(String response, {String? ttsText}) async {
+      await _saveAssistantMessage(requestSessionId, response, ttsText: ttsText);
+      if (generateTitle) {
+        unawaited(
+          _generateAndPersistConversationTitle(
+            sessionId: requestSessionId,
+            userMessage: text,
+            assistantMessage: response,
+            expectedFallbackTitle: fallbackTitle,
+          ),
+        );
+      }
+    }
+
+    final String lowerText = text.toLowerCase().trim();
+    // Tangani Kembali jika lolos dari sendMessage (misal dari edit/regenerate)
+    if (lowerText == 'kembali') {
+      if (_sessionId == requestSessionId) {
+        _suggestions = ['Jadwal Poliklinik', 'Informasi Kontak', 'Lokasi RS'];
+        _safeNotify();
+      }
+      return;
+    }
+
+    // Semua pertanyaan (termasuk tombol cepat) dijawab oleh OTAK LOKAL
+    // [HospitalAI] agar konsisten & tergrounding pada data rumah sakit.
+    // Dengan cara ini tombol cepat "Lokasi RS" dan chat "dimana alamatnya"
+    // menghasilkan jawaban yang SAMA persis (termasuk tautan Maps), karena
+    // keduanya melewati satu sumber kebenaran yang sama.
+    final history = messagesForRequest
+        .where((message) => message.text.isNotEmpty)
+        .take(messagesForRequest.length - 1)
+        .toList();
+
+    final lastMessages = history.length > 5
+        ? history.sublist(history.length - 5)
+        : history;
+
+    final List<Map<String, String>> aiHistory = lastMessages
+        .map((m) => {'role': m.isBot ? 'assistant' : 'user', 'content': m.text})
+        .toList();
+
+    final JawabanBot jawaban =
+        await _getBotResponse.execute(text, aiHistory);
+    await saveResponse(jawaban.tampilan, ttsText: jawaban.tts);
+
+    if (_sessionId == requestSessionId) {
+      _suggestions = jawaban.saran.isNotEmpty
+          ? jawaban.saran
+          : ['Jadwal Poliklinik', 'Informasi Kontak', 'Lokasi RS'];
+    }
+  }
+
+  Future<void> _generateAndPersistConversationTitle({
+    required String sessionId,
+    required String userMessage,
+    required String assistantMessage,
+    required String expectedFallbackTitle,
+  }) async {
+    try {
+      final title = await _generateConversationTitle.execute(
+        userMessage: userMessage,
+        assistantMessage: assistantMessage,
+      );
+      if (title == null) {
+        await _resolveConversationTitleFallback(
+          sessionId: sessionId,
+          expectedFallbackTitle: expectedFallbackTitle,
+        );
         return;
       }
 
-      // Prepare history for AI (last 5 messages)
-      final history = _messages
-          .where((m) => m.text.isNotEmpty)
-          .take(_messages.length - 1) 
-          .toList();
-      
-      final lastMessages = history.length > 5 
-          ? history.sublist(history.length - 5) 
-          : history;
+      final wasUpdated = await DatabaseHelper.instance
+          .updateGeneratedSessionTitleIfPending(
+            sessionId,
+            expectedFallbackTitle,
+            title,
+          );
+      if (wasUpdated > 0) await loadSessions();
+    } catch (error, stackTrace) {
+      log(
+        'Failed to generate conversation title for $sessionId',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      await _resolveConversationTitleFallback(
+        sessionId: sessionId,
+        expectedFallbackTitle: expectedFallbackTitle,
+      );
+    }
+  }
 
-      final List<Map<String, String>> aiHistory = lastMessages.map((m) => {
-        'role': m.isBot ? 'assistant' : 'user',
-        'content': m.text,
-      }).toList();
-
-      // Get bot response from use case
-      final response = await _getBotResponse.execute(text, aiHistory);
-      
-      _messages.add(ChatMessage(
-        text: response,
-        isBot: true,
-        time: DateTime.now(),
-      ));
-      await DatabaseHelper.instance.insertChat(_sessionId, response, true);
-
-      _suggestions = ['Jadwal Poliklinik', 'Informasi Kontak', 'Lokasi RS'];
-    } catch (e) {
-      _messages.add(ChatMessage(
-        text: 'Maaf, terjadi kesalahan sistem. Silakan coba lagi nanti.',
-        isBot: true,
-        time: DateTime.now(),
-      ));
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+  Future<void> _resolveConversationTitleFallback({
+    required String sessionId,
+    required String expectedFallbackTitle,
+  }) async {
+    try {
+      final wasUpdated = await DatabaseHelper.instance
+          .resolveSessionTitleFallbackIfPending(
+            sessionId,
+            expectedFallbackTitle,
+          );
+      if (wasUpdated > 0) await loadSessions();
+    } catch (error, stackTrace) {
+      log(
+        'Failed to resolve fallback title for $sessionId',
+        error: error,
+        stackTrace: stackTrace,
+      );
     }
   }
 
   Future<void> clearChat() async {
-    await DatabaseHelper.instance.deleteChatHistory(_sessionId);
+    await _tts.stop();
+    await DatabaseHelper.instance.deleteAllSessions();
     _messages.clear();
-    // Re-load initial greeting
-    await _loadHistory();
-    notifyListeners();
+    _sessions.clear();
+    await startNewChat();
   }
 }
