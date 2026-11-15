@@ -69,11 +69,8 @@ class IndonesianTextProcessor {
       (cocok) => '${cocok.group(1)}, ',
     );
 
-    // 3d. Ganti tanda kurung yang mengapit singkatan atau alternatif dengan kata "atau" untuk jeda natural
-    //    Contoh: "Spesialis Kandungan (Obsgyn)" -> "Spesialis Kandungan atau Obsgyn"
-    //    Contoh: "dr. Akil (Senin, 10,30-12,30)" -> "dr. Akil atau Senin, 10,30-12,30"
-    //    Kurung buka dibaca "atau" agar tidak terbaca "satu" oleh TTS, kurung tutup jadi spasi
-    hasil = hasil.replaceAll('(', ' atau ').replaceAll(')', ' ');
+    // 3d. Ganti tanda kurung dengan jeda koma agar terbaca natural oleh TTS
+    hasil = hasil.replaceAll('(', ', ').replaceAll(')', ', ');
 
     // 3e. Ganti garis miring dan pemisah vertikal dengan spasi
     hasil = hasil.replaceAll('/', ' ').replaceAll('|', ' ').replaceAll('\\', ' ');
@@ -147,32 +144,21 @@ class IndonesianTextProcessor {
       r'\bUGD\b': 'U G D',
       r'\bVCT\b': 'V C T',
       r'\bHC\b': 'H C',
-      r'\bSpA\b': 'Spesialis Anak',
-      r'\bSpB\b': 'Spesialis Bedah',
-      r'\bSpOG\b': 'Spesialis Kandungan',
+      r'\bSp\.?\s*PD\b': 'Spesialis Penyakit Dalam',
+      r'\bSp\.?\s*OG\b': 'Spesialis Kandungan',
       r'\bObsgyn\b': 'Spesialis Kandungan',
-      r'\bSpPD\b': 'Spesialis Penyakit Dalam',
+      r'\bSp\.?\s*A\b': 'Spesialis Anak',
+      r'\bSp\.?\s*B\b': 'Spesialis Bedah',
     };
 
-    // Lindungi frasa "atau <Singkatan>" agar tidak menjadi duplikat setelah ekspansi
-    // Contoh: "Spesialis Kandungan (Obsgyn)" sudah menjadi " atau Obsgyn " setelah langkah 3d
-    // Jika langsung di-expand, akan menjadi "atau Spesialis Kandungan" sehingga duplikat
-    // Simpan placeholder sebelum mapping, kembalikan setelahnya
-    final Map<String, String> petaPlaceholder = {};
-    int indeksPlaceholder = 0;
-    for (final kunci in petaRumahSakit.keys) {
-      // Ekstrak singkatan dari pola regex, contoh r'\bSpA\b' -> SpA
-      // Hapus \b dan karakter regex lain agar dapat singkatan murni
-      final String singkatan = kunci.replaceAll(r'\b', '').replaceAll(RegExp(r'[^A-Za-z0-9]'), '');
-      if (singkatan.isEmpty) continue;
-      final RegExp polaAtauSingkatan = RegExp(r'atau\s+' + RegExp.escape(singkatan), caseSensitive: false);
-      if (polaAtauSingkatan.hasMatch(hasil)) {
-        final String placeholder = '__PH_${indeksPlaceholder}__';
-        petaPlaceholder[placeholder] = 'atau $singkatan';
-        hasil = hasil.replaceAll(polaAtauSingkatan, placeholder);
-        indeksPlaceholder++;
-      }
-    }
+    // Hindari duplikasi saat "Poliklinik Kandungan (Obsgyn)" menjadi "Poliklinik Kandungan, Obsgyn"
+    hasil = hasil.replaceAllMapped(
+      RegExp(
+        r'\b((?:Poliklinik|Spesialis)\s+Kandungan|Kandungan)\s*(?:,|atau)\s*Obsgyn\b',
+        caseSensitive: false,
+      ),
+      (cocok) => cocok.group(1)!,
+    );
 
     // Urutkan dari kunci terpanjang agar RSUD tidak tertimpa RS
     final daftarKunciRs = petaRumahSakit.keys.toList()..sort((a, b) => b.length.compareTo(a.length));
@@ -180,11 +166,6 @@ class IndonesianTextProcessor {
       final pengganti = petaRumahSakit[kunci]!;
       hasil = hasil.replaceAll(RegExp(kunci, caseSensitive: false), pengganti);
     }
-
-    // Kembalikan placeholder menjadi bentuk natural "atau <Singkatan>"
-    petaPlaceholder.forEach((placeholder, asli) {
-      hasil = hasil.replaceAll(placeholder, asli);
-    });
 
     // 8b. Tangani tanda hubung untuk rentang dan jeda SEBELUM konversi jam
     //    Rentang angka/waktu tanpa spasi: 10,30-12,30 -> 10,30 sampai 12,30
@@ -224,16 +205,24 @@ class IndonesianTextProcessor {
     });
 
     // 8d. Tangani waktu generik yang belum ada di peta, misal 09,15 -> jam sembilan lewat lima belas
-    //     Pola: angka jam , angka menit yang belum diubah
+    //     Pola: angka jam (0..23) , angka menit (00..59) yang belum diubah
     hasil = hasil.replaceAllMapped(
       RegExp(r'\b(\d{1,2}),(\d{2})\b'),
       (cocok) {
         final jam = int.tryParse(cocok.group(1)!);
         final menit = int.tryParse(cocok.group(2)!);
-        if (jam == null || menit == null) return cocok.group(0)!;
+        if (jam == null || menit == null || jam > 23 || menit >= 60) {
+          return cocok.group(0)!;
+        }
         if (menit == 0) return 'jam $jam';
         return 'jam $jam lewat $menit';
       },
+    );
+
+    // 8e. Hindari pengulangan "jam jam ..." jika teks sumber sudah menulis "jam 07:00"
+    hasil = hasil.replaceAllMapped(
+      RegExp(r'\b(jam|pukul)\s+jam\b', caseSensitive: false),
+      (cocok) => cocok.group(1)!,
     );
 
     // 9. Verbalisasi nomor telepon agar dibaca per digit dengan jeda

@@ -120,6 +120,24 @@ class ChatProvider extends ChangeNotifier {
     _initSessions();
   }
 
+  @visibleForTesting
+  ChatProvider.forPreview({
+    List<ChatMessage> messages = const [],
+    List<ChatSession> sessions = const [],
+    List<String> suggestions = const [
+      'Jadwal Poliklinik',
+      'Informasi Kontak',
+      'Lokasi RS',
+    ],
+    String sessionId = 'preview-session',
+  }) {
+    _sessionId = sessionId;
+    _isSessionPersisted = true;
+    _messages.addAll(messages);
+    _sessions = List<ChatSession>.of(sessions);
+    _suggestions = List<String>.of(suggestions);
+  }
+
   @override
   void dispose() {
     _disposed = true;
@@ -483,6 +501,7 @@ class ChatProvider extends ChangeNotifier {
         final wasSaved = await DatabaseHelper.instance
             .insertChatIfSessionExists(requestSessionId, text, false);
         if (!wasSaved) {
+          requestSessionPersisted = false;
           throw StateError('Chat session was deleted before sending');
         }
       }
@@ -561,57 +580,59 @@ class ChatProvider extends ChangeNotifier {
     final requestSessionId = _sessionId;
     final requestToken = ++_requestTokenSequence;
 
-    await stopSpeaking();
-
-    // 1. Update pesan user pada index tersebut
-    final updatedUserMsg = ChatMessage(
-      text: newText.trim(),
-      isBot: false,
-      time: DateTime.now(),
-      isAnimated: false,
-    );
-
-    // 2. Hapus respons lama AI dan pesan sesudahnya
-    _messages.removeRange(index, _messages.length);
-    _messages.add(updatedUserMsg);
-
-    // 3. Jika ini pesan pertama user, perbarui judul sesi
-    final isFirstUserMessage = !_messages.take(index).any((m) => !m.isBot);
-    if (isFirstUserMessage) {
-      final newTitle = _generateConversationTitle.fallback(
-        userMessage: newText.trim(),
-      );
-      await DatabaseHelper.instance.updateSessionTitle(
-        _sessionId,
-        newTitle,
-        false,
-      );
-      await loadSessions();
-    }
-
-    // 4. Update database dengan riwayat yang telah dipotong
-    await DatabaseHelper.instance.replaceChatHistory(
-      _sessionId,
-      _messages
-          .map(
-            (m) => {
-              'text': m.text,
-              'tts_text': m.ttsText,
-              'is_bot': m.isBot ? 1 : 0,
-              'timestamp': m.time.toIso8601String(),
-            },
-          )
-          .toList(),
-    );
-
-    // 5. Generate respons AI baru
     _isLoading = true;
     _loadingSessionId = requestSessionId;
     _activeRequestToken = requestToken;
     _suggestions = [];
     _safeNotify();
 
+    // Tentukan apakah pesan ini adalah pesan pertama user sebelum modifikasi list
+    final isFirstUserMessage = !_messages.take(index).any((m) => !m.isBot);
+
     try {
+      await stopSpeaking();
+
+      // 1. Update pesan user pada index tersebut
+      final updatedUserMsg = ChatMessage(
+        text: newText.trim(),
+        isBot: false,
+        time: DateTime.now(),
+        isAnimated: false,
+      );
+
+      // 2. Hapus respons lama AI dan pesan sesudahnya
+      _messages.removeRange(index, _messages.length);
+      _messages.add(updatedUserMsg);
+
+      // 3. Jika ini pesan pertama user, perbarui judul sesi
+      if (isFirstUserMessage) {
+        final newTitle = _generateConversationTitle.fallback(
+          userMessage: newText.trim(),
+        );
+        await DatabaseHelper.instance.updateSessionTitle(
+          _sessionId,
+          newTitle,
+          false,
+        );
+        await loadSessions();
+      }
+
+      // 4. Update database dengan riwayat yang telah dipotong
+      await DatabaseHelper.instance.replaceChatHistory(
+        _sessionId,
+        _messages
+            .map(
+              (m) => {
+                'text': m.text,
+                'tts_text': m.ttsText,
+                'is_bot': m.isBot ? 1 : 0,
+                'timestamp': m.time.toIso8601String(),
+              },
+            )
+            .toList(),
+      );
+
+      // 5. Generate respons AI baru
       final messagesForRequest = List<ChatMessage>.of(_messages);
       await _generateAndSaveBotResponse(
         requestSessionId,
@@ -661,36 +682,37 @@ class ChatProvider extends ChangeNotifier {
     final requestSessionId = _sessionId;
     final requestToken = ++_requestTokenSequence;
 
-    await stopSpeaking();
-
-    // Hapus respons AI lama dan pesan setelahnya
-    _messages.removeRange(assistantIndex, _messages.length);
-    final isFirstUserResponse = !_messages
-        .take(userIndex)
-        .any((message) => !message.isBot);
-
-    // Simpan history yang dipotong ke DB
-    await DatabaseHelper.instance.replaceChatHistory(
-      _sessionId,
-      _messages
-          .map(
-            (m) => {
-              'text': m.text,
-              'tts_text': m.ttsText,
-              'is_bot': m.isBot ? 1 : 0,
-              'timestamp': m.time.toIso8601String(),
-            },
-          )
-          .toList(),
-    );
-
     _isLoading = true;
     _loadingSessionId = requestSessionId;
     _activeRequestToken = requestToken;
     _suggestions = [];
     _safeNotify();
 
+    final isFirstUserResponse = !_messages
+        .take(userIndex)
+        .any((message) => !message.isBot);
+
     try {
+      await stopSpeaking();
+
+      // Hapus respons AI lama dan pesan setelahnya
+      _messages.removeRange(assistantIndex, _messages.length);
+
+      // Simpan history yang dipotong ke DB
+      await DatabaseHelper.instance.replaceChatHistory(
+        _sessionId,
+        _messages
+            .map(
+              (m) => {
+                'text': m.text,
+                'tts_text': m.ttsText,
+                'is_bot': m.isBot ? 1 : 0,
+                'timestamp': m.time.toIso8601String(),
+              },
+            )
+            .toList(),
+      );
+
       final messagesForRequest = List<ChatMessage>.of(_messages);
       await _generateAndSaveBotResponse(
         requestSessionId,
@@ -784,6 +806,7 @@ class ChatProvider extends ChangeNotifier {
       _suggestions = jawaban.saran.isNotEmpty
           ? jawaban.saran
           : ['Jadwal Poliklinik', 'Informasi Kontak', 'Lokasi RS'];
+      _safeNotify();
     }
   }
 

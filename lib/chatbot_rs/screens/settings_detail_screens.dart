@@ -154,8 +154,15 @@ class _SoundSettingsScreenState extends State<SoundSettingsScreen> {
     try {
       await _layananTts.loadSettingsOnly();
       if (!mounted) return;
+      if (!_layananTts.modelSiap) {
+        setState(() => _sedangMemuat = false);
+        await _layananTts.init();
+      }
+      if (!mounted) return;
       setState(() {
-        _pesanErrorModel = _layananTts.lastError != null ? 'Error: ${_layananTts.lastError}' : null;
+        _pesanErrorModel = _layananTts.lastError != null
+            ? 'Error: ${_layananTts.lastError}'
+            : null;
       });
     } catch (error) {
       if (!mounted) return;
@@ -164,6 +171,24 @@ class _SoundSettingsScreenState extends State<SoundSettingsScreen> {
       });
     } finally {
       if (mounted) setState(() => _sedangMemuat = false);
+    }
+  }
+
+  Future<void> _retryInitModel() async {
+    setState(() => _pesanErrorModel = null);
+    try {
+      await _layananTts.init();
+      if (!mounted) return;
+      setState(() {
+        _pesanErrorModel = _layananTts.lastError != null
+            ? 'Error: ${_layananTts.lastError}'
+            : null;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _pesanErrorModel = 'Model Piper belum siap: $error';
+      });
     }
   }
 
@@ -282,6 +307,19 @@ class _SoundSettingsScreenState extends State<SoundSettingsScreen> {
                           ),
                         ),
                       ),
+                      if (_pesanErrorModel != null)
+                        TextButton(
+                          onPressed: _retryInitModel,
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: const Text(
+                            'Coba Lagi',
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                          ),
+                        ),
                     ],
                   ),
                 ),

@@ -147,33 +147,38 @@ class _ChatbotSplashScreenState extends State<ChatbotSplashScreen>
                                     ),
                                   ),
                                   const SizedBox(width: 12),
-                                  AnimatedBuilder(
-                                    animation: _floatingTextController,
-                                    builder: (context, child) => Transform.translate(
-                                      offset: Offset(
-                                        0,
-                                        -4 + (_floatingTextController.value * 8),
+                                  Flexible(
+                                    child: AnimatedBuilder(
+                                      animation: _floatingTextController,
+                                      builder: (context, child) => Transform.translate(
+                                        offset: Offset(
+                                          0,
+                                          -4 + (_floatingTextController.value * 8),
+                                        ),
+                                        child: child,
                                       ),
-                                      child: child,
-                                    ),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical: 8,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: theme.brightness == Brightness.light
-                                            ? theme.colorScheme.primary
-                                            : Colors.white,
-                                        borderRadius: BorderRadius.circular(30),
-                                      ),
-                                      child: Text(
-                                        AppLocalizations.of(context)!.hospitalGuide,
-                                        style: theme.textTheme.displaySmall?.copyWith(
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 16,
+                                          vertical: 8,
+                                        ),
+                                        decoration: BoxDecoration(
                                           color: theme.brightness == Brightness.light
-                                              ? Colors.white
-                                              : theme.colorScheme.primary,
-                                          fontWeight: FontWeight.bold,
+                                              ? theme.colorScheme.primary
+                                              : Colors.white,
+                                          borderRadius: BorderRadius.circular(30),
+                                        ),
+                                        child: FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Text(
+                                            AppLocalizations.of(context)!.hospitalGuide,
+                                            style: theme.textTheme.displaySmall?.copyWith(
+                                              color: theme.brightness == Brightness.light
+                                                  ? Colors.white
+                                                  : theme.colorScheme.primary,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
                                         ),
                                       ),
                                     ),

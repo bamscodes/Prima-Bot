@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math' as matematika;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 /// Model dokumen untuk kebutuhan Retrieval Augmented Generation.
@@ -306,6 +307,9 @@ class LayananRag {
   // Simpan angka (jam) sebagai token agar query "jam 10" tetap match
   static final RegExp _reTimeColon = RegExp(r'(\d{1,2}):(\d{2})');
 
+  @visibleForTesting
+  List<String> tokenizeForTest(String teks) => _tokenisasi(teks);
+
   /// Tokenisasi teks menjadi daftar kata yang sudah dinormalisasi.
   /// Menghapus tanda baca, mengubah ke huruf kecil, dan membuang stopwords.
   /// Angka dipertahankan (mis. jam 10:30 -> token "1030" + "10" + "30") agar
@@ -315,8 +319,11 @@ class LayananRag {
 
     // Normalisasi: huruf kecil, pertahankan angka, ganti tanda baca dengan spasi
     String normal = teks.toLowerCase();
-    // Ubah jam 10:30 -> 10 30 agar angka tidak hilang
-    normal = normal.replaceAll(_reTimeColon, r'$1 $2');
+    // Ubah jam 10:30 -> "1030 10 30" agar angka tetap terindeks utuh maupun terpisah
+    normal = normal.replaceAllMapped(
+      _reTimeColon,
+      (m) => '${m.group(1)}${m.group(2)} ${m.group(1)} ${m.group(2)}',
+    );
     normal = normal.replaceAll(_reNonWord, ' ');
     normal = normal.replaceAll(_reSpaces, ' ').trim();
 

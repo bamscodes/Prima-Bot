@@ -446,7 +446,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                             setState(() => _editingMessageIndex = null);
                           },
                           style: TextButton.styleFrom(
-                            foregroundColor: const Color(0xFFF7F9F9),
+                            foregroundColor: theme.colorScheme.onSurface
+                                .withValues(alpha: 0.72),
                             padding: const EdgeInsets.symmetric(
                               horizontal: 12,
                               vertical: 8,
@@ -821,50 +822,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     ChatSession session,
     ChatProvider chatProvider,
   ) {
-    final theme = Theme.of(context);
-    final controller = TextEditingController(text: session.title);
-
-    showDialog(
+    showDialog<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: theme.colorScheme.secondary,
-        title: Text(
-          'Ganti Nama Obrolan',
-          style: TextStyle(color: theme.colorScheme.onSurface),
-        ),
-        content: TextField(
-          controller: controller,
-          style: TextStyle(color: theme.colorScheme.onSurface),
-          decoration: InputDecoration(
-            hintText: 'Nama obrolan',
-            hintStyle: const TextStyle(color: Color(0xFF9D9D9D)),
-            enabledBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: theme.colorScheme.outlineVariant),
-            ),
-            focusedBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: theme.colorScheme.primary),
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(
-              AppLocalizations.of(context)!.cancel,
-              style: const TextStyle(color: Color(0xFF9D9D9D)),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              chatProvider.renameSession(session.id, controller.text);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: theme.colorScheme.primary,
-            ),
-            child: const Text('Simpan', style: TextStyle(color: Colors.white)),
-          ),
-        ],
+      builder: (_) => _RenameSessionDialog(
+        initialTitle: session.title,
+        onSave: (newTitle) => chatProvider.renameSession(session.id, newTitle),
       ),
     );
   }
@@ -1060,30 +1022,34 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                       horizontal: 12.0,
                       vertical: 2.0,
                     ),
-                    child: ListTile(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                    child: Material(
+                      type: MaterialType.transparency,
+                      borderRadius: BorderRadius.circular(12),
+                      child: ListTile(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        focusColor: Colors.transparent,
+                        hoverColor: theme.colorScheme.secondary.withValues(
+                          alpha: 0.5,
+                        ),
+                        splashColor: theme.colorScheme.secondary.withValues(
+                          alpha: 0.7,
+                        ),
+                        leading: Icon(
+                          Icons.chat_bubble_outline_rounded,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                        title: Text(
+                          AppLocalizations.of(context)!.newChat,
+                          style: TextStyle(color: theme.colorScheme.onSurface),
+                        ),
+                        onTap: () {
+                          FocusScope.of(context).unfocus();
+                          Navigator.pop(context);
+                          chatProvider.startNewChat();
+                        },
                       ),
-                      focusColor: Colors.transparent,
-                      hoverColor: theme.colorScheme.secondary.withValues(
-                        alpha: 0.5,
-                      ),
-                      splashColor: theme.colorScheme.secondary.withValues(
-                        alpha: 0.7,
-                      ),
-                      leading: Icon(
-                        Icons.chat_bubble_outline_rounded,
-                        color: theme.colorScheme.onSurface,
-                      ),
-                      title: Text(
-                        AppLocalizations.of(context)!.newChat,
-                        style: TextStyle(color: theme.colorScheme.onSurface),
-                      ),
-                      onTap: () {
-                        FocusScope.of(context).unfocus();
-                        Navigator.pop(context);
-                        chatProvider.startNewChat();
-                      },
                     ),
                   ),
                   Padding(
@@ -1091,35 +1057,39 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                       horizontal: 12.0,
                       vertical: 2.0,
                     ),
-                    child: ListTile(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                    child: Material(
+                      type: MaterialType.transparency,
+                      borderRadius: BorderRadius.circular(12),
+                      child: ListTile(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        focusColor: Colors.transparent,
+                        hoverColor: theme.colorScheme.secondary.withValues(
+                          alpha: 0.5,
+                        ),
+                        splashColor: theme.colorScheme.secondary.withValues(
+                          alpha: 0.7,
+                        ),
+                        leading: Icon(
+                          Icons.search_rounded,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                        title: Text(
+                          AppLocalizations.of(context)!.search,
+                          style: TextStyle(color: theme.colorScheme.onSurface),
+                        ),
+                        onTap: () {
+                          FocusScope.of(context).unfocus();
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const SearchScreen(),
+                            ),
+                          );
+                        },
                       ),
-                      focusColor: Colors.transparent,
-                      hoverColor: theme.colorScheme.secondary.withValues(
-                        alpha: 0.5,
-                      ),
-                      splashColor: theme.colorScheme.secondary.withValues(
-                        alpha: 0.7,
-                      ),
-                      leading: Icon(
-                        Icons.search_rounded,
-                        color: theme.colorScheme.onSurface,
-                      ),
-                      title: Text(
-                        AppLocalizations.of(context)!.search,
-                        style: TextStyle(color: theme.colorScheme.onSurface),
-                      ),
-                      onTap: () {
-                        FocusScope.of(context).unfocus();
-                        Navigator.pop(context);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const SearchScreen(),
-                          ),
-                        );
-                      },
                     ),
                   ),
                   Padding(
@@ -1746,6 +1716,12 @@ class _ThreeDotsWaveState extends State<ThreeDotsWave>
 
 /// Widget Typewriter Markdown Body untuk efek mengetik pesan AI baru secara bertahap yang smooth
 class TypewriterMarkdownBody extends StatefulWidget {
+  static bool isSupportedLinkScheme(Uri? uri) {
+    if (uri == null) return false;
+    return const {'https', 'http', 'tel', 'mailto'}
+        .contains(uri.scheme.toLowerCase());
+  }
+
   final String fullText;
   final ThemeData theme;
   final bool animate;
@@ -1850,13 +1826,12 @@ class _TypewriterMarkdownBodyState extends State<TypewriterMarkdownBody> {
                 if (href == null) return;
 
                 final uri = Uri.tryParse(href);
-                if (uri == null ||
-                    (uri.scheme != 'https' && uri.scheme != 'http')) {
+                if (!TypewriterMarkdownBody.isSupportedLinkScheme(uri)) {
                   return;
                 }
 
                 try {
-                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  await launchUrl(uri!, mode: LaunchMode.externalApplication);
                 } catch (e) {
                   debugPrint('Could not launch $href: $e');
                 }
@@ -2007,5 +1982,79 @@ class _AnimatedSwipeHintState extends State<_AnimatedSwipeHint>
   @override
   Widget build(BuildContext context) {
     return SlideTransition(position: _animation, child: widget.child);
+  }
+}
+
+class _RenameSessionDialog extends StatefulWidget {
+  final String initialTitle;
+  final ValueChanged<String> onSave;
+
+  const _RenameSessionDialog({
+    required this.initialTitle,
+    required this.onSave,
+  });
+
+  @override
+  State<_RenameSessionDialog> createState() => _RenameSessionDialogState();
+}
+
+class _RenameSessionDialogState extends State<_RenameSessionDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialTitle);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return AlertDialog(
+      backgroundColor: theme.colorScheme.secondary,
+      title: Text(
+        'Ganti Nama Obrolan',
+        style: TextStyle(color: theme.colorScheme.onSurface),
+      ),
+      content: TextField(
+        controller: _controller,
+        style: TextStyle(color: theme.colorScheme.onSurface),
+        decoration: InputDecoration(
+          hintText: 'Nama obrolan',
+          hintStyle: const TextStyle(color: Color(0xFF9D9D9D)),
+          enabledBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: theme.colorScheme.outlineVariant),
+          ),
+          focusedBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: theme.colorScheme.primary),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(
+            AppLocalizations.of(context)!.cancel,
+            style: const TextStyle(color: Color(0xFF9D9D9D)),
+          ),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.pop(context);
+            widget.onSave(_controller.text);
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: theme.colorScheme.primary,
+          ),
+          child: const Text('Simpan', style: TextStyle(color: Colors.white)),
+        ),
+      ],
+    );
   }
 }

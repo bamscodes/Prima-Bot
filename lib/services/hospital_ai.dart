@@ -155,7 +155,7 @@ class DokterData {
     required this.jadwal,
   });
 
-  /// Mencocokkan nama dokter dari teks.
+  /// Mencocokkan nama dokter dari teks dengan batas kata agar tidak salah cocok (mis. "mewakili" != "akil").
   static DokterData? cariNama(String teks) {
     final String t = teks.toLowerCase();
     for (final d in HospitalFakta.daftarDokter) {
@@ -163,9 +163,15 @@ class DokterData {
         if (kunci == 'vct' || kunci == 'dokter umum' || kunci == 'poli umum') {
           continue;
         }
-        if (t.contains(kunci)) return d;
+        if (RegExp('\\b${RegExp.escape(kunci)}\\b', caseSensitive: false)
+            .hasMatch(t)) {
+          return d;
+        }
       }
-      if (t.contains(d.nama.toLowerCase())) return d;
+      if (RegExp('\\b${RegExp.escape(d.nama.toLowerCase())}\\b', caseSensitive: false)
+          .hasMatch(t)) {
+        return d;
+      }
     }
     return null;
   }
@@ -520,17 +526,25 @@ class HospitalAI {
         bersih.split(' ').where((k) => k.isNotEmpty).toList();
     if (kata.isEmpty) return false;
 
-    // Jika ada kata kunci topik medis/jadwal/alamat -> bukan sapaan murni
+    // Jika ada kata kunci topik medis/jadwal/alamat/layanan -> bukan sapaan murni
     final RegExp sinyalTopik = RegExp(
-      r'\b(jadwal|dokter|dr|poli|spesialis|nomor|nomer|telepon|telp|telpon|'
-      r'alamat|lokasi|sakit|biaya|bpjs|pendaftaran|daftar|kontak|vct|igd|'
-      r'bayar|tarif|operasional|presiden|mencret|mencet|demam|luka)\b',
+      r'\b(jadwal|dokter|dr|poli|poliklinik|spesialis|nomor|nomer|telepon|telp|telpon|'
+      r'alamat|lokasi|dimana|sakit|biaya|bpjs|pendaftaran|daftar|kontak|vct|igd|'
+      r'bayar|tarif|operasional|presiden|mencret|mencet|demam|luka|buka|tutup|jam|hari|'
+      r'besok|lusa|kapan|rujukan|besuk|jenguk|rawat|kamar|inap|lab|laboratorium|rontgen|'
+      r'usg|hamil|vaksin|imunisasi|keluhan|periksa|konsultasi|anak|bayi|bedah|kandungan|'
+      r'penyakit|umum|rekomendasi|saran|obat|resep|antrean|antrian|gigi|mata|tht|kulit|'
+      r'jantung|paru|saraf|syaraf|orthopedi|ortopedi|tulang|jiwa|psikolog|psikiater|gizi|fisioterapi)\b',
     );
     if (sinyalTopik.hasMatch(t)) return false;
 
-    // Cek sapaan multi-kata (seperti "halo apa kabar prima insan disini")
-    for (final s in _kataSapaan) {
-      if (t.startsWith(s)) return true;
+    // Cek sapaan multi-kata yang tetap berada di batas kata wajar
+    if (kata.length <= 7) {
+      for (final s in _kataSapaan) {
+        if (RegExp('^${RegExp.escape(s)}\\b', caseSensitive: false).hasMatch(t)) {
+          return true;
+        }
+      }
     }
 
     // Kata sapaan tunggal atau pendek
@@ -721,7 +735,19 @@ class HospitalAI {
         .replaceAll(RegExp(r'\brs\b', caseSensitive: false), ' ')
         .toLowerCase();
 
-    // 1. Pencernaan & Sakit Perut (termasuk mencet, mencret, diare, mual muntah)
+    // 1. Anak & Bayi (prioritaskan sebelum keluhan umum/pencernaan agar "anak mencret" ke Poli Anak)
+    if (RegExp(
+      r'\b(bayi|balita|imunisasi|campak)\b|'
+      r'\banak(?:\s+\w+){0,3}\s+(?:demam|panas|batuk|pilek|flu|sakit|mencret|diare|muntah|step|kejang|rewel|mules|kembung)\b|'
+      r'\b(?:demam|panas|batuk|pilek|sakit|mencret|diare|muntah)\s+(?:pada\s+)?(?:anak|bayi|balita)\b',
+    ).hasMatch(tt)) {
+      return const SimtomResult(
+        poli: 'Anak',
+        keluhan: 'keluhan kesehatan pada anak atau balita',
+      );
+    }
+
+    // 2. Pencernaan & Sakit Perut (termasuk mencet, mencret, diare, mual muntah)
     if (RegExp(
       r'(mencet|mencret|diare|bab\s*cair|sakit\s*perut|nyeri\s*perut|perut\s*melilit|mules|'
       r'mual|muntah|lambung|maag|gerd|asam\s*lambung|nyeri\s*ulu\s*hati|kembung|begah)',
@@ -729,16 +755,6 @@ class HospitalAI {
       return const SimtomResult(
         poli: 'Penyakit Dalam',
         keluhan: 'keluhan sakit perut dan gangguan pencernaan (seperti mencret/diare atau asam lambung)',
-      );
-    }
-
-    // 2. Anak & Bayi
-    if (RegExp(
-      r'(anak\s*demam|anak\s*panas|anak\s*batuk|anak\s*sakit|bayi|balita|imunisasi|campak|anak\s*mencret)',
-    ).hasMatch(tt)) {
-      return const SimtomResult(
-        poli: 'Anak',
-        keluhan: 'keluhan kesehatan pada anak atau balita',
       );
     }
 
@@ -805,13 +821,13 @@ class HospitalAI {
 
   String? _cariHari(String t) {
     final RegExp reHari = RegExp(
-      r'\b(senin|selasa|rabu|kamis|jumat|sabtu|minggu)\b',
+      r"\b(senin|selasa|rabu|kamis|jum['’]?at|sabtu|minggu)\b",
       caseSensitive: false,
     );
     final RegExpMatch? m = reHari.firstMatch(t);
     if (m != null) {
-      final String h = m.group(1)!;
-      return h[0].toUpperCase() + h.substring(1).toLowerCase();
+      final String h = m.group(1)!.replaceAll(RegExp(r"['’]"), '').toLowerCase();
+      return h[0].toUpperCase() + h.substring(1);
     }
     if (t.contains('besok')) return _namaHari(DateTime.now().weekday + 1);
     if (t.contains('lusa')) return _namaHari(DateTime.now().weekday + 2);
@@ -820,7 +836,7 @@ class HospitalAI {
   }
 
   String _namaHari(int weekday) {
-    if (weekday > 7) weekday -= 7;
+    final int normalized = ((weekday - 1) % 7) + 1;
     const names = [
       '',
       'Senin',
@@ -831,7 +847,7 @@ class HospitalAI {
       'Sabtu',
       'Minggu',
     ];
-    return names[weekday];
+    return names[normalized];
   }
 
   String? _cariPoli(String t) {
@@ -1060,7 +1076,7 @@ class HospitalAI {
     if (daftar.isEmpty) return 'Tidak ada jadwal pada hari yang diminta.';
     final List<String> parts = [];
     for (final j in daftar) {
-      parts.add('${j.hari} jam ${j.jamMulai} sampai ${j.jamSelesai}');
+      parts.add('${j.hari} ${j.jamMulai} sampai ${j.jamSelesai}');
     }
     return 'Jadwal praktiknya: ${parts.join(', ')}.';
   }
@@ -1429,7 +1445,7 @@ class HospitalAI {
 
     final String tampilan = buffer.toString().trim();
     final String tts =
-        'Layanan Klinik VCT tersedia di RS Prima Insan Mulia setiap hari Selasa dan Kamis jam 08:00 sampai 15:00 di Gedung Utama. '
+        'Layanan Klinik VCT tersedia di RS Prima Insan Mulia setiap hari Selasa dan Kamis pukul 08:00 sampai 15:00 di Gedung Utama. '
         'Layanan bersifat rahasia dan aman. Hubungi pendaftaran di ${HospitalFakta.telpPendaftaran}.';
 
     return JawabanBot(
@@ -1503,7 +1519,8 @@ class HospitalAI {
   }
 
   JawabanBot _jawabanUmumHospital(String q) {
-    final String? poli = _cariPoli(q.toLowerCase());
+    final String lower = q.toLowerCase();
+    final String? poli = _cariPoli(lower);
     if (poli != null) {
       return _jawabanJadwal(
         HasilDeteksi(
@@ -1511,6 +1528,39 @@ class HospitalAI {
           dokter: DokterData.cariPoli(poli),
           poli: poli,
         ),
+      );
+    }
+
+    final RegExpMatch? poliBelumTersedia = RegExp(
+      r'\b(gigi|mata|tht|kulit|kelamin|jantung|paru|saraf|syaraf|'
+      r'orthopedi|ortopedi|tulang|jiwa|psikolog|psikiater|gizi|fisioterapi|rehab)\b',
+      caseSensitive: false,
+    ).firstMatch(lower);
+    if (poliBelumTersedia != null) {
+      final String namaPoliDiminta = poliBelumTersedia.group(1)!;
+      final String labelPoli =
+          namaPoliDiminta[0].toUpperCase() + namaPoliDiminta.substring(1);
+      final StringBuffer buffer = StringBuffer();
+      buffer.writeln(
+        'Mohon maaf, layanan atau dokter spesialis **$labelPoli** saat ini **belum tercantum** dalam data jadwal utama **${HospitalFakta.nama}**.',
+      );
+      buffer.writeln();
+      buffer.writeln(
+        'Saat ini layanan yang tersedia di sistem informasi kami meliputi ${HospitalFakta.layananUmum}, serta **IGD 24 Jam** di **Gedung Utama**.',
+      );
+      buffer.writeln();
+      buffer.writeln(
+        'Untuk memastikan ketersediaan layanan terbaru atau informasi rujukan, silakan hubungi Pendaftaran di [${HospitalFakta.telpPendaftaran}](tel:${HospitalFakta.telpPendaftaran.replaceAll(' ', '')}).',
+      );
+      final String tampilan = buffer.toString().trim();
+      final String tts =
+          'Mohon maaf, layanan $namaPoliDiminta belum tercantum dalam data jadwal utama Rumah Sakit Prima Insan Mulia. '
+          'Layanan yang tersedia meliputi ${HospitalFakta.layananUmum} dan IGD 24 jam. '
+          'Untuk konfirmasi ketersediaan terbaru, hubungi pendaftaran di ${HospitalFakta.telpPendaftaran}.';
+      return JawabanBot(
+        tampilan: tampilan,
+        tts: tts,
+        saran: const ['Jadwal Poliklinik', 'Informasi Kontak', 'Kembali'],
       );
     }
 

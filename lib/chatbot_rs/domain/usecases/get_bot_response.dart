@@ -1,6 +1,8 @@
 // ignore_for_file: curly_braces_in_flow_control_structures
 import 'dart:developer';
 
+import 'package:flutter/foundation.dart';
+
 import '../../../services/hospital_ai.dart' as rs;
 import '../../data/datasources/ai_datasource.dart';
 import '../../data/datasources/local_datasource.dart';
@@ -135,32 +137,54 @@ class GetBotResponse {
     return b.toString();
   }
 
+  @visibleForTesting
+  bool hasHallucination(String jawaban) => _berhalusinasi(jawaban);
+
+  @visibleForTesting
+  String cleanRawResponse(String raw) => _bersihkanMentah(raw);
+
   /// Deteksi halusinasi: nama dokter / jam / hari yang tidak ada di data.
   bool _berhalusinasi(String jawaban) {
     final String lower = jawaban.toLowerCase();
-    final Set<String> namaValid = {
-      for (final d in rs.HospitalFakta.daftarDokter) d.nama.toLowerCase(),
+    final Set<String> tokenDokterValid = {
+      for (final d in rs.HospitalFakta.daftarDokter) ...d.kunci,
+      for (final d in rs.HospitalFakta.daftarDokter)
+        ...d.nama
+            .toLowerCase()
+            .replaceAll(RegExp(r'[^a-z\s]'), ' ')
+            .split(RegExp(r'\s+'))
+            .where(
+              (t) =>
+                  t.length >= 2 &&
+                  t != 'dr' &&
+                  t != 'dokter' &&
+                  t != 'sp' &&
+                  t != 'og' &&
+                  t != 'pd' &&
+                  t != 'klinik' &&
+                  t != 'umum',
+            ),
+      'sp',
+      'spesialis',
+      'umum',
+      'anda',
     };
 
     // Deteksi nama dokter "dr. X" / "dr X" di jawaban.
     final RegExp reDokter = RegExp(
-      r'dr\.?\s+([a-z]{2,})',
+      r'\bdr\.?\s+([a-z]{2,})',
       caseSensitive: false,
     );
     for (final m in reDokter.allMatches(jawaban)) {
-      final String nama = m.group(0)!.toLowerCase();
-      final bool valid = namaValid.any((n) => nama.contains(n.split(' ')[0]));
-      if (!valid) {
-        // Nama dokter yang tidak dikenal oleh data -> potensi halusinasi.
-        // Namun bila nama valid kebetulan dipotong, toleransi: cek substring.
-        final bool cocok = namaValid.any((n) => n.contains(nama));
-        if (!cocok) return true;
+      final String namaDepan = m.group(1)!.toLowerCase();
+      if (!tokenDokterValid.contains(namaDepan)) {
+        return true;
       }
     }
 
     // Deteksi nomor telepon yang tidak resmi (mengarang nomor).
     final RegExp reTelepon = RegExp(
-      r'0(8[0-9]{2,3}|2[0-9]{2,3})[\s-]?\d{3,5}',
+      r'(?:\+62|0)\d(?:[\s-]?\d){7,13}',
     );
     final Set<String> nomorValid = {
       '081511000600',
@@ -169,7 +193,10 @@ class GetBotResponse {
       '02838473333',
     };
     for (final m in reTelepon.allMatches(jawaban)) {
-      final String hanyaAngka = m.group(0)!.replaceAll(RegExp(r'[\s-]'), '');
+      String hanyaAngka = m.group(0)!.replaceAll(RegExp(r'\D'), '');
+      if (hanyaAngka.startsWith('62')) {
+        hanyaAngka = '0${hanyaAngka.substring(2)}';
+      }
       if (!nomorValid.contains(hanyaAngka)) {
         // Nomor yang tidak dikenal -> halusinasi.
         return true;
@@ -189,16 +216,19 @@ class GetBotResponse {
   }
 
   String _bersihkanMentah(String s) {
-    var t = s.trim();
+    var t = s.replaceAll('\r\n', '\n').trim();
     // Hapus tag safety/moderation yang kadang bocor dari model.
     t = t.replaceAll(
       RegExp(r'(user|response)\s*safety\s*[:\-]?\s*\w+', caseSensitive: false),
       ' ',
     );
     t = t.replaceAll(RegExp(r'as an ai\b', caseSensitive: false), '');
-    t = t.replaceAll(RegExp(r'\s+'), ' ').trim();
-    // Hapus markdown berlebihan & baris kosong berlebih
-    t = t.replaceAll(RegExp(r'\n{3,}'), '\n\n');
+    // Rapikan spasi horizontal dan pertahankan paragraf/daftar markdown
+    t = t
+        .replaceAll(RegExp(r'[ \t]{2,}'), ' ')
+        .replaceAll(RegExp(r' *\n *'), '\n')
+        .replaceAll(RegExp(r'\n{3,}'), '\n\n')
+        .trim();
     return t;
   }
 

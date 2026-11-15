@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/layanan_model.dart';
@@ -271,9 +272,10 @@ class DatabaseHelper {
   /// Memperbaiki judul sesi lama yang rusak atau bernilai generic/bahasa inggris
   /// berdasarkan pesan pertama pengguna pada sesi tersebut.
   Future<void> sanitizeSessionTitles(
-    String Function(String) titleFormatter,
-  ) async {
-    final db = await instance.database;
+    String Function(String) titleFormatter, {
+    @visibleForTesting Database? dbOverride,
+  }) async {
+    final db = dbOverride ?? await instance.database;
     final sessions = await db.query('chat_sessions');
 
     for (final session in sessions) {
@@ -293,6 +295,7 @@ class DatabaseHelper {
         final userMessages = await db.query(
           'chat_history',
           where: 'session_id = ? AND is_bot = 0',
+          whereArgs: [sessionId],
           orderBy: 'timestamp ASC',
           limit: 1,
         );
